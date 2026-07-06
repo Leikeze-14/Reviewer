@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Korean Quiz">
+<title>Korean Vocabulary Quiz</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#f5f4f0;--card:#fff;--text:#1a1a1a;--text-dim:#888;--text-dimmer:#aaa;
+    --text-mid:#555;--text-mid2:#666;--border:#e5e3de;--border-light:#ddd;
+    --divider:#f0efe9;--input-bg:#f9f9f7;--disabled:#ccc;--overlay:rgba(0,0,0,0.45);
+    --overlay2:rgba(0,0,0,0.5);
+  }
+  body.dark{
+    --bg:#121212;--card:#1e1e1e;--text:#f0f0f0;--text-dim:#9a9a9a;--text-dimmer:#7d7d7d;
+    --text-mid:#bbb;--text-mid2:#aaa;--border:#333;--border-light:#3d3d3d;
+    --divider:#2a2a2a;--input-bg:#262626;--disabled:#444;--overlay:rgba(0,0,0,0.65);
+    --overlay2:rgba(0,0,0,0.7);
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.2s,color 0.2s}
+  .header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 16px;position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .header h1{font-size:17px;font-weight:600;color:var(--text);letter-spacing:-0.3px}
+  .header p{font-size:12px;color:var(--text-dim);margin-top:2px}
+  .header-btns{display:flex;gap:8px;align-items:center;flex-shrink:0}
+  .icon-toggle-btn{background:var(--input-bg);border:1px solid var(--border-light);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px}
+  .stat{background:var(--card);border-radius:10px;padding:10px 8px;text-align:center}
+  .stat-label{font-size:10px;color:var(--text-dim);margin-bottom:3px}
+  .stat-val{font-size:20px;font-weight:600;color:var(--text)}
+  .filters{padding:0 16px 10px;display:flex;gap:6px;flex-wrap:wrap}
+  .fbtn{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border-light);background:var(--card);color:var(--text-mid);cursor:pointer;white-space:nowrap;font-family:inherit}
+  .fbtn.active{background:var(--text);color:var(--card);border-color:var(--text)}
+  .mode-bar{padding:0 16px 10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .mode-label{font-size:11px;color:var(--text-dim);font-weight:500}
+  .mbtn{font-size:12px;padding:5px 14px;border-radius:20px;border:1.5px solid var(--border-light);background:var(--card);color:var(--text-mid);cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.15s}
+  .mbtn.active{background:#3730a3;color:#fff;border-color:#3730a3}
+  .mbtn.listen-active{background:#be185d;color:#fff;border-color:#be185d}
+
+  /* LISTENING EXAM */
+  .listen-card{background:var(--card);border-radius:16px;padding:28px 20px 22px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center}
+  .listen-play-btn{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#be185d,#9d174d);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 4px 14px rgba(190,24,93,0.35);transition:transform 0.15s,box-shadow 0.15s}
+  .listen-play-btn:active{transform:scale(0.94)}
+  .listen-play-btn.playing{animation:listenPulse 0.7s infinite alternate;box-shadow:0 0 0 8px rgba(190,24,93,0.18)}
+  @keyframes listenPulse{from{transform:scale(1)}to{transform:scale(1.08)}}
+  .listen-play-btn svg{width:36px;height:36px;fill:#fff}
+  .listen-replay-hint{font-size:12px;color:var(--text-dimmer);margin-bottom:18px}
+  .listen-prompt{font-size:14px;color:var(--text-mid);margin-bottom:14px;font-weight:500}
+  .listen-input{width:100%;padding:13px 16px;border-radius:12px;border:2px solid var(--border);background:var(--card);color:var(--text);font-size:16px;font-family:inherit;outline:none;transition:border-color 0.2s;text-align:center}
+  .listen-input:focus{border-color:#be185d}
+  .listen-input.correct-input{border-color:#16a34a;background:#dcfce7;color:#166534;font-weight:600}
+  .listen-input.wrong-input{border-color:#dc2626;background:#fee2e2;color:#991b1b}
+  .listen-submit{display:block;width:100%;padding:13px;border-radius:12px;background:#be185d;color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;transition:background 0.15s}
+  .listen-submit:hover{background:#9d174d}
+  .listen-submit:disabled{background:var(--disabled);cursor:default}
+  .listen-skip{display:block;width:100%;padding:10px;border-radius:12px;background:var(--bg);color:var(--text-dim);border:none;font-size:13px;cursor:pointer;font-family:inherit;margin-top:6px}
+  .listen-answer-reveal{font-size:15px;margin-top:12px;padding:12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-weight:600}
+  .listen-answer-reveal.wrong-reveal{background:#fff1f2;border-color:#fecdd3;color:#9f1239}
+  .listen-mode-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#fce7f3;color:#be185d;margin-bottom:10px;margin-left:6px}
+  .read-mode-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#d1fae5;color:#065f46;margin-bottom:10px;margin-left:6px}
+  .read-card{background:var(--card);border-radius:16px;padding:28px 20px 22px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center}
+  .read-korean-big{font-size:52px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.2}
+  .read-speak-btn{background:#d1fae5;border:none;border-radius:50%;width:46px;height:46px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;transition:background 0.15s}
+  .read-speak-btn:active{background:#a7f3d0}
+  .read-speak-btn.speaking{background:#a7f3d0;animation:pulse 0.6s infinite alternate}
+  .read-speak-btn svg{width:22px;height:22px;fill:#065f46}
+  .read-speak-hint{font-size:11px;color:var(--text-dimmer);margin-bottom:18px}
+  .read-prompt{font-size:14px;color:var(--text-mid);margin-bottom:12px;font-weight:500}
+  .read-input{width:100%;padding:13px 16px;border-radius:12px;border:2px solid var(--border);background:var(--card);color:var(--text);font-size:16px;font-family:inherit;outline:none;transition:border-color 0.2s;text-align:center}
+  .read-input:focus{border-color:#059669}
+  .read-input.correct-input{border-color:#16a34a;background:#dcfce7;color:#166534;font-weight:600}
+  .read-input.wrong-input{border-color:#dc2626;background:#fee2e2;color:#991b1b}
+  .read-submit{display:block;width:100%;padding:13px;border-radius:12px;background:#059669;color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;transition:background 0.15s}
+  .read-submit:hover{background:#047857}
+  .read-submit:disabled{background:var(--disabled);cursor:default}
+  .read-skip{display:block;width:100%;padding:10px;border-radius:12px;background:var(--bg);color:var(--text-dim);border:none;font-size:13px;cursor:pointer;font-family:inherit;margin-top:6px}
+  .read-answer-reveal{font-size:15px;margin-top:12px;padding:12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-weight:600}
+  .read-answer-reveal.wrong-reveal{background:#fff1f2;border-color:#fecdd3;color:#9f1239}
+  .mbtn.read-active{background:#059669;color:#fff;border-color:#059669}
+  .mbtn.audio-active{background:#d97706;color:#fff;border-color:#d97706}
+  .review-bar{padding:0 16px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .rev-btn{font-size:12px;padding:6px 14px;border-radius:20px;border:1.5px solid #86efac;background:#dcfce7;color:#166534;cursor:pointer;font-family:inherit;font-weight:600;display:flex;align-items:center;gap:5px;transition:all 0.15s}
+  .rev-btn:hover{background:#bbf7d0}
+  .rev-btn svg{width:14px;height:14px;fill:#166534}
+  .settings-btn{font-size:12px;padding:6px 14px;border-radius:20px;border:1.5px solid #c4b5fd;background:#ede9fe;color:#5b21b6;cursor:pointer;font-family:inherit;font-weight:600;display:flex;align-items:center;gap:5px;transition:all 0.15s}
+  .settings-btn:hover{background:#ddd6fe}
+  .quiz-area{padding:0 16px 32px}
+  .progress{font-size:12px;color:var(--text-dim);text-align:right;margin-bottom:8px}
+  .cat-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#3730a3;margin-bottom:10px}
+  .mode-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#92400e;margin-bottom:10px;margin-left:6px}
+  .qcard{background:var(--card);border-radius:16px;padding:24px 20px 20px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+  .korean-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px}
+  .korean{font-size:40px;font-weight:700;text-align:center;color:var(--text);line-height:1.2}
+  .speak-btn{background:#eef2ff;border:none;border-radius:50%;width:42px;height:42px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s}
+  .speak-btn:active{background:#c7d2fe}
+  .speak-btn svg{width:20px;height:20px;fill:#3730a3}
+  .speak-btn.speaking{background:#c7d2fe;animation:pulse 0.6s infinite alternate}
+  @keyframes pulse{from{transform:scale(1)}to{transform:scale(1.12)}}
+  .hint{font-size:12px;color:var(--text-dimmer);text-align:center;margin-bottom:20px}
+  .fib-sentence{font-size:16px;line-height:1.9;color:var(--text);text-align:center;margin-bottom:6px;padding:0 4px}
+  .fib-blank{display:inline-block;border-bottom:2.5px solid #3730a3;min-width:80px;padding:0 8px;color:#3730a3;font-weight:700;font-size:16px;text-align:center;vertical-align:middle}
+  .fib-translation{font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:14px;font-style:italic;line-height:1.5}
+  .fib-korean-hint{font-size:11px;color:var(--text-dimmer);text-align:center;margin-bottom:4px}
+  .choice-toggle{display:flex;gap:6px;justify-content:flex-end;margin-bottom:10px;align-items:center}
+  .choice-label{font-size:11px;color:var(--text-dim)}
+  .ctbtn{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid var(--border-light);background:var(--card);color:var(--text-mid);cursor:pointer;font-family:inherit}
+  .ctbtn.active{background:var(--text);color:var(--card);border-color:var(--text)}
+  .options{display:grid;gap:8px}
+  .options.cols2{grid-template-columns:1fr 1fr}
+  .options.cols1{grid-template-columns:1fr}
+  .opt{background:var(--input-bg);border:1.5px solid var(--border);border-radius:12px;padding:12px 10px;font-size:13px;color:var(--text);cursor:pointer;text-align:left;font-family:inherit;line-height:1.3;transition:background 0.1s}
+  .opt:active{background:var(--divider)}
+  .opt.correct{background:#dcfce7;border-color:#86efac;color:#166534;font-weight:600}
+  .opt.wrong{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+  .opt:disabled{cursor:default}
+  .feedback{text-align:center;font-size:14px;font-weight:600;padding:10px 0 4px;min-height:36px}
+  .feedback.ok{color:#16a34a}
+  .feedback.bad{color:#dc2626}
+  .next-btn{display:block;width:100%;padding:14px;border-radius:12px;background:var(--text);color:var(--card);border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:6px}
+  .end-card{background:var(--card);border-radius:16px;padding:32px 20px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+  .end-emoji{font-size:48px;margin-bottom:12px}
+  .end-title{font-size:22px;font-weight:700;margin-bottom:8px}
+  .end-sub{font-size:14px;color:var(--text-mid2);margin-bottom:24px}
+  .end-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+  .end-stat{background:var(--bg);border-radius:10px;padding:12px;text-align:center}
+  .end-stat-label{font-size:11px;color:var(--text-dim);margin-bottom:4px}
+  .end-stat-val{font-size:22px;font-weight:700;color:var(--text)}
+  .replay-btn{display:block;width:100%;padding:14px;border-radius:12px;background:var(--text);color:var(--card);border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px}
+  .streak-banner{background:#fef3c7;border-radius:8px;padding:8px 12px;text-align:center;font-size:13px;font-weight:600;color:#92400e;margin-top:8px}
+  .total-count{font-size:11px;color:var(--text-dimmer);text-align:center;padding:0 16px 8px}
+  .repeat-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#fff3cd;color:#856404;margin-left:6px;border:1px solid #ffc107}
+  .weak-section{background:var(--card);border-radius:16px;padding:16px 16px 8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+  .weak-title{font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text);display:flex;align-items:center;gap:6px}
+  .weak-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--divider);font-size:13px}
+  .weak-item:last-child{border-bottom:none}
+  .weak-korean{font-weight:600;font-size:15px}
+  .weak-eng{color:var(--text-dim);font-size:12px}
+  .weak-count{font-size:12px;padding:2px 8px;border-radius:20px;background:#fee2e2;color:#991b1b;font-weight:600}
+  .no-weak{font-size:13px;color:var(--text-dim);text-align:center;padding:8px 0 10px}
+  .weak-speak{background:#eef2ff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:6px}
+  .weak-speak svg{width:14px;height:14px;fill:#3730a3}
+
+  /* REVIEW PANEL */
+  .review-panel{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--overlay);z-index:100;display:flex;flex-direction:column;justify-content:flex-end}
+  .review-panel.hidden{display:none}
+  .review-sheet{background:var(--card);border-radius:20px 20px 0 0;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;animation:slideUp 0.28s ease}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .review-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .review-header h2{font-size:16px;font-weight:700;color:var(--text)}
+  .review-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-dim);line-height:1;padding:4px}
+  .review-cat-tabs{padding:10px 16px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--divider);flex-shrink:0}
+  .rct{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--border-light);background:var(--input-bg);color:var(--text-mid);cursor:pointer;font-family:inherit;white-space:nowrap}
+  .rct.active{background:#3730a3;color:#fff;border-color:#3730a3}
+  .review-count{font-size:11px;color:var(--text-dim);text-align:center;padding:8px 0 4px;flex-shrink:0}
+  .review-body{overflow-y:auto;flex:1;padding:8px 16px 16px}
+  .vocab-grid{display:grid;gap:8px}
+  .vocab-card{background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .vocab-k{font-size:17px;font-weight:700;color:var(--text)}
+  .vocab-e{font-size:12px;color:var(--text-mid);margin-top:2px}
+  .vocab-left{flex:1;min-width:0}
+  .vocab-cat-tag{font-size:10px;padding:2px 8px;border-radius:20px;background:#eef2ff;color:#3730a3;white-space:nowrap;flex-shrink:0}
+  .vocab-speak{background:#eef2ff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .vocab-speak svg{width:15px;height:15px;fill:#3730a3}
+  .review-start-bar{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--card)}
+  .review-quiz-btn{display:block;width:100%;padding:13px;border-radius:12px;background:#3730a3;color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .mastery-bar{padding:0 16px 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .mastery-track{flex:1;min-width:160px;background:var(--border);border-radius:20px;height:8px;overflow:hidden}
+  .mastery-fill{height:100%;background:linear-gradient(90deg,#a78bfa,#3730a3);border-radius:20px;transition:width 0.4s ease}
+  .mastery-label{font-size:11px;color:var(--text-dim);white-space:nowrap}
+  .mastery-count{font-size:11px;font-weight:700;color:#3730a3;white-space:nowrap}
+  .mastered-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;margin-left:4px;font-weight:600}
+  .mastered-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--card);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:200;pointer-events:none;opacity:0;transition:opacity 0.3s}
+  .mastered-toast.show{opacity:1}
+  .all-mastered-card{background:var(--card);border-radius:16px;padding:32px 20px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+  .reset-mastery-btn{display:block;width:100%;padding:14px;border-radius:12px;background:#7c3aed;color:#fff;border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px}
+  .vocab-mastered .vocab-k{text-decoration:line-through}
+  .mastery-star{font-size:11px;margin-left:3px}
+  .reset-session-btn{font-size:12px;padding:5px 14px;border-radius:20px;border:1.5px solid #fca5a5;background:#fee2e2;color:#991b1b;cursor:pointer;font-family:inherit;font-weight:600;display:flex;align-items:center;gap:5px;transition:all 0.15s}
+  .reset-session-btn:hover{background:#fecaca}
+  .particle-card{background:#f5f3ff;border:1px solid #c4b5fd;border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px}
+  .particle-k{font-size:19px;font-weight:700;color:#5b21b6;min-width:48px}
+  .particle-e{font-size:12px;color:#4c1d95;margin-top:2px;line-height:1.45}
+  .particle-ex{font-size:11px;color:#7c3aed;margin-top:4px;font-style:italic}
+
+  /* CLOUD SAVE */
+  .cloud-btn{font-size:12px;padding:5px 14px;border-radius:20px;border:1.5px solid #bae6fd;background:#e0f2fe;color:#0369a1;cursor:pointer;font-family:inherit;font-weight:600;display:flex;align-items:center;gap:5px;transition:all 0.15s}
+  .cloud-btn:hover{background:#bae6fd}
+  .cloud-btn svg{width:14px;height:14px;fill:#0369a1}
+  .cloud-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--overlay2);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+  .cloud-modal.hidden{display:none}
+  .cloud-sheet{background:var(--card);border-radius:20px;padding:24px 20px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+  .cloud-title{font-size:18px;font-weight:700;margin-bottom:4px;color:var(--text)}
+  .cloud-sub{font-size:13px;color:var(--text-dim);margin-bottom:16px;line-height:1.5}
+  .cloud-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  .cloud-save-btn{padding:13px;border-radius:12px;background:#0369a1;color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.15s}
+  .cloud-save-btn:hover{background:#0284c7}
+  .cloud-load-btn{padding:13px;border-radius:12px;background:#f0fdf4;color:#166534;border:2px solid #86efac;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.15s}
+  .cloud-load-btn:hover{background:#dcfce7}
+  .cloud-cancel{display:block;width:100%;padding:10px;border-radius:12px;background:var(--bg);color:var(--text-dim);border:none;font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px}
+  .cloud-status{font-size:13px;text-align:center;margin-top:12px;min-height:20px;font-weight:600}
+  .cloud-status.ok{color:#16a34a}
+  .cloud-status.err{color:#dc2626}
+  .cloud-file-label{display:block;width:100%;padding:13px;border-radius:12px;background:#f0fdf4;color:#166534;border:2px solid #86efac;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;margin-top:0}
+  .cloud-file-label:hover{background:#dcfce7}
+
+  /* AUDIO REVIEW (walk & listen) */
+  .audio-card{background:var(--card);border-radius:16px;padding:30px 20px 24px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center}
+  .audio-progress{font-size:12px;color:var(--text-dimmer);font-weight:600;margin-bottom:18px;letter-spacing:0.3px}
+  .audio-word{font-size:34px;font-weight:700;color:var(--text);margin-bottom:14px;min-height:44px}
+  .audio-meaning{font-size:17px;color:#92400e;font-weight:500;min-height:26px;margin-bottom:22px}
+  .audio-controls{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:22px}
+  .audio-btn{background:#fef3c7;border:none;border-radius:50%;width:52px;height:52px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.1s}
+  .audio-btn:active{transform:scale(0.92)}
+  .audio-play{width:68px;height:68px;font-size:26px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;box-shadow:0 4px 14px rgba(217,119,6,0.35)}
+  .audio-settings{display:flex;flex-direction:column;gap:12px;align-items:stretch;text-align:left;padding:16px 4px 4px;border-top:1px solid var(--divider)}
+  .audio-settings label{font-size:12px;color:var(--text-mid2);display:flex;align-items:center;gap:8px;font-weight:500}
+  .audio-settings input[type=range]{flex:1}
+  .audio-hint{font-size:12px;color:var(--text-dimmer);margin-top:16px;line-height:1.5}
+
+  /* VOCAB SETTINGS (per-category word selection) */
+  .settings-tab-actions{display:flex;gap:8px;margin-bottom:10px}
+  .settings-mini-btn{flex:1;font-size:12px;padding:8px;border-radius:10px;border:1px solid var(--border-light);background:var(--input-bg);color:var(--text-mid);cursor:pointer;font-family:inherit;font-weight:600}
+  .settings-mini-btn:hover{background:var(--divider)}
+  .vocab-check-row{display:flex;align-items:center;gap:10px;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+  .vocab-check-row input[type=checkbox]{width:19px;height:19px;flex-shrink:0;accent-color:#3730a3}
+  .vocab-check-text{flex:1;min-width:0}
+  .vocab-check-row .vocab-e{margin-top:1px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Korean Vocabulary Quiz</h1>
+    <p id="total-label">Loading...</p>
+  </div>
+  <div class="header-btns">
+    <button class="icon-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-label">Score</div><div class="stat-val" id="sc">0</div></div>
+  <div class="stat"><div class="stat-label">Correct</div><div class="stat-val" id="cc">0</div></div>
+  <div class="stat"><div class="stat-label">Streak</div><div class="stat-val" id="stk">0</div></div>
+  <div class="stat"><div class="stat-label">Accuracy</div><div class="stat-val" id="acc">--</div></div>
+</div>
+
+<div class="mastery-bar"><span class="mastery-label">Mastered:</span><div class="mastery-track"><div class="mastery-fill" id="mastery-fill" style="width:0%"></div></div><span class="mastery-count" id="mastery-count">0 / 0</span></div>
+<div class="filters" id="frow"></div>
+<div class="total-count" id="total-count"></div>
+
+<div class="mode-bar">
+  <span class="mode-label">Quiz Mode:</span>
+  <button class="mbtn active" id="mbtn-mc" onclick="setMode('mc')">Multiple Choice</button>
+  <button class="mbtn" id="mbtn-fib" onclick="setMode('fib')">Fill in the Blank</button>
+  <button class="mbtn" id="mbtn-listen" onclick="setMode('listen')" style="border-color:#f9a8d4;color:#be185d">🎧 Listening</button>
+  <button class="mbtn" id="mbtn-read" onclick="setMode('read')" style="border-color:#6ee7b7;color:#065f46">✍️ Reading</button>
+  <button class="mbtn" id="mbtn-audio" onclick="setMode('audio')" style="border-color:#fcd34d;color:#92400e">🚶 Audio Review</button>
+</div>
+
+<div class="review-bar">
+  <button class="rev-btn" onclick="openReview()">
+    <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+    Review Vocab
+  </button>
+  <button class="cloud-btn" onclick="openCloudSave()">
+    <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+    <span id="cloud-btn-label">Save / Load</span>
+  </button>
+  <button class="settings-btn" onclick="openSettings()">
+    <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#5b21b6"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.65c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    Vocab Settings
+  </button>
+  <button class="reset-session-btn" onclick="confirmResetSession()">
+    <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#991b1b"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+    Reset
+  </button>
+</div>
+
+<div class="quiz-area" id="qa"></div>
+<audio id="keep-alive-audio" loop playsinline style="display:none" src="data:audio/wav;base64,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"></audio>
+<!-- VOCAB REVIEW PANEL -->
+<div class="review-panel hidden" id="review-panel" onclick="handlePanelClick(event)">
+  <div class="review-sheet" id="review-sheet">
+    <div class="review-header">
+      <h2 id="review-title">Review Vocabulary</h2>
+      <button class="review-close" onclick="closeReview()">x</button>
+    </div>
+    <div class="review-cat-tabs" id="review-tabs"></div>
+    <div class="review-count" id="review-count"></div>
+    <div class="review-body">
+      <div class="vocab-grid" id="vocab-grid"></div>
+    </div>
+    <div class="review-start-bar">
+      <button class="review-quiz-btn" id="review-quiz-btn" onclick="startQuizFromReview()">Start Quiz for This Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- PARTICLES & COUNTING UNITS PANEL -->
+<div class="review-panel hidden" id="particles-panel" onclick="handleParticlesPanelClick(event)">
+  <div class="review-sheet" id="particles-sheet">
+    <div class="review-header">
+      <h2>📌 Particles &amp; Counting Units</h2>
+      <button class="review-close" onclick="closeParticles()">x</button>
+    </div>
+    <div class="review-cat-tabs" id="particles-tabs">
+      <button class="rct active" onclick="switchParticlesTab('particles',this)">Particles (조사)</button>
+      <button class="rct" onclick="switchParticlesTab('counters',this)">Counting Units (단위)</button>
+      <button class="rct" onclick="switchParticlesTab('grammar',this)">Graph (문법)</button>
+    </div>
+    <div class="review-count" id="particles-count"></div>
+    <div class="review-body">
+      <div id="particles-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- VOCAB SETTINGS PANEL -->
+<div class="review-panel hidden" id="settings-panel" onclick="handleSettingsPanelClick(event)">
+  <div class="review-sheet" id="settings-sheet">
+    <div class="review-header">
+      <h2>⚙️ Vocab Settings</h2>
+      <button class="review-close" onclick="closeSettings()">x</button>
+    </div>
+    <div class="review-cat-tabs" id="settings-tabs"></div>
+    <div class="review-count" id="settings-count"></div>
+    <div class="review-body">
+      <div class="settings-tab-actions">
+        <button class="settings-mini-btn" onclick="selectAllInCat()">Select All</button>
+        <button class="settings-mini-btn" onclick="deselectAllInCat()">Deselect All</button>
+      </div>
+      <div class="vocab-grid" id="settings-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CLOUD SAVE MODAL -->
+<div class="cloud-modal hidden" id="cloud-modal" onclick="handleCloudModalClick(event)">
+  <div class="cloud-sheet" id="cloud-sheet">
+    <div class="cloud-title">💾 Save / Load Progress</div>
+    <div class="cloud-sub">Export your progress as a save file to transfer between devices or accounts. Import it anytime to restore everything.</div>
+    <div class="cloud-actions">
+      <button class="cloud-save-btn" onclick="exportSave()">📤 Export Save</button>
+      <label class="cloud-file-label" for="import-file-input">📥 Import Save</label>
+    </div>
+    <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importSave(event)"/>
+    <button class="cloud-cancel" onclick="closeCloudSave()">Cancel</button>
+    <div class="cloud-status" id="cloud-status"></div>
+  </div>
+</div>
+
+<div class="mastered-toast" id="mastered-toast"></div>
+<script>
+const V=[
+  {k:"오다",e:"To come",c:"Verbs"},{k:"마시다",e:"To drink",c:"Verbs"},{k:"먹다",e:"To eat",c:"Verbs"},{k:"주다",e:"To give",c:"Verbs"},{k:"가다",e:"To go",c:"Verbs"},{k:"듣다",e:"To hear",c:"Verbs"},{k:"배우다",e:"To learn",c:"Verbs"},{k:"앉다",e:"To sit",c:"Verbs"},{k:"자다",e:"To sleep",c:"Verbs"},{k:"씻다",e:"To wash",c:"Verbs"},{k:"쓰다",e:"To write / use / wear (headwear)",c:"Verbs"},{k:"울다",e:"To cry",c:"Verbs"},{k:"갖다",e:"To have",c:"Verbs"},{k:"만들다",e:"To make",c:"Verbs"},{k:"웃다",e:"To laugh",c:"Verbs"},{k:"보다",e:"To see",c:"Verbs"},{k:"일어나다",e:"To get up",c:"Verbs"},{k:"걷다",e:"To walk",c:"Verbs"},{k:"춤추다",e:"To dance",c:"Verbs"},{k:"만나다",e:"To meet",c:"Verbs"},{k:"공부하다",e:"To study",c:"Verbs"},{k:"운전하다",e:"To drive",c:"Verbs"},{k:"사다",e:"To buy",c:"Verbs"},{k:"읽다",e:"To read",c:"Verbs"},{k:"주문하다",e:"To order",c:"Verbs"},{k:"입다",e:"To wear (bodywear)",c:"Verbs"},{k:"찍다",e:"To take a picture",c:"Verbs"},{k:"받다",e:"To receive",c:"Verbs"},{k:"신다",e:"To wear (footwear)",c:"Verbs"},{k:"빌리다",e:"To borrow",c:"Verbs"},{k:"전화하다",e:"To telephone",c:"Verbs"},{k:"말하다",e:"To talk",c:"Verbs"},{k:"가르치다",e:"To teach",c:"Verbs"},{k:"기다리다",e:"To wait",c:"Verbs"},{k:"걸다",e:"To call",c:"Verbs"},{k:"청소하다",e:"To clean",c:"Verbs"},{k:"타다",e:"To ride",c:"Verbs"},{k:"나가다",e:"To exit",c:"Verbs"},{k:"들어오다",e:"To enter",c:"Verbs"},{k:"물어보다",e:"To ask",c:"Verbs"},{k:"필요하다",e:"To need",c:"Verbs"},{k:"도와주다",e:"To help",c:"Verbs"},{k:"열다",e:"To open",c:"Verbs"},{k:"닫다",e:"To close",c:"Verbs"},{k:"일하다",e:"To work",c:"Verbs"},{k:"쉬다",e:"To rest",c:"Verbs"},{k:"운동하다",e:"To exercise",c:"Verbs"},{k:"생각하다",e:"To think",c:"Verbs"},{k:"알다",e:"To know",c:"Verbs"},{k:"모르다",e:"To not know",c:"Verbs"},{k:"요리하다",e:"To cook",c:"Verbs"},{k:"끓이다",e:"To boil",c:"Verbs"},{k:"썰다",e:"To chop / slice",c:"Verbs"},{k:"튀기다",e:"To deep fry",c:"Verbs"},{k:"재다",e:"To measure / weigh",c:"Verbs"},{k:"섞다",e:"To mix / blend",c:"Verbs"},{k:"굽다",e:"To roast / grill / bake",c:"Verbs"},{k:"볶다",e:"To fry",c:"Verbs"},{k:"찌다",e:"To steam",c:"Verbs"},{k:"휘젓다",e:"To stir",c:"Verbs"},{k:"하다",e:"To do",c:"Verbs"},{k:"있다",e:"To have / exist",c:"Verbs"},{k:"없다",e:"To not have",c:"Verbs"},{k:"이야기하다",e:"To talk / chat",c:"Verbs"},{k:"연습하다",e:"To practice",c:"Verbs"},{k:"묻다",e:"To ask a question",c:"Verbs"},{k:"내다",e:"To pay",c:"Verbs"},{k:"살다",e:"To live",c:"Verbs"},{k:"죽다",e:"To die",c:"Verbs"},{k:"태어나다",e:"To be born",c:"Verbs"},{k:"사랑하다",e:"To love",c:"Verbs"},{k:"좋아하다",e:"To like",c:"Verbs"},{k:"싫어하다",e:"To hate / dislike",c:"Verbs"},{k:"결혼하다",e:"To marry",c:"Verbs"},{k:"축하하다",e:"To congratulate",c:"Verbs"},{k:"걱정하다",e:"To worry",c:"Verbs"},{k:"약속하다",e:"To promise",c:"Verbs"},{k:"거짓말하다",e:"To lie",c:"Verbs"},{k:"고백하다",e:"To confess",c:"Verbs"},{k:"죄송하다",e:"To be sorry",c:"Verbs"},{k:"찾다",e:"To find / look for",c:"Verbs"},{k:"준비하다",e:"To prepare",c:"Verbs"},{k:"가지다",e:"To have (possess)",c:"Verbs"},{k:"기억하다",e:"To remember",c:"Verbs"},{k:"꿈꾸다",e:"To dream",c:"Verbs"},{k:"시작하다",e:"To start",c:"Verbs"},{k:"끝나다",e:"To finish",c:"Verbs"},{k:"보내다",e:"To send",c:"Verbs"},{k:"사용하다",e:"To use",c:"Verbs"},{k:"팔다",e:"To sell",c:"Verbs"},{k:"싸우다",e:"To fight",c:"Verbs"},{k:"대답하다",e:"To answer",c:"Verbs"},{k:"소개하다",e:"To introduce",c:"Verbs"},{k:"출발하다",e:"To depart",c:"Verbs"},{k:"도착하다",e:"To arrive",c:"Verbs"},{k:"벗다",e:"To undress / take off",c:"Verbs"},{k:"이기다",e:"To win",c:"Verbs"},{k:"지다",e:"To lose",c:"Verbs"},{k:"서두르다",e:"To hurry / rush",c:"Verbs"},{k:"사랑해 빠지다",e:"To fall in love",c:"Verbs"},
+  {k:"회사 / 작업장",e:"Workplace",c:"Places"},{k:"사무실",e:"Office",c:"Places"},{k:"화장실",e:"Restroom",c:"Places"},{k:"식당",e:"Restaurant",c:"Places"},{k:"집",e:"House",c:"Places"},{k:"기숙사",e:"Dormitory",c:"Places"},{k:"세탁소",e:"Laundromat",c:"Places"},{k:"미용실",e:"Hair salon",c:"Places"},{k:"시장",e:"Market",c:"Places"},{k:"마트",e:"Mart",c:"Places"},{k:"편의점",e:"Convenience store",c:"Places"},{k:"슈퍼마켓",e:"Supermarket",c:"Places"},{k:"공원",e:"Park",c:"Places"},{k:"커피숍",e:"Cafe shop",c:"Places"},{k:"서점",e:"Bookstore",c:"Places"},{k:"도서관",e:"Library",c:"Places"},{k:"백화점",e:"Department store",c:"Places"},{k:"노래방",e:"Singing room (karaoke)",c:"Places"},{k:"영화관",e:"Theatre / cinema",c:"Places"},{k:"호텔",e:"Hotel",c:"Places"},{k:"버스 정류장",e:"Bus stop",c:"Places"},{k:"버스 터미널",e:"Bus terminal",c:"Places"},{k:"택시 승강장",e:"Taxi stop",c:"Places"},{k:"기차역",e:"Train station",c:"Places"},{k:"지하철역",e:"Subway station",c:"Places"},{k:"공항",e:"Airport",c:"Places"},{k:"교실",e:"Classroom",c:"Places"},{k:"은행",e:"Bank",c:"Places"},{k:"돈사",e:"Pigsty",c:"Places"},{k:"축사 / 우사",e:"Cattle shed",c:"Places"},{k:"양계장",e:"Poultry farm",c:"Places"},{k:"양식장",e:"Fish farm",c:"Places"},{k:"농장",e:"Farm",c:"Places"},{k:"병원",e:"Hospital",c:"Places"},{k:"운동장",e:"Playground",c:"Places"},{k:"창고",e:"Warehouse",c:"Places"},{k:"회의실",e:"Meeting room",c:"Places"},{k:"꽃집",e:"Flower shop",c:"Places"},{k:"환전소",e:"Money changer",c:"Places"},{k:"주차장",e:"Parking area",c:"Places"},{k:"가구점",e:"Furniture shop",c:"Places"},{k:"농구장",e:"Basketball court",c:"Places"},{k:"비닐하우스",e:"Greenhouse",c:"Places"},{k:"계단",e:"Staircase",c:"Places"},{k:"해수욕장",e:"Beach",c:"Places"},{k:"수영장",e:"Swimming pool",c:"Places"},{k:"치과병원",e:"Dental clinic",c:"Places"},{k:"부엌",e:"Kitchen",c:"Places"},{k:"건설현장",e:"Construction site",c:"Places"},{k:"우체국",e:"Post office",c:"Places"},{k:"샤워실",e:"Shower room",c:"Places"},{k:"공장",e:"Factory",c:"Places"},{k:"다리",e:"Bridge",c:"Places"},{k:"탁구장",e:"Table tennis room",c:"Places"},{k:"테니스장",e:"Tennis court",c:"Places"},{k:"약국",e:"Pharmacy",c:"Places"},{k:"사거리 / 교차로",e:"Intersection",c:"Places"},{k:"빵집",e:"Bakery",c:"Places"},{k:"이발소",e:"Barber shop",c:"Places"},{k:"터널",e:"Tunnel",c:"Places"},{k:"문구점",e:"Stationery store",c:"Places"},{k:"미술관",e:"Art gallery",c:"Places"},{k:"체육사",e:"Sports goods store",c:"Places"},
+  {k:"도청",e:"Provincial government building",c:"Gov. Offices"},{k:"시청",e:"City hall",c:"Gov. Offices"},{k:"구청",e:"Borough office",c:"Gov. Offices"},{k:"경찰서",e:"Police station",c:"Gov. Offices"},{k:"소방서",e:"Fire station",c:"Gov. Offices"},{k:"출입국관리사무소",e:"Immigration office",c:"Gov. Offices"},{k:"보건소",e:"Public health center",c:"Gov. Offices"},{k:"주민센터",e:"Community service center",c:"Gov. Offices"},
+  {k:"선생님",e:"Teacher",c:"Occupations"},{k:"학생",e:"Student",c:"Occupations"},{k:"회사원",e:"Company employee",c:"Occupations"},{k:"주부",e:"Homemaker",c:"Occupations"},{k:"경찰관",e:"Police officer",c:"Occupations"},{k:"소방관",e:"Firefighter",c:"Occupations"},{k:"공무원",e:"Public official",c:"Occupations"},{k:"점원",e:"Clerk",c:"Occupations"},{k:"의사",e:"Doctor",c:"Occupations"},{k:"간호사",e:"Nurse",c:"Occupations"},{k:"요리사",e:"Cook / chef",c:"Occupations"},{k:"운전기사",e:"Driver",c:"Occupations"},{k:"기술자",e:"Technician",c:"Occupations"},{k:"목수",e:"Carpenter",c:"Occupations"},{k:"농부",e:"Farmer",c:"Occupations"},{k:"어부",e:"Fisherman",c:"Occupations"},{k:"가수",e:"Singer",c:"Occupations"},{k:"화가",e:"Painter",c:"Occupations"},{k:"청소부",e:"Cleaner / janitor",c:"Occupations"},{k:"기자",e:"Reporter",c:"Occupations"},{k:"변호사",e:"Lawyer",c:"Occupations"},{k:"사장님",e:"Boss",c:"Occupations"},{k:"사원",e:"Employee",c:"Occupations"},{k:"사업가",e:"Business person",c:"Occupations"},
+  {k:"버스",e:"Bus",c:"Transport"},{k:"택시",e:"Taxi / cab",c:"Transport"},{k:"기차",e:"Train",c:"Transport"},{k:"지하철",e:"Subway",c:"Transport"},{k:"비행기",e:"Airplane",c:"Transport"},{k:"배",e:"Ship",c:"Transport"},{k:"승용차",e:"Passenger vehicle",c:"Transport"},{k:"소방차",e:"Fire truck",c:"Transport"},{k:"트럭",e:"Truck",c:"Transport"},{k:"앰블런스",e:"Ambulance",c:"Transport"},{k:"오토바이",e:"Motorcycle",c:"Transport"},{k:"자전거",e:"Bicycle",c:"Transport"},{k:"자동차",e:"Car / vehicle",c:"Transport"},
+  {k:"할아버지",e:"Grandfather",c:"Family"},{k:"할머니",e:"Grandmother",c:"Family"},{k:"아버지",e:"Father",c:"Family"},{k:"어머니",e:"Mother",c:"Family"},{k:"형",e:"Older brother (for boys)",c:"Family"},{k:"오빠",e:"Older brother (for girls)",c:"Family"},{k:"누나",e:"Older sister (for boys)",c:"Family"},{k:"언니",e:"Older sister (for girls)",c:"Family"},{k:"여동생",e:"Younger sister",c:"Family"},{k:"남동생",e:"Younger brother",c:"Family"},{k:"부인 / 아내",e:"Wife",c:"Family"},{k:"남편",e:"Husband",c:"Family"},{k:"아들",e:"Son",c:"Family"},{k:"딸",e:"Daughter",c:"Family"},{k:"이모",e:"Aunt (mother's sister)",c:"Family"},{k:"고모",e:"Aunt (father's sister)",c:"Family"},{k:"삼촌",e:"Uncle (father's brother)",c:"Family"},{k:"외삼촌",e:"Uncle (mother's brother)",c:"Family"},{k:"남자",e:"Man / male",c:"Family"},
+  {k:"머리",e:"Head",c:"Body Parts"},{k:"눈",e:"Eyes",c:"Body Parts"},{k:"귀",e:"Ears",c:"Body Parts"},{k:"코",e:"Nose",c:"Body Parts"},{k:"얼굴",e:"Face",c:"Body Parts"},{k:"입",e:"Mouth",c:"Body Parts"},{k:"목",e:"Neck",c:"Body Parts"},{k:"어깨",e:"Shoulders",c:"Body Parts"},{k:"팔",e:"Arms",c:"Body Parts"},{k:"손",e:"Hands",c:"Body Parts"},{k:"허리",e:"Waist",c:"Body Parts"},{k:"몸",e:"Body",c:"Body Parts"},{k:"손목",e:"Wrist",c:"Body Parts"},{k:"배",e:"Stomach",c:"Body Parts"},{k:"손가락",e:"Fingers",c:"Body Parts"},{k:"무릎",e:"Knees",c:"Body Parts"},{k:"다리",e:"Legs",c:"Body Parts"},{k:"발목",e:"Ankles",c:"Body Parts"},{k:"발",e:"Foot / feet",c:"Body Parts"},{k:"가슴",e:"Chest",c:"Body Parts"},{k:"엉덩이",e:"Hips",c:"Body Parts"},{k:"이 / 이빨",e:"Tooth",c:"Body Parts"},
+  {k:"옷",e:"Clothes",c:"Clothes"},{k:"자켓",e:"Jacket",c:"Clothes"},{k:"티셔츠",e:"T-shirt",c:"Clothes"},{k:"양복",e:"Suit",c:"Clothes"},{k:"넥타이",e:"Tie",c:"Clothes"},{k:"바지",e:"Pants",c:"Clothes"},{k:"반바지",e:"Shorts",c:"Clothes"},{k:"치마",e:"Skirt",c:"Clothes"},{k:"양말",e:"Socks",c:"Clothes"},{k:"신발 / 구두",e:"Shoes",c:"Clothes"},{k:"장갑",e:"Gloves",c:"Clothes"},{k:"모자",e:"Cap / hat",c:"Clothes"},{k:"부츠 / 장화",e:"Boots",c:"Clothes"},{k:"스카프",e:"Scarf",c:"Clothes"},{k:"운동화",e:"Sneakers",c:"Clothes"},{k:"점퍼",e:"Jumper / jacket",c:"Clothes"},{k:"한복",e:"Hanbok",c:"Clothes"},{k:"앞치마",e:"Apron",c:"Clothes"},{k:"스타킹",e:"Stocking",c:"Clothes"},{k:"벨트 / 허리띠",e:"Belt",c:"Clothes"},{k:"원피스 / 드레스",e:"Dress",c:"Clothes"},{k:"우비",e:"Raincoat / poncho",c:"Clothes"},
+  {k:"물",e:"Water",c:"Food"},{k:"주스",e:"Juice",c:"Food"},{k:"우유",e:"Milk",c:"Food"},{k:"빵",e:"Bread",c:"Food"},{k:"라면",e:"Ramyeon",c:"Food"},{k:"과자",e:"Snacks",c:"Food"},{k:"밥",e:"Rice",c:"Food"},{k:"반찬",e:"Side dishes",c:"Food"},{k:"국",e:"Soup",c:"Food"},{k:"햄버거",e:"Hamburger",c:"Food"},{k:"김밥",e:"Kimbap",c:"Food"},{k:"커피",e:"Coffee",c:"Food"},{k:"사탕",e:"Candy",c:"Food"},{k:"계란 / 달걀",e:"Egg",c:"Food"},{k:"떡볶이",e:"Tteokbokki",c:"Food"},
+  {k:"새",e:"Bird",c:"Animals"},{k:"개",e:"Dog",c:"Animals"},{k:"강아지",e:"Puppy",c:"Animals"},{k:"돼지",e:"Pig",c:"Animals"},{k:"소 / 송아지",e:"Cow",c:"Animals"},{k:"닭",e:"Chicken",c:"Animals"},{k:"병아리",e:"Chick",c:"Animals"},{k:"고양이",e:"Cat",c:"Animals"},{k:"말",e:"Horse",c:"Animals"},{k:"원숭이",e:"Monkey",c:"Animals"},{k:"사자",e:"Lion",c:"Animals"},{k:"염소",e:"Goat",c:"Animals"},{k:"양",e:"Sheep",c:"Animals"},{k:"물고기 / 생선",e:"Fish",c:"Animals"},{k:"새우",e:"Shrimp",c:"Animals"},{k:"게",e:"Crab",c:"Animals"},{k:"뱀",e:"Snake",c:"Animals"},
+  {k:"사과",e:"Apple",c:"Fruits"},{k:"오렌지",e:"Orange",c:"Fruits"},{k:"포도",e:"Grape",c:"Fruits"},{k:"수박",e:"Watermelon",c:"Fruits"},{k:"딸기",e:"Strawberry",c:"Fruits"},{k:"바나나",e:"Banana",c:"Fruits"},{k:"체리",e:"Cherry",c:"Fruits"},{k:"참외",e:"Melon",c:"Fruits"},{k:"배",e:"Pear",c:"Fruits"},{k:"복숭아",e:"Peach",c:"Fruits"},{k:"감",e:"Persimmon",c:"Fruits"},
+  {k:"배추",e:"Chinese cabbage",c:"Vegetables"},{k:"무",e:"Radish",c:"Vegetables"},{k:"감자",e:"Potato",c:"Vegetables"},{k:"양파",e:"Onion",c:"Vegetables"},{k:"마늘",e:"Garlic",c:"Vegetables"},{k:"당근",e:"Carrot",c:"Vegetables"},{k:"토마토",e:"Tomato",c:"Vegetables"},{k:"가지",e:"Eggplant",c:"Vegetables"},{k:"오이",e:"Cucumber",c:"Vegetables"},{k:"호박",e:"Pumpkin / squash",c:"Vegetables"},{k:"상추",e:"Lettuce",c:"Vegetables"},{k:"고구마",e:"Sweet potato",c:"Vegetables"},{k:"파",e:"Spring onion",c:"Vegetables"},{k:"생강",e:"Ginger",c:"Vegetables"},{k:"고추",e:"Chili / pepper",c:"Vegetables"},{k:"옥수수",e:"Corn",c:"Vegetables"},{k:"콩",e:"Bean",c:"Vegetables"},{k:"버섯",e:"Mushroom",c:"Vegetables"},{k:"시금치",e:"Spinach",c:"Vegetables"},{k:"완두콩",e:"Pea",c:"Vegetables"},{k:"꽃",e:"Flower",c:"Vegetables"},
+  {k:"거울",e:"Mirror",c:"Home Goods"},{k:"휴지",e:"Tissue paper",c:"Home Goods"},{k:"비누",e:"Soap",c:"Home Goods"},{k:"칫솔",e:"Toothbrush",c:"Home Goods"},{k:"치약",e:"Toothpaste",c:"Home Goods"},{k:"책상",e:"Desk",c:"Home Goods"},{k:"테이블 / 식탁",e:"Table",c:"Home Goods"},{k:"의자",e:"Chair",c:"Home Goods"},{k:"빗자루",e:"Broom",c:"Home Goods"},{k:"쓰레받기",e:"Dustpan",c:"Home Goods"},{k:"빗",e:"Comb",c:"Home Goods"},{k:"소화기",e:"Fire extinguisher",c:"Home Goods"},{k:"시계",e:"Clock",c:"Home Goods"},{k:"침대",e:"Bed",c:"Home Goods"},{k:"주전자",e:"Kettle",c:"Home Goods"},{k:"그릇",e:"Bowl",c:"Home Goods"},{k:"접시",e:"Plate",c:"Home Goods"},{k:"컵",e:"Cup",c:"Home Goods"},{k:"병",e:"Bottle",c:"Home Goods"},{k:"동전",e:"Coin",c:"Home Goods"},{k:"지폐",e:"Paper bill",c:"Home Goods"},{k:"수표",e:"Check",c:"Home Goods"},{k:"수저",e:"Spoon and chopsticks",c:"Home Goods"},{k:"바구니",e:"Basket",c:"Home Goods"},{k:"이불",e:"Blanket",c:"Home Goods"},{k:"냄비",e:"Pot",c:"Home Goods"},{k:"수건",e:"Towel",c:"Home Goods"},{k:"면도기",e:"Razor",c:"Home Goods"},{k:"양동이",e:"Pail",c:"Home Goods"},
+  {k:"전화기",e:"Telephone",c:"Appliances"},{k:"휴대폰",e:"Cellular phone",c:"Appliances"},{k:"선풍기",e:"Electric fan",c:"Appliances"},{k:"세탁기",e:"Washing machine",c:"Appliances"},{k:"다리미",e:"Iron",c:"Appliances"},{k:"텔레비전",e:"Television",c:"Appliances"},{k:"라디오",e:"Radio",c:"Appliances"},{k:"냉장고",e:"Refrigerator",c:"Appliances"},{k:"에어콘",e:"Air conditioner",c:"Appliances"},{k:"진공청소기",e:"Vacuum cleaner",c:"Appliances"},{k:"환풍기",e:"Ventilator",c:"Appliances"},{k:"컴퓨터",e:"Computer",c:"Appliances"},{k:"노트북 컴퓨터",e:"Laptop computer",c:"Appliances"},{k:"드라이기",e:"Hair dryer",c:"Appliances"},{k:"카메라",e:"Camera",c:"Appliances"},
+  {k:"연필",e:"Pencil",c:"School Supplies"},{k:"볼펜",e:"Ballpen",c:"School Supplies"},{k:"공책",e:"Notebook",c:"School Supplies"},{k:"책",e:"Book",c:"School Supplies"},{k:"신문",e:"Newspaper",c:"School Supplies"},{k:"신분증",e:"ID",c:"School Supplies"},{k:"지우개",e:"Eraser",c:"School Supplies"},{k:"자",e:"Ruler",c:"School Supplies"},{k:"칼",e:"Cutter / knife",c:"School Supplies"},{k:"칠판",e:"Blackboard",c:"School Supplies"},{k:"가방",e:"Bag",c:"School Supplies"},{k:"가위",e:"Scissors",c:"School Supplies"},{k:"풀",e:"Glue",c:"School Supplies"},{k:"크레용",e:"Crayon",c:"School Supplies"},{k:"필통",e:"Pencil case",c:"School Supplies"},{k:"호치키스",e:"Stapler",c:"School Supplies"},{k:"계산기",e:"Calculator",c:"School Supplies"},{k:"스카치테이프",e:"Scotch tape",c:"School Supplies"},{k:"클립",e:"Paper clip",c:"School Supplies"},{k:"컴퍼스",e:"Compass",c:"School Supplies"},{k:"달력",e:"Calendar",c:"School Supplies"},{k:"압정",e:"Thumbtack / push pin",c:"School Supplies"},{k:"만년필",e:"Fountain pen",c:"School Supplies"},{k:"형광펜",e:"Highlighter",c:"School Supplies"},{k:"고무줄",e:"Rubber band",c:"School Supplies"},{k:"각도기",e:"Protractor",c:"School Supplies"},{k:"온도계 / 체온계",e:"Thermometer",c:"School Supplies"},
+  {k:"목걸이",e:"Necklace",c:"Accessories"},{k:"귀걸이",e:"Earrings",c:"Accessories"},{k:"반지",e:"Ring",c:"Accessories"},{k:"팔찌",e:"Bracelet",c:"Accessories"},{k:"안경",e:"Eye glasses",c:"Accessories"},{k:"선글라스",e:"Sun glasses",c:"Accessories"},{k:"시계",e:"Watch",c:"Accessories"},{k:"지갑",e:"Wallet",c:"Accessories"},{k:"용접면",e:"Welder's mask",c:"Accessories"},{k:"악기",e:"Musical instrument",c:"Accessories"},{k:"피아노",e:"Piano",c:"Accessories"},{k:"기타",e:"Guitar",c:"Accessories"},{k:"피리",e:"Flute",c:"Accessories"},
+  {k:"지금",e:"Now",c:"Time & Date"},{k:"오늘",e:"Today",c:"Time & Date"},{k:"어제",e:"Yesterday",c:"Time & Date"},{k:"내일",e:"Tomorrow",c:"Time & Date"},{k:"오전",e:"Morning / A.M.",c:"Time & Date"},{k:"오후",e:"Afternoon / P.M.",c:"Time & Date"},{k:"낮",e:"Daytime",c:"Time & Date"},{k:"밤",e:"Night",c:"Time & Date"},{k:"새벽",e:"Dawn",c:"Time & Date"},{k:"아침",e:"Morning",c:"Time & Date"},{k:"점심",e:"Lunch / midday",c:"Time & Date"},{k:"저녁",e:"Evening",c:"Time & Date"},{k:"지난달",e:"Last month",c:"Time & Date"},{k:"이번 달",e:"This month",c:"Time & Date"},{k:"다음 달",e:"Next month",c:"Time & Date"},{k:"지난주",e:"Last week",c:"Time & Date"},{k:"이번주",e:"This week",c:"Time & Date"},{k:"다음주",e:"Next week",c:"Time & Date"},{k:"작년",e:"Last year",c:"Time & Date"},{k:"올해",e:"This year",c:"Time & Date"},{k:"내년",e:"Next year",c:"Time & Date"},{k:"주중 / 평일",e:"Weekdays",c:"Time & Date"},{k:"주말",e:"Weekend",c:"Time & Date"},
+  {k:"하나",e:"One (1)",c:"Numbers"},{k:"둘",e:"Two (2)",c:"Numbers"},{k:"셋",e:"Three (3)",c:"Numbers"},{k:"넷",e:"Four (4)",c:"Numbers"},{k:"다섯",e:"Five (5)",c:"Numbers"},{k:"여섯",e:"Six (6)",c:"Numbers"},{k:"일곱",e:"Seven (7)",c:"Numbers"},{k:"여덟",e:"Eight (8)",c:"Numbers"},{k:"아홉",e:"Nine (9)",c:"Numbers"},{k:"열",e:"Ten (10)",c:"Numbers"},
+  {k:"열하나",e:"Eleven (11)",c:"Numbers"},{k:"열둘",e:"Twelve (12)",c:"Numbers"},{k:"열셋",e:"Thirteen (13)",c:"Numbers"},{k:"열넷",e:"Fourteen (14)",c:"Numbers"},{k:"열다섯",e:"Fifteen (15)",c:"Numbers"},{k:"열여섯",e:"Sixteen (16)",c:"Numbers"},{k:"열일곱",e:"Seventeen (17)",c:"Numbers"},{k:"열여덟",e:"Eighteen (18)",c:"Numbers"},{k:"열아홉",e:"Nineteen (19)",c:"Numbers"},
+  {k:"스물",e:"Twenty (20)",c:"Numbers"},{k:"스물하나",e:"Twenty-one (21)",c:"Numbers"},{k:"스물둘",e:"Twenty-two (22)",c:"Numbers"},{k:"스물셋",e:"Twenty-three (23)",c:"Numbers"},{k:"스물넷",e:"Twenty-four (24)",c:"Numbers"},{k:"스물다섯",e:"Twenty-five (25)",c:"Numbers"},{k:"스물여섯",e:"Twenty-six (26)",c:"Numbers"},{k:"스물일곱",e:"Twenty-seven (27)",c:"Numbers"},{k:"스물여덟",e:"Twenty-eight (28)",c:"Numbers"},{k:"스물아홉",e:"Twenty-nine (29)",c:"Numbers"},
+  {k:"서른",e:"Thirty (30)",c:"Numbers"},{k:"서른하나",e:"Thirty-one (31)",c:"Numbers"},{k:"서른둘",e:"Thirty-two (32)",c:"Numbers"},{k:"서른셋",e:"Thirty-three (33)",c:"Numbers"},{k:"서른넷",e:"Thirty-four (34)",c:"Numbers"},{k:"서른다섯",e:"Thirty-five (35)",c:"Numbers"},{k:"서른여섯",e:"Thirty-six (36)",c:"Numbers"},{k:"서른일곱",e:"Thirty-seven (37)",c:"Numbers"},{k:"서른여덟",e:"Thirty-eight (38)",c:"Numbers"},{k:"서른아홉",e:"Thirty-nine (39)",c:"Numbers"},
+  {k:"마흔",e:"Forty (40)",c:"Numbers"},{k:"마흔하나",e:"Forty-one (41)",c:"Numbers"},{k:"마흔둘",e:"Forty-two (42)",c:"Numbers"},{k:"마흔셋",e:"Forty-three (43)",c:"Numbers"},{k:"마흔넷",e:"Forty-four (44)",c:"Numbers"},{k:"마흔다섯",e:"Forty-five (45)",c:"Numbers"},{k:"마흔여섯",e:"Forty-six (46)",c:"Numbers"},{k:"마흔일곱",e:"Forty-seven (47)",c:"Numbers"},{k:"마흔여덟",e:"Forty-eight (48)",c:"Numbers"},{k:"마흔아홉",e:"Forty-nine (49)",c:"Numbers"},
+  {k:"쉰",e:"Fifty (50)",c:"Numbers"},{k:"쉰하나",e:"Fifty-one (51)",c:"Numbers"},{k:"쉰둘",e:"Fifty-two (52)",c:"Numbers"},{k:"쉰셋",e:"Fifty-three (53)",c:"Numbers"},{k:"쉰넷",e:"Fifty-four (54)",c:"Numbers"},{k:"쉰다섯",e:"Fifty-five (55)",c:"Numbers"},{k:"쉰여섯",e:"Fifty-six (56)",c:"Numbers"},{k:"쉰일곱",e:"Fifty-seven (57)",c:"Numbers"},{k:"쉰여덟",e:"Fifty-eight (58)",c:"Numbers"},{k:"쉰아홉",e:"Fifty-nine (59)",c:"Numbers"},
+  {k:"예순",e:"Sixty (60)",c:"Numbers"},{k:"예순하나",e:"Sixty-one (61)",c:"Numbers"},{k:"예순둘",e:"Sixty-two (62)",c:"Numbers"},{k:"예순셋",e:"Sixty-three (63)",c:"Numbers"},{k:"예순넷",e:"Sixty-four (64)",c:"Numbers"},{k:"예순다섯",e:"Sixty-five (65)",c:"Numbers"},{k:"예순여섯",e:"Sixty-six (66)",c:"Numbers"},{k:"예순일곱",e:"Sixty-seven (67)",c:"Numbers"},{k:"예순여덟",e:"Sixty-eight (68)",c:"Numbers"},{k:"예순아홉",e:"Sixty-nine (69)",c:"Numbers"},
+  {k:"일흔",e:"Seventy (70)",c:"Numbers"},{k:"일흔하나",e:"Seventy-one (71)",c:"Numbers"},{k:"일흔둘",e:"Seventy-two (72)",c:"Numbers"},{k:"일흔셋",e:"Seventy-three (73)",c:"Numbers"},{k:"일흔넷",e:"Seventy-four (74)",c:"Numbers"},{k:"일흔다섯",e:"Seventy-five (75)",c:"Numbers"},{k:"일흔여섯",e:"Seventy-six (76)",c:"Numbers"},{k:"일흔일곱",e:"Seventy-seven (77)",c:"Numbers"},{k:"일흔여덟",e:"Seventy-eight (78)",c:"Numbers"},{k:"일흔아홉",e:"Seventy-nine (79)",c:"Numbers"},
+  {k:"여든",e:"Eighty (80)",c:"Numbers"},{k:"여든하나",e:"Eighty-one (81)",c:"Numbers"},{k:"여든둘",e:"Eighty-two (82)",c:"Numbers"},{k:"여든셋",e:"Eighty-three (83)",c:"Numbers"},{k:"여든넷",e:"Eighty-four (84)",c:"Numbers"},{k:"여든다섯",e:"Eighty-five (85)",c:"Numbers"},{k:"여든여섯",e:"Eighty-six (86)",c:"Numbers"},{k:"여든일곱",e:"Eighty-seven (87)",c:"Numbers"},{k:"여든여덟",e:"Eighty-eight (88)",c:"Numbers"},{k:"여든아홉",e:"Eighty-nine (89)",c:"Numbers"},
+  {k:"아흔",e:"Ninety (90)",c:"Numbers"},{k:"아흔하나",e:"Ninety-one (91)",c:"Numbers"},{k:"아흔둘",e:"Ninety-two (92)",c:"Numbers"},{k:"아흔셋",e:"Ninety-three (93)",c:"Numbers"},{k:"아흔넷",e:"Ninety-four (94)",c:"Numbers"},{k:"아흔다섯",e:"Ninety-five (95)",c:"Numbers"},{k:"아흔여섯",e:"Ninety-six (96)",c:"Numbers"},{k:"아흔일곱",e:"Ninety-seven (97)",c:"Numbers"},{k:"아흔여덟",e:"Ninety-eight (98)",c:"Numbers"},{k:"아흔아홉",e:"Ninety-nine (99)",c:"Numbers"},
+  {k:"백",e:"One hundred (100)",c:"Numbers"},{k:"천",e:"One thousand (1,000)",c:"Numbers"},{k:"만",e:"Ten thousand (10,000)",c:"Numbers"},
+  {k:"행복하다",e:"To be happy",c:"Adjectives"},{k:"기쁘다",e:"To be glad",c:"Adjectives"},{k:"화나다",e:"To be angry",c:"Adjectives"},{k:"슬프다",e:"To be sad",c:"Adjectives"},{k:"아프다",e:"To be sick, painful",c:"Adjectives"},{k:"피곤하다",e:"To be tired, exhausted",c:"Adjectives"},{k:"배가 고프다",e:"To be hungry",c:"Adjectives"},{k:"목이 마르다",e:"To be thirsty",c:"Adjectives"},{k:"졸리다",e:"To be sleepy",c:"Adjectives"},{k:"걱정하다",e:"To be worried",c:"Adjectives"},
+  {k:"무섭다",e:"To be scared",c:"Adjectives"},{k:"짜증나다",e:"To be annoyed",c:"Adjectives"},{k:"놀라다",e:"To be surprised",c:"Adjectives"},{k:"수줍다",e:"To be shy",c:"Adjectives"},{k:"재미 있다",e:"To be interesting",c:"Adjectives"},{k:"재미 없다",e:"To be not interesting",c:"Adjectives"},{k:"심심하다",e:"To be bored",c:"Adjectives"},{k:"지루하다",e:"To be boring, dull",c:"Adjectives"},{k:"조용하다",e:"To be quiet",c:"Adjectives"},{k:"시끄럽다",e:"To be loud, noisy",c:"Adjectives"},
+  {k:"무겁다",e:"To be heavy",c:"Adjectives"},{k:"가볍다",e:"To be light",c:"Adjectives"},{k:"밝다",e:"To be bright",c:"Adjectives"},{k:"시원하다",e:"To be cool, refreshing",c:"Adjectives"},{k:"신선하다",e:"To be fresh",c:"Adjectives"},{k:"아름답다",e:"To be beautiful",c:"Adjectives"},{k:"예쁘다",e:"To be pretty",c:"Adjectives"},{k:"귀엽다",e:"To be cute",c:"Adjectives"},{k:"잘생기다",e:"To be good-looking",c:"Adjectives"},{k:"못생기다",e:"To be ugly",c:"Adjectives"},
+  {k:"크다",e:"To be big",c:"Adjectives"},{k:"작다",e:"To be small",c:"Adjectives"},{k:"많다",e:"To be many",c:"Adjectives"},{k:"적다",e:"To be short",c:"Adjectives"},{k:"좁다",e:"To be narrow",c:"Adjectives"},{k:"넓다",e:"To be wide, broad",c:"Adjectives"},{k:"뚱뚱하다",e:"To be fat, overweight",c:"Adjectives"},{k:"통통하다",e:"To be chubby",c:"Adjectives"},{k:"날씬하다",e:"To be slim, slender",c:"Adjectives"},{k:"깡마르다",e:"To be skinny, scrawny",c:"Adjectives"},
+  {k:"덥다",e:"To be hot (regarding weather)",c:"Adjectives"},{k:"뜨겁다",e:"To be hot (regarding objects)",c:"Adjectives"},{k:"따뜻하다",e:"To be warm (both weather and objects)",c:"Adjectives"},{k:"춥다",e:"To be cold (regarding weather)",c:"Adjectives"},{k:"차갑다",e:"To be cold (regarding objects)",c:"Adjectives"},{k:"싸늘하다",e:"To be chilly, frosty",c:"Adjectives"},{k:"습하다",e:"To be damp, moist, humid",c:"Adjectives"},{k:"건조하다",e:"To be dry",c:"Adjectives"},{k:"흐리다",e:"To be cloudy",c:"Adjectives"},{k:"좋다",e:"To be good, fine",c:"Adjectives"},
+  {k:"어렵다",e:"To be difficult",c:"Adjectives"},{k:"쉽다",e:"To be easy",c:"Adjectives"},{k:"깨끗하다",e:"To be clean",c:"Adjectives"},{k:"더럽다",e:"To be dirty",c:"Adjectives"},{k:"빠르다",e:"To be fast",c:"Adjectives"},{k:"천천하다",e:"To be slowly",c:"Adjectives"},{k:"느리다",e:"To be slow",c:"Adjectives"},{k:"급하다",e:"To be urgent",c:"Adjectives"},{k:"늦다",e:"To be late",c:"Adjectives"},{k:"이르다",e:"To be early",c:"Adjectives"},
+  {k:"똑똑하다",e:"To be smart, clever",c:"Adjectives"},{k:"멍청하다",e:"To be stupid, foolish",c:"Adjectives"},{k:"싸다",e:"To be cheap",c:"Adjectives"},{k:"비싸다",e:"To be expensive",c:"Adjectives"},{k:"새롭다",e:"To be new, fresh",c:"Adjectives"},{k:"오래되다",e:"To be old (regarding objects)",c:"Adjectives"},{k:"튼튼하다",e:"To be strong, sturdy",c:"Adjectives"},{k:"씩씩하다",e:"To be brave",c:"Adjectives"},{k:"약하다",e:"To be weak, feeble",c:"Adjectives"},{k:"건강하다",e:"To be healthy",c:"Adjectives"},
+  {k:"쓰다",e:"To be bitter",c:"Adjectives"},{k:"짜다",e:"To be salty",c:"Adjectives"},{k:"시다",e:"To be sour",c:"Adjectives"},{k:"맵다",e:"To be spicy",c:"Adjectives"},{k:"달다",e:"To be sweet",c:"Adjectives"},{k:"기름지다",e:"To be fatty, greasy, oily",c:"Adjectives"},{k:"맛있다",e:"To be tasty, delicious",c:"Adjectives"},{k:"맛없다",e:"To be not tasty",c:"Adjectives"},{k:"가득하다",e:"To be full, crammed",c:"Adjectives"},{k:"비어 있다",e:"To be empty",c:"Adjectives"},
+  {k:"나쁘다",e:"To be bad, poor",c:"Adjectives"},{k:"딱딱하다",e:"To be hard, stiff",c:"Adjectives"},{k:"뾰족하다",e:"To be sharp, pointed",c:"Adjectives"},{k:"부드럽다",e:"To be soft",c:"Adjectives"},{k:"말랑하다",e:"To be soft, tender, ripe",c:"Adjectives"},{k:"촉촉하다",e:"To be moist",c:"Adjectives"},{k:"축축하다",e:"To be damp, clammy, wet",c:"Adjectives"},{k:"젖다",e:"To get wet, damp",c:"Adjectives"},{k:"건조하다",e:"To be dry, arid",c:"Adjectives"},{k:"미끄럽다",e:"To be slippery",c:"Adjectives"},
+  {k:"편하다",e:"To be comfortable",c:"Adjectives"},{k:"불편하다",e:"To be uncomfortable",c:"Adjectives"},{k:"괜찮다",e:"To be alright, ok",c:"Adjectives"},{k:"이상하다",e:"To be weird, strange",c:"Adjectives"},{k:"복잡하다",e:"To be jammed, crowded",c:"Adjectives"},{k:"편리하다",e:"To be convenient",c:"Adjectives"},{k:"다르다",e:"To be different",c:"Adjectives"},{k:"같다",e:"To be the same",c:"Adjectives"},{k:"착하다",e:"To be good-natured, nice",c:"Adjectives"},{k:"비열하다",e:"To be mean, nasty",c:"Adjectives"},
+];
+
+// EPS-TOPIK style fill-in-the-blank sentence templates
+const FIB_TEMPLATES=[
+  {s:"저는 매일 ( ___ )에 갑니다.",t:"I go to ( ___ ) every day."},
+  {s:"그 사람은 ( ___ )입니다.",t:"That person is a/an ( ___ )."},
+  {s:"저는 ( ___ )을/를 좋아합니다.",t:"I like ( ___ )."},
+  {s:"오늘 ( ___ )을/를 탔습니다.",t:"Today I took/rode the ( ___ )."},
+  {s:"제 ( ___ )이/가 아픕니다.",t:"My ( ___ ) hurts."},
+  {s:"저는 ( ___ )를 입었습니다.",t:"I wore ( ___ )."},
+  {s:"집에서 ( ___ )을/를 사용합니다.",t:"I use ( ___ ) at home."},
+  {s:"책상 위에 ( ___ )이/가 있습니다.",t:"There is a/an ( ___ ) on the desk."},
+  {s:"저는 가족과 함께 ( ___ )에 갔습니다.",t:"I went to ( ___ ) with my family."},
+  {s:"어머니가 ( ___ )을/를 샀습니다.",t:"My mother bought ( ___ )."},
+  {s:"저는 매일 아침 ( ___ )을/를 합니다.",t:"I do ( ___ ) every morning."},
+  {s:"가게에서 ( ___ )을/를 팔고 있습니다.",t:"The store sells ( ___ )."},
+  {s:"( ___ )은/는 어디에 있습니까?",t:"Where is ( ___ )?"},
+  {s:"저는 ( ___ )이/가 필요합니다.",t:"I need ( ___ )."},
+  {s:"그것의 한국어는 ( ___ )입니다.",t:"The Korean word for it is ( ___ )."},
+];
+
+let CATS=["All",...new Set(V.map(v=>v.c))];
+let af="All",pool=[],queue=[],cur=null,answered=false;
+let score=0,cc=0,tot=0,stk=0;
+let seenCounter=0;
+let choiceMode=4;
+let quizMode="mc";
+
+// ===== THEME (dark mode) =====
+const THEME_KEY="korean_quiz_theme";
+function loadTheme(){
+  try{
+    const t=localStorage.getItem(THEME_KEY);
+    if(t==="dark") document.body.classList.add("dark");
+  }catch(e){}
+  updateThemeIcon();
+}
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+  try{ localStorage.setItem(THEME_KEY, document.body.classList.contains("dark")?"dark":"light"); }catch(e){}
+  updateThemeIcon();
+}
+function updateThemeIcon(){
+  const btn=document.getElementById("theme-toggle-btn");
+  if(btn) btn.textContent=document.body.classList.contains("dark")?"☀️":"🌙";
+}
+
+// ===== VOCAB SELECTION (per-category include/exclude) =====
+let excludedSet=new Set();
+function vocabId(v){ return v.k+"|"+v.c; }
+function isIncluded(v){ return !excludedSet.has(vocabId(v)); }
+const QL=20;
+const MASTERY_THRESHOLD=3;
+const SAVE_KEY="korean_quiz_v1";
+
+// ===== PERSISTENCE =====
+function saveSession(){
+  try{
+    const data={
+      weakMap: Object.fromEntries(Object.entries(weakMap).map(([k,v])=>
+        [k,{wrong:v.wrong,correct:v.correct,streak:v.streak,mastered:v.mastered,lastSeen:v.lastSeen||0}]
+      )),
+      af,quizMode,choiceMode,score,cc,tot,stk,seenCounter,
+      excluded:Array.from(excludedSet)
+    };
+    localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+  }catch(e){}
+}
+function loadSession(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw)return;
+    const data=JSON.parse(raw);
+    if(data.weakMap){
+      Object.entries(data.weakMap).forEach(([id,val])=>{
+        const entry=V.find(v=>v.k+"|"+v.e===id);
+        if(entry) weakMap[id]={wrong:val.wrong||0,correct:val.correct||0,streak:val.streak||0,mastered:val.mastered||false,lastSeen:val.lastSeen||0,entry};
+      });
+    }
+    if(data.quizMode) quizMode=data.quizMode;
+    if(data.choiceMode) choiceMode=data.choiceMode;
+    if(data.score) score=data.score;
+    if(data.cc) cc=data.cc;
+    if(data.tot) tot=data.tot;
+    if(data.stk) stk=data.stk;
+    if(data.af) af=data.af;
+    if(data.seenCounter) seenCounter=data.seenCounter;
+    if(data.excluded) excludedSet=new Set(data.excluded);
+  }catch(e){}
+}
+
+// ===== WEAK / MASTERY MAP =====
+const weakMap={};
+function getWeak(entry){
+  const id=entry.k+"|"+entry.e;
+  if(!weakMap[id]) weakMap[id]={wrong:0,correct:0,streak:0,mastered:false,lastSeen:0,entry};
+  return weakMap[id];
+}
+function lastSeenOf(entry){
+  const w=weakMap[entry.k+"|"+entry.e];
+  return w&&w.lastSeen?w.lastSeen:0;
+}
+function getSeenCount(cat){
+  const words=(cat==="All"?V:V.filter(v=>v.c===cat)).filter(isIncluded);
+  return words.filter(v=>{
+    const w=weakMap[v.k+"|"+v.e];
+    return w&&w.lastSeen>0;
+  }).length;
+}
+function recordAnswer(entry,isCorrect){
+  const w=getWeak(entry);
+  if(isCorrect){
+    w.correct++;
+    w.streak=(w.streak||0)+1;
+    if(!w.mastered && w.streak>=MASTERY_THRESHOLD){
+      w.mastered=true;
+      showMasteredToast(entry.k);
+    }
+  }else{
+    w.wrong++;
+    w.streak=0;
+    w.mastered=false; // wrong answer un-masters it
+  }
+  updateMasteryBar();
+  saveSession();
+}
+function getMasteredSet(){
+  const catWords=(af==="All"?V:V.filter(v=>v.c===af)).filter(isIncluded);
+  return catWords.filter(v=>{ const w=weakMap[v.k+"|"+v.e]; return w&&w.mastered; });
+}
+function getUnmastered(){
+  const catWords=(af==="All"?V:V.filter(v=>v.c===af)).filter(isIncluded);
+  return catWords.filter(v=>{ const w=weakMap[v.k+"|"+v.e]; return !w||!w.mastered; });
+}
+function getWeakWords(){
+  return Object.values(weakMap).filter(w=>{
+    const inCat=af==="All"||w.entry.c===af;
+    return inCat&&isIncluded(w.entry)&&w.wrong>w.correct&&!w.mastered;
+  }).sort((a,b)=>(b.wrong-b.correct)-(a.wrong-a.correct));
+}
+function updateMasteryBar(){
+  const catWords=(af==="All"?V:V.filter(v=>v.c===af)).filter(isIncluded);
+  const total=catWords.length;
+  const mastered=getMasteredSet().length;
+  const pct=total>0?Math.round(mastered/total*100):0;
+  document.getElementById("mastery-fill").style.width=pct+"%";
+  document.getElementById("mastery-count").textContent=mastered+" / "+total+" mastered";
+}
+
+// ===== TOAST =====
+let toastTimer=null;
+function showMasteredToast(word){
+  const el=document.getElementById("mastered-toast");
+  el.textContent="⭐ Mastered: "+word;
+  el.classList.add("show");
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove("show"),2200);
+}
+
+// ===== RESET MASTERY =====
+function resetMastery(){
+  Object.values(weakMap).forEach(w=>{w.mastered=false;w.streak=0;});
+  saveSession();
+  updateMasteryBar();
+  buildPool();nxt();
+}
+
+
+const speakerSVG='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+
+let koVoice=null;
+function loadVoice(){
+  const voices=window.speechSynthesis.getVoices();
+  koVoice=voices.find(v=>v.lang==="ko-KR")||voices.find(v=>v.lang.startsWith("ko"))||null;
+}
+if(window.speechSynthesis){
+  loadVoice();
+  window.speechSynthesis.onvoiceschanged=loadVoice;
+  // Unlock audio context on first user interaction for faster subsequent calls
+  document.addEventListener("click",function unlock(){
+    const u=new SpeechSynthesisUtterance("");u.volume=0;u.lang="ko-KR";
+    window.speechSynthesis.speak(u);
+    document.removeEventListener("click",unlock);
+  },{once:true});
+}
+function speakKorean(text,btn){
+  if(!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  // Use setTimeout(0) to let cancel() flush before queuing new utterance
+  setTimeout(()=>{
+    const utt=new SpeechSynthesisUtterance(text);
+    utt.lang="ko-KR"; utt.rate=1.0;
+    if(koVoice)utt.voice=koVoice;
+    if(btn){btn.classList.add("speaking");utt.onend=()=>btn.classList.remove("speaking");utt.onerror=()=>btn.classList.remove("speaking");}
+    window.speechSynthesis.speak(utt);
+  },0);
+}
+
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+// ===== AUDIO REVIEW (hands-free, walk & listen) =====
+let audioPool=[],audioIdx=0,audioPlaying=false,audioRate=0.95,audioShuffle=true,audioRepeat=false,wakeLock=null;
+function escHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function initAudioReview(){
+  pauseAudioReview();
+  buildAudioPool();
+  audioIdx=0;
+  renderAudioReview();
+}
+function buildAudioPool(){
+  const list=(af==="All"?[...V]:V.filter(v=>v.c===af)).filter(isIncluded);
+  audioPool=audioShuffle?shuf([...list]):list;
+}
+function renderAudioReview(){
+  const qa=document.getElementById("qa");
+  if(!audioPool.length){qa.innerHTML='<div style="padding:40px;text-align:center;color:#888">No words in this category.</div>';return;}
+  const item=audioPool[audioIdx];
+  updateMediaSessionMetadata();
+  qa.innerHTML=
+    '<div class="audio-card">'+
+      '<div class="audio-progress">'+(audioIdx+1)+' / '+audioPool.length+' &middot; '+escHtml(af)+'</div>'+
+      '<div class="audio-word" id="audio-word">'+escHtml(item.k)+'</div>'+
+      '<div class="audio-meaning" id="audio-meaning" style="visibility:hidden">'+escHtml(item.e)+'</div>'+
+      '<div class="audio-controls">'+
+        '<button class="audio-btn" onclick="audioPrev()">⏮</button>'+
+        '<button class="audio-btn audio-play" id="audio-play-btn" onclick="toggleAudioPlay()">'+(audioPlaying?'⏸':'▶️')+'</button>'+
+        '<button class="audio-btn" onclick="audioNext()">⏭</button>'+
+      '</div>'+
+      '<div class="audio-settings">'+
+        '<label>🐢 Speed <input type="range" min="0.6" max="1.3" step="0.05" value="'+audioRate+'" oninput="setAudioRate(this.value)"> 🐇</label>'+
+        '<label><input type="checkbox" '+(audioShuffle?'checked':'')+' onchange="toggleAudioShuffle(this.checked)"> Shuffle order</label>'+
+        '<label><input type="checkbox" '+(audioRepeat?'checked':'')+' onchange="toggleAudioRepeat(this.checked)"> Say Korean twice</label>'+
+      '</div>'+
+      '<div class="audio-hint">🎧 Hit play, pocket your phone, and walk — each word plays in Korean, pauses, then its English meaning. Screen stays awake while playing.</div>'+
+    '</div>';
+}
+function updateAudioPlayBtn(){
+  const btn=document.getElementById("audio-play-btn");
+  if(btn) btn.textContent=audioPlaying?'⏸':'▶️';
+}
+function toggleAudioPlay(){ audioPlaying?pauseAudioReview():playAudioReview(); }
+function playAudioReview(){
+  if(!audioPool.length) return;
+  audioPlaying=true;
+  updateAudioPlayBtn();
+  requestAudioWakeLock();
+  startKeepAliveAudio();
+  setupMediaSession();
+  speakCurrentAudioItem();
+}
+function pauseAudioReview(){
+  audioPlaying=false;
+  updateAudioPlayBtn();
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  releaseAudioWakeLock();
+  stopKeepAliveAudio();
+  if('mediaSession' in navigator) navigator.mediaSession.playbackState="paused";
+}
+function startKeepAliveAudio(){
+  const a=document.getElementById("keep-alive-audio");
+  if(a){ a.volume=0.4; a.play().catch(()=>{}); }
+}
+function stopKeepAliveAudio(){
+  const a=document.getElementById("keep-alive-audio");
+  if(a) a.pause();
+}
+function setupMediaSession(){
+  if(!('mediaSession' in navigator)) return;
+  navigator.mediaSession.playbackState="playing";
+  navigator.mediaSession.setActionHandler('play',()=>playAudioReview());
+  navigator.mediaSession.setActionHandler('pause',()=>pauseAudioReview());
+  navigator.mediaSession.setActionHandler('nexttrack',()=>audioNext());
+  navigator.mediaSession.setActionHandler('previoustrack',()=>audioPrev());
+  updateMediaSessionMetadata();
+}
+function updateMediaSessionMetadata(){
+  if(!('mediaSession' in navigator)||!audioPool.length) return;
+  const item=audioPool[audioIdx];
+  try{
+    navigator.mediaSession.metadata=new MediaMetadata({
+      title: item.k,
+      artist: item.e,
+      album: 'Korean Vocab — Audio Review'
+    });
+  }catch(e){}
+}
+function speakCurrentAudioItem(){
+  if(!audioPlaying||!window.speechSynthesis) return;
+  const item=audioPool[audioIdx];
+  const mEl=document.getElementById("audio-meaning");
+  if(mEl) mEl.style.visibility="hidden";
+  window.speechSynthesis.cancel();
+  setTimeout(()=>{
+    if(!audioPlaying) return;
+    const utt=new SpeechSynthesisUtterance(item.k);
+    utt.lang="ko-KR";utt.rate=audioRate;
+    if(koVoice) utt.voice=koVoice;
+    utt.onend=()=>{
+      if(!audioPlaying) return;
+      setTimeout(()=>{
+        if(!audioPlaying) return;
+        if(audioRepeat){
+          const utt2=new SpeechSynthesisUtterance(item.k);
+          utt2.lang="ko-KR";utt2.rate=audioRate;
+          if(koVoice) utt2.voice=koVoice;
+          utt2.onend=()=>{ if(audioPlaying) speakAudioMeaning(item); };
+          window.speechSynthesis.speak(utt2);
+        }else{
+          speakAudioMeaning(item);
+        }
+      },350);
+    };
+    window.speechSynthesis.speak(utt);
+  },50);
+}
+function speakAudioMeaning(item){
+  if(!audioPlaying||!window.speechSynthesis) return;
+  const mEl=document.getElementById("audio-meaning");
+  if(mEl) mEl.style.visibility="visible";
+  const utt=new SpeechSynthesisUtterance(item.e);
+  utt.lang="en-US";utt.rate=Math.min(audioRate+0.05,1.3);
+  utt.onend=()=>{
+    if(!audioPlaying) return;
+    setTimeout(()=>{ if(audioPlaying) advanceAudio(); },900);
+  };
+  window.speechSynthesis.speak(utt);
+}
+function advanceAudio(){
+  audioIdx=(audioIdx+1)%audioPool.length;
+  renderAudioReview();
+  if(audioPlaying) speakCurrentAudioItem();
+}
+function audioNext(){
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  audioIdx=(audioIdx+1)%audioPool.length;
+  renderAudioReview();
+  if(audioPlaying) speakCurrentAudioItem();
+}
+function audioPrev(){
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  audioIdx=(audioIdx-1+audioPool.length)%audioPool.length;
+  renderAudioReview();
+  if(audioPlaying) speakCurrentAudioItem();
+}
+function setAudioRate(v){ audioRate=parseFloat(v); }
+function toggleAudioShuffle(v){
+  audioShuffle=v;
+  const wasPlaying=audioPlaying;
+  buildAudioPool();
+  audioIdx=0;
+  renderAudioReview();
+  if(wasPlaying) speakCurrentAudioItem();
+}
+function toggleAudioRepeat(v){ audioRepeat=v; }
+async function requestAudioWakeLock(){
+  try{ if('wakeLock' in navigator){ wakeLock=await navigator.wakeLock.request('screen'); } }catch(e){}
+}
+function releaseAudioWakeLock(){
+  try{ if(wakeLock){ wakeLock.release(); wakeLock=null; } }catch(e){}
+}
+document.addEventListener('visibilitychange',async ()=>{
+  if(audioPlaying && document.visibilityState==='visible' && 'wakeLock' in navigator){
+    try{ wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
+  }
+});
+
+let noneSelected=false;
+function buildPool(){
+  // Full category pool (for mastery bar reference), respecting vocab selection
+  pool=(af==="All"?[...V]:V.filter(v=>v.c===af)).filter(isIncluded);
+  if(pool.length===0){
+    noneSelected=true;
+    queue=[];
+    return;
+  }
+  noneSelected=false;
+  // Active pool = unmastered words only
+  const active=getUnmastered();
+  if(active.length===0){
+    // All mastered — show celebration screen
+    queue=[];
+    return;
+  }
+  const weakWords=getWeakWords().map(w=>w.entry).filter(e=>active.includes(e));
+  // Shuffle first so ties among equally-fresh words stay random, then push
+  // words that have appeared more recently towards the back of the list so
+  // less-seen vocabulary gets priority in the round.
+  const freshSorted=shuf([...active]).sort((a,b)=>lastSeenOf(a)-lastSeenOf(b));
+  const normal=freshSorted.slice(0,Math.min(QL,freshSorted.length));
+  const merged=[...weakWords.slice(0,5),...normal];
+  // Keep the fresh-first ordering when trimming duplicates so recently-seen
+  // words don't crowd out new ones, but shuffle the final order of play.
+  const dedupedSeen=new Set();
+  const deduped=merged.filter(e=>{
+    const id=e.k+"|"+e.e;
+    if(dedupedSeen.has(id))return false;
+    dedupedSeen.add(id);
+    return true;
+  });
+  queue=shuf(deduped).slice(0,Math.min(QL+weakWords.length,deduped.length));
+}
+
+function setMode(m){
+  const wasAudio=quizMode==="audio";
+  quizMode=m;
+  document.getElementById("mbtn-mc").classList.toggle("active",m==="mc");
+  document.getElementById("mbtn-fib").classList.toggle("active",m==="fib");
+  const listenBtn=document.getElementById("mbtn-listen");
+  listenBtn.classList.remove("active","listen-active");
+  if(m==="listen") listenBtn.classList.add("listen-active");
+  const readBtn=document.getElementById("mbtn-read");
+  readBtn.classList.remove("active","read-active");
+  if(m==="read") readBtn.classList.add("read-active");
+  const audioBtn=document.getElementById("mbtn-audio");
+  audioBtn.classList.remove("active","audio-active");
+  if(m==="audio") audioBtn.classList.add("active","audio-active");
+  if(wasAudio && m!=="audio") pauseAudioReview();
+  if(m==="audio"){
+    renderFilters();
+    initAudioReview();
+    return;
+  }
+  score=0;cc=0;tot=0;stk=0;updateS();
+  buildPool();updateMasteryBar();nxt();
+}
+
+function renderFilters(){
+  document.getElementById("frow").innerHTML=
+    CATS.map(c=>{
+      const total=(c==="All"?V:V.filter(v=>v.c===c)).filter(isIncluded).length;
+      const seen=getSeenCount(c);
+      return '<button class="fbtn '+(c===af?'active':'')+'" onclick="sf(this,\''+c.replace(/'/g,"\\'")+'\')" >'+c+
+        ' <span style="opacity:.55;font-size:10px;margin-left:2px">'+seen+'/'+total+'</span></button>';
+    }).join("");
+}
+
+function sf(btn,cat){
+  af=cat;
+  document.querySelectorAll(".fbtn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  if(quizMode==="audio"){
+    initAudioReview();
+    return;
+  }
+  score=0;cc=0;tot=0;stk=0;updateS();
+  buildPool();updateMasteryBar();nxt();
+}
+
+function updateS(){
+  document.getElementById("sc").textContent=score;
+  document.getElementById("cc").textContent=cc;
+  document.getElementById("stk").textContent=stk;
+  document.getElementById("acc").textContent=tot===0?"--":Math.round(cc/tot*100)+"%";
+}
+
+function wrongs(c){
+  // Pull distractors from same category first for a fairer challenge
+  const sameCat=V.filter(v=>v.e!==c.e&&v.c===c.c);shuf(sameCat);
+  if(sameCat.length>=choiceMode-1){
+    return sameCat.slice(0,choiceMode-1).map(v=>v.e);
+  }
+  // If not enough same-category words, top up from other categories
+  const others=V.filter(v=>v.e!==c.e&&v.c!==c.c);shuf(others);
+  const combined=[...sameCat,...others];
+  return combined.slice(0,choiceMode-1).map(v=>v.e);
+}
+
+function nxt(){
+  answered=false;
+  if(noneSelected){
+    showNoneSelected();
+    return;
+  }
+  if(queue.length===0){
+    const unmastered=getUnmastered();
+    if(unmastered.length===0) showAllMastered();
+    else showEnd();
+    return;
+  }
+  cur=queue.pop();
+  getWeak(cur).lastSeen=++seenCounter;
+  renderFilters();
+  if(quizMode==="listen") renderListen();
+  else if(quizMode==="read") renderRead();
+  else if(quizMode==="fib") renderFIB();
+  else renderMC();
+}
+
+function setChoices(n){choiceMode=n;nxt();}
+
+// ---- MULTIPLE CHOICE ----
+function renderMC(){
+  const isWeak=getWeak(cur).wrong>getWeak(cur).correct;
+  const w=wrongs(cur);
+  const opts=shuf([cur.e,...w]);
+  const qn=Math.min(QL,pool.length)-queue.length;
+  const tot2=queue.length+qn;
+  const poolInfo=af==="All"?pool.length+" words":pool.length+" words in "+af;
+  document.getElementById("total-count").textContent=poolInfo;
+  const repeatBadge=isWeak?'<span class="repeat-badge">Repeat - needs practice</span>':"";
+  const wData=getWeak(cur);
+  const streakStars=wData.streak>0?'<span class="mastered-badge">'+"⭐".repeat(Math.min(wData.streak,3))+' '+wData.streak+'/3'+(wData.mastered?' ✓':'')+'</span>':"";
+  const esc=s=>s.replace(/'/g,"\\'").replace(/"/g,"&quot;");
+
+  document.getElementById("qa").innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+    '<p class="progress" style="margin:0">'+qn+' / '+tot2+'</p>'+
+    '<div class="choice-toggle"><span class="choice-label">Choices:</span>'+
+    '<button class="ctbtn '+(choiceMode===2?'active':'')+'" onclick="setChoices(2)">2</button>'+
+    '<button class="ctbtn '+(choiceMode===4?'active':'')+'" onclick="setChoices(4)">4</button></div></div>'+
+    '<span class="cat-badge">'+cur.c+'</span>'+repeatBadge+streakStars+
+    '<div class="qcard">'+
+    '<div class="korean-row"><div class="korean">'+cur.k+'</div>'+
+    '<button class="speak-btn" id="main-speak" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+speakerSVG+'</button></div>'+
+    '<div class="hint">What does this mean in English?</div>'+
+    '<div class="options '+(choiceMode===2?'cols1':'cols2')+'">'+
+    opts.map(o=>'<button class="opt" onclick="pick(this,\''+esc(o)+'\',\''+esc(cur.e)+'\')">'+o+'</button>').join("")+
+    '</div></div>'+
+    '<div class="feedback" id="fb"></div>'+
+    '<button class="next-btn" id="nb" onclick="nxt()" style="display:none">Next question</button>';
+}
+
+// ---- FILL IN THE BLANK ----
+function renderFIB(){
+  const isWeak=getWeak(cur).wrong>getWeak(cur).correct;
+  const qn=Math.min(QL,pool.length)-queue.length;
+  const tot2=queue.length+qn;
+  const poolInfo=af==="All"?pool.length+" words":pool.length+" words in "+af;
+  document.getElementById("total-count").textContent=poolInfo;
+  const repeatBadge=isWeak?'<span class="repeat-badge">Repeat - needs practice</span>':"";
+
+  const tpl=FIB_TEMPLATES[Math.floor(Math.random()*FIB_TEMPLATES.length)];
+  // Korean word distractors — same category first for a fairer challenge
+  const sameCatPool=V.filter(v=>v.k!==cur.k&&v.c===cur.c);shuf(sameCatPool);
+  let wrongPool;
+  if(sameCatPool.length>=choiceMode-1){
+    wrongPool=sameCatPool;
+  }else{
+    const othersPool=V.filter(v=>v.k!==cur.k&&v.c!==cur.c);shuf(othersPool);
+    wrongPool=[...sameCatPool,...othersPool];
+  }
+  const wrongOpts=wrongPool.slice(0,choiceMode-1).map(v=>v.k);
+  const opts=shuf([cur.k,...wrongOpts]);
+  const esc=s=>s.replace(/'/g,"\\'").replace(/"/g,"&quot;");
+
+  const sentDisp=tpl.s.replace("( ___ )",'<span class="fib-blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>');
+  const transDisp=tpl.t.replace("( ___ )",'<strong style="color:#3730a3">'+cur.e+'</strong>');
+
+  document.getElementById("qa").innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+    '<p class="progress" style="margin:0">'+qn+' / '+tot2+'</p>'+
+    '<div class="choice-toggle"><span class="choice-label">Choices:</span>'+
+    '<button class="ctbtn '+(choiceMode===2?'active':'')+'" onclick="setChoices(2)">2</button>'+
+    '<button class="ctbtn '+(choiceMode===4?'active':'')+'" onclick="setChoices(4)">4</button></div></div>'+
+    '<span class="cat-badge">'+cur.c+'</span><span class="mode-badge">Fill in the Blank</span>'+repeatBadge+
+    '<div class="qcard">'+
+    '<div class="fib-sentence">'+sentDisp+'</div>'+
+    '<div class="fib-translation">'+transDisp+'</div>'+
+    '<div class="fib-korean-hint">Choose the correct Korean word for the blank:</div>'+
+    '<div class="options '+(choiceMode===2?'cols1':'cols2')+'" style="margin-top:10px">'+
+    opts.map(o=>'<button class="opt" onclick="pickFIB(this,\''+esc(o)+'\',\''+esc(cur.k)+'\')">'+o+'</button>').join("")+
+    '</div></div>'+
+    '<div class="feedback" id="fb"></div>'+
+    '<button class="next-btn" id="nb" onclick="nxt()" style="display:none">Next question</button>';
+}
+
+function pick(btn,chosen,correct){
+  if(answered)return;
+  answered=true;tot++;
+  document.querySelectorAll(".opt").forEach(b=>{
+    b.disabled=true;
+    if(b.textContent.trim()===correct)b.classList.add("correct");
+  });
+  const isCorrect=chosen===correct;
+  recordAnswer(cur,isCorrect);
+  const fb=document.getElementById("fb");
+  if(isCorrect){
+    cc++;stk++;score+=10+Math.min(stk-1,5)*2;
+    const streakMsg=stk>=3?'<div class="streak-banner" style="margin-top:6px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':'';
+    fb.innerHTML='<div style="padding:12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-weight:600;font-size:15px">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+streakMsg;
+    fb.className="feedback ok";
+  }else{
+    btn.classList.add("wrong");stk=0;
+    // Find what the wrong chosen option actually means in Korean
+    const wrongEntry=V.find(v=>v.e===chosen);
+    const wrongHint=wrongEntry
+      ? '<div style="font-size:12px;margin-top:5px;padding:6px 10px;background:#fee2e2;border-radius:8px;color:#991b1b">Your choice: <strong>'+chosen+'</strong> = <span style="font-weight:700">'+wrongEntry.k+'</span></div>'
+      : '';
+    fb.innerHTML='Wrong! Correct answer: <strong>'+correct+'</strong>'+wrongHint;
+    fb.className="feedback bad";
+    const ins=Math.max(0,Math.floor(Math.random()*Math.min(3,queue.length)));
+    queue.splice(ins,0,cur);
+  }
+  updateS();
+  document.getElementById("nb").style.display="block";
+}
+
+// ---- LISTENING EXAM ----
+function renderListen(){
+  const isWeak=getWeak(cur).wrong>getWeak(cur).correct;
+  const qn=Math.min(QL,pool.length)-queue.length;
+  const tot2=queue.length+qn;
+  const poolInfo=af==="All"?pool.length+" words":pool.length+" words in "+af;
+  document.getElementById("total-count").textContent=poolInfo;
+  const repeatBadge=isWeak?'<span class="repeat-badge">Repeat - needs practice</span>':"";
+  const wData=getWeak(cur);
+  const streakStars=wData.streak>0?'<span class="mastered-badge">'+"⭐".repeat(Math.min(wData.streak,3))+' '+wData.streak+'/3'+(wData.mastered?' ✓':'')+'</span>':"";
+
+  document.getElementById("qa").innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+    '<p class="progress" style="margin:0">'+qn+' / '+tot2+'</p></div>'+
+    '<span class="cat-badge">'+cur.c+'</span>'+
+    '<span class="listen-mode-badge">🎧 Listening</span>'+
+    repeatBadge+streakStars+
+    '<div class="listen-card">'+
+    '<button class="listen-play-btn" id="listen-play-btn" onclick="playListenWord(this)">'+
+      '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'+
+    '</button>'+
+    '<div class="listen-replay-hint">Tap to play • tap again to replay</div>'+
+    '<div class="listen-prompt">Type the <strong>English meaning</strong> of the Korean word you hear:</div>'+
+    '<input class="listen-input" id="listen-input" type="text" placeholder="Type answer here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key===\'Enter\' && !answered){submitListen();setTimeout(function(){var i=document.getElementById(\'listen-input\');if(i)i.blur();},80);}"/>'+
+    '<button class="listen-submit" id="listen-submit-btn" onclick="submitListen()">Check Answer ↵</button>'+
+    '<button class="listen-skip" onclick="skipListen()">Skip / Show Answer</button>'+
+    '<div id="listen-feedback"></div>'+
+    '</div>'+
+    '<button class="next-btn" id="nb" onclick="nxt()" style="display:none;margin-top:10px">Next question</button>';
+
+  // Auto-play after short delay
+  setTimeout(()=>{const btn=document.getElementById("listen-play-btn");if(btn)playListenWord(btn);},100);
+}
+
+function playListenWord(btn){
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  setTimeout(()=>{
+    btn.classList.add("playing");
+    const utt=new SpeechSynthesisUtterance(cur.k);
+    utt.lang="ko-KR"; utt.rate=1.0;
+    if(koVoice) utt.voice=koVoice;
+    utt.onend=()=>btn.classList.remove("playing");
+    utt.onerror=()=>btn.classList.remove("playing");
+    window.speechSynthesis.speak(utt);
+    setTimeout(()=>{const inp=document.getElementById("listen-input");if(inp)inp.focus();},200);
+  },0);
+}
+
+function normalizeAnswer(s){
+  return s.toLowerCase().replace(/[^a-z0-9\s\/\-]/g,"").replace(/\s+/g," ").trim();
+}
+
+function checkListenAnswer(typed, correct){
+  const t=normalizeAnswer(typed);
+  const c=normalizeAnswer(correct);
+  if(t===c) return true;
+  // Accept partial: typed matches start of any key meaning segment
+  const segments=c.split(/[\/,;]+/).map(s=>s.trim());
+  for(const seg of segments){
+    if(t===seg || seg.startsWith(t) && t.length>=3) return true;
+  }
+  return false;
+}
+
+function submitListen(){
+  if(answered) return;
+  const inp=document.getElementById("listen-input");
+  if(!inp) return;
+  const typed=inp.value.trim();
+  if(!typed) return;
+
+  answered=true; tot++;
+  inp.disabled=true;
+  document.getElementById("listen-submit-btn").disabled=true;
+
+  const isCorrect=checkListenAnswer(typed, cur.e);
+  recordAnswer(cur, isCorrect);
+
+  const fb=document.getElementById("listen-feedback");
+  if(isCorrect){
+    cc++; stk++; score+=10+Math.min(stk-1,5)*2;
+    inp.classList.add("correct-input");
+    const streakMsg=stk>=3?'<div class="streak-banner" style="margin-top:8px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':'';
+    fb.innerHTML='<div class="listen-answer-reveal">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+streakMsg;
+  } else {
+    stk=0;
+    inp.classList.add("wrong-input");
+    // Find what the typed answer actually means in Korean (if it matches any vocab)
+    const typedNorm=normalizeAnswer(typed);
+    const matched=V.find(v=>normalizeAnswer(v.e)===typedNorm||normalizeAnswer(v.e).split(/[\/,;]+/).map(s=>s.trim()).includes(typedNorm));
+    const typedMeaningHint=matched
+      ? '<div style="font-size:12px;margin-top:6px;padding:7px 10px;background:#ffe4e6;border-radius:8px;color:#9f1239">💬 "<em>'+typed+'</em>" = <strong>'+matched.k+'</strong> ('+matched.e+')</div>'
+      : '<div style="font-size:12px;margin-top:6px;color:#be185d;font-style:italic">💬 "<em>'+typed+'</em>" — not found in vocab list</div>';
+    fb.innerHTML='<div class="listen-answer-reveal wrong-reveal">❌ Wrong answer!<br><span style="font-size:13px">Correct: <strong>'+cur.e+'</strong> → <strong>'+cur.k+'</strong></span>'+typedMeaningHint+'</div>';
+    const ins=Math.max(0,Math.floor(Math.random()*Math.min(3,queue.length)));
+    queue.splice(ins,0,cur);
+  }
+  updateS();
+  setTimeout(()=>document.getElementById("nb").style.display="block", 150);
+  // Speak the word after revealing answer
+  setTimeout(()=>speakKorean(cur.k,null),50);
+}
+
+function skipListen(){
+  if(answered) return;
+  answered=true; tot++;
+  const inp=document.getElementById("listen-input");
+  if(inp) inp.disabled=true;
+  const submitBtn=document.getElementById("listen-submit-btn");
+  if(submitBtn) submitBtn.disabled=true;
+  recordAnswer(cur, false);
+  stk=0;
+  const fb=document.getElementById("listen-feedback");
+  fb.innerHTML='<div class="listen-answer-reveal wrong-reveal">⏭ Skipped — Answer: <strong>'+cur.e+'</strong><br><span style="font-size:13px;color:#be185d">Korean: '+cur.k+'</span></div>';
+  const ins=Math.max(0,Math.floor(Math.random()*Math.min(3,queue.length)));
+  queue.splice(ins,0,cur);
+  updateS();
+  document.getElementById("nb").style.display="block";
+  setTimeout(()=>speakKorean(cur.k,null),50);
+}
+
+// ---- READING (type the meaning) ----
+function renderRead(){
+  const isWeak=getWeak(cur).wrong>getWeak(cur).correct;
+  const qn=Math.min(QL,pool.length)-queue.length;
+  const tot2=queue.length+qn;
+  const poolInfo=af==="All"?pool.length+" words":pool.length+" words in "+af;
+  document.getElementById("total-count").textContent=poolInfo;
+  const repeatBadge=isWeak?'<span class="repeat-badge">Repeat - needs practice</span>':"";
+  const wData=getWeak(cur);
+  const streakStars=wData.streak>0?'<span class="mastered-badge">'+"⭐".repeat(Math.min(wData.streak,3))+' '+wData.streak+'/3'+(wData.mastered?' ✓':'')+'</span>':"";
+  const esc=s=>s.replace(/'/g,"\\'");
+
+  document.getElementById("qa").innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+    '<p class="progress" style="margin:0">'+qn+' / '+tot2+'</p></div>'+
+    '<span class="cat-badge">'+cur.c+'</span>'+
+    '<span class="read-mode-badge">✍️ Reading</span>'+
+    repeatBadge+streakStars+
+    '<div class="read-card">'+
+      '<div class="read-korean-big">'+cur.k+'</div>'+
+      '<button class="read-speak-btn" id="read-speak-btn" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+
+        '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>'+
+      '</button>'+
+      '<div class="read-speak-hint">Tap 🔊 to hear pronunciation</div>'+
+      '<div class="read-prompt">Type the <strong>English meaning</strong> of the Korean word above:</div>'+
+      '<input class="read-input" id="read-input" type="text" placeholder="Type answer here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key===\'Enter\' && !answered){submitRead();setTimeout(function(){var i=document.getElementById(\'read-input\');if(i)i.blur();},80);}"/>'+
+      '<button class="read-submit" id="read-submit-btn" onclick="submitRead()">Check Answer ↵</button>'+
+      '<button class="read-skip" onclick="skipRead()">Skip / Show Answer</button>'+
+      '<div id="read-feedback"></div>'+
+    '</div>'+
+    '<button class="next-btn" id="nb" onclick="nxt()" style="display:none;margin-top:10px">Next question</button>';
+
+  // Auto-focus input
+  setTimeout(()=>{const inp=document.getElementById("read-input");if(inp)inp.focus();},200);
+}
+
+function submitRead(){
+  if(answered) return;
+  const inp=document.getElementById("read-input");
+  if(!inp) return;
+  const typed=inp.value.trim();
+  if(!typed) return;
+
+  answered=true; tot++;
+  inp.disabled=true;
+  document.getElementById("read-submit-btn").disabled=true;
+
+  const isCorrect=checkListenAnswer(typed, cur.e);
+  recordAnswer(cur, isCorrect);
+
+  const fb=document.getElementById("read-feedback");
+  if(isCorrect){
+    cc++; stk++; score+=10+Math.min(stk-1,5)*2;
+    inp.classList.add("correct-input");
+    fb.innerHTML='<div class="read-answer-reveal">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+
+      (stk>=3?'<div class="streak-banner" style="margin-top:8px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':"");
+    setTimeout(()=>speakKorean(cur.k,null),50);
+  } else {
+    stk=0;
+    inp.classList.add("wrong-input");
+    // Look up what the user typed — does it match any known vocab?
+    const typedNorm=normalizeAnswer(typed);
+    const matched=V.find(v=>
+      normalizeAnswer(v.e)===typedNorm ||
+      normalizeAnswer(v.e).split(/[\/,;]+/).map(s=>s.trim()).some(seg=>seg===typedNorm)
+    );
+    const wrongHint=matched
+      ? '<div style="font-size:12px;margin-top:6px;padding:7px 10px;background:#ffe4e6;border-radius:8px;color:#9f1239">💬 "<em>'+typed+'</em>" is actually <strong>'+matched.k+'</strong> ('+matched.e+')</div>'
+      : (typed.length>0
+          ? '<div style="font-size:12px;margin-top:6px;padding:6px 10px;background:#fff1f2;border-radius:8px;color:#9f1239">💬 "<em>'+typed+'</em>" — not in vocabulary list</div>'
+          : '');
+    fb.innerHTML='<div class="read-answer-reveal wrong-reveal">❌ Wrong!<br>'+
+      '<span style="font-size:14px">Correct answer: <strong>'+cur.e+'</strong></span>'+
+      wrongHint+'</div>';
+    const ins=Math.max(0,Math.floor(Math.random()*Math.min(3,queue.length)));
+    queue.splice(ins,0,cur);
+    setTimeout(()=>speakKorean(cur.k,null),50);
+  }
+  updateS();
+  setTimeout(()=>document.getElementById("nb").style.display="block", 150);
+}
+
+function skipRead(){
+  if(answered) return;
+  answered=true; tot++;
+  const inp=document.getElementById("read-input");
+  if(inp) inp.disabled=true;
+  document.getElementById("read-submit-btn").disabled=true;
+  recordAnswer(cur, false);
+  stk=0;
+  const fb=document.getElementById("read-feedback");
+  fb.innerHTML='<div class="read-answer-reveal wrong-reveal">⏭ Skipped!<br>'+
+    '<span style="font-size:14px">Answer: <strong>'+cur.e+'</strong></span></div>';
+  const ins=Math.max(0,Math.floor(Math.random()*Math.min(3,queue.length)));
+  queue.splice(ins,0,cur);
+  updateS();
+  document.getElementById("nb").style.display="block";
+  setTimeout(()=>speakKorean(cur.k,null),50);
+}
+
+function pickFIB(btn,chosen,correct){
+  if(answered)return;
+  answered=true;tot++;
+  document.querySelectorAll(".opt").forEach(b=>{
+    b.disabled=true;
+    if(b.textContent.trim()===correct)b.classList.add("correct");
+  });
+  const isCorrect=chosen===correct;
+  recordAnswer(cur,isCorrect);
+  const fb=document.getElementById("fb");
+  if(isCorrect){
+    cc++;stk++;score+=10+Math.min(stk-1,5)*2;
+    const streakMsg=stk>=3?'<div class="streak-banner" style="margin-top:6px">🔥 Streak x'+stk+'!</div>':'';
+    fb.innerHTML='<div style="padding:12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-weight:600;font-size:15px">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+streakMsg;
+    fb.className="feedback ok";
+    setTimeout(()=>speakKorean(cur.k,null),50);
+  }else{
+    btn.classList.add("wrong");stk=0;
+    // Find what the wrong chosen Korean word actually means
+    const wrongEntry=V.find(v=>v.k===chosen);
+    const wrongHint=wrongEntry
+      ? '<div style="font-size:12px;margin-top:5px;padding:6px 10px;background:#fee2e2;border-radius:8px;color:#991b1b">Your choice: <strong>'+chosen+'</strong> = <span style="font-weight:700">'+wrongEntry.e+'</span></div>'
+      : '';
+    fb.innerHTML='Wrong! Answer: <strong>'+correct+'</strong> ('+cur.e+')'+wrongHint;
+    fb.className="feedback bad";
+    const ins=Math.max(0,Math.floor(Math.random()*Math.min(3,queue.length)));
+    queue.splice(ins,0,cur);
+  }
+  updateS();
+  document.getElementById("nb").style.display="block";
+}
+
+function showNoneSelected(){
+  document.getElementById("total-count").textContent="";
+  document.getElementById("qa").innerHTML=
+    '<div class="all-mastered-card">'+
+    '<div style="font-size:56px;margin-bottom:12px">🙈</div>'+
+    '<div class="end-title">No Words Selected</div>'+
+    '<div class="end-sub" style="margin-bottom:20px">You\'ve deselected every word in <strong>'+af+'</strong>.<br>Pick some words in Vocab Settings to continue.</div>'+
+    '<button class="review-quiz-btn" style="margin-bottom:10px" onclick="openSettings()">⚙️ Open Vocab Settings</button>'+
+    '</div>';
+}
+
+function showAllMastered(){
+  document.getElementById("total-count").textContent="";
+  const catWords=(af==="All"?V:V.filter(v=>v.c===af)).filter(isIncluded);
+  const total=catWords.length;
+  const esc=s=>s.replace(/'/g,"\'");
+  document.getElementById("qa").innerHTML=
+    '<div class="all-mastered-card">'+
+    '<div style="font-size:56px;margin-bottom:12px">🏆</div>'+
+    '<div class="end-title">All Words Mastered!</div>'+
+    '<div class="end-sub" style="margin-bottom:20px">You mastered all '+total+' words in <strong>'+af+'</strong>!<br>Ready for a fresh challenge?</div>'+
+    '<div style="background:#ede9fe;border-radius:12px;padding:16px;margin-bottom:20px">'+
+    '<div style="font-size:13px;color:#5b21b6;font-weight:600;margin-bottom:4px">⭐ '+total+' / '+total+' words mastered</div>'+
+    '<div style="font-size:12px;color:#7c3aed">Words are mastered by answering correctly 3 times in a row.</div>'+
+    '</div>'+
+    '<button class="reset-mastery-btn" onclick="resetMastery()">🔄 Reset & Practice Again</button>'+
+    '<button class="replay-btn" style="background:#f5f4f0;color:#1a1a1a" onclick="sf(document.querySelector(\'.fbtn.active\'),\''+esc(af)+'\')">Change Category</button>'+
+    '</div>';
+}
+
+function showEnd(){
+  const total=Math.min(QL,pool.length);
+  const pct=Math.round(cc/total*100);
+  const emoji=pct>=90?"trophy":pct>=70?"muscle":pct>=50?"books":"hands";
+  const emojis={trophy:"🏆",muscle:"💪",books:"📚",hands:"🙌"};
+  const msg=pct>=90?"Outstanding!":pct>=70?"Great work!":pct>=50?"Keep practicing!":"Don't give up! 화이팅!";
+  document.getElementById("total-count").textContent="";
+  const weakList=getWeakWords();
+  let weakHTML="";
+  if(weakList.length>0){
+    weakHTML='<div class="weak-section"><div class="weak-title">Words to practice more</div>'+
+      weakList.slice(0,10).map(w=>
+        '<div class="weak-item"><div><div class="weak-korean">'+w.entry.k+'</div><div class="weak-eng">'+w.entry.e+'</div></div>'+
+        '<div style="display:flex;align-items:center;gap:6px">'+
+        '<span class="weak-count">'+w.wrong+' wrong / '+w.correct+' right</span>'+
+        '<button class="weak-speak" onclick="speakKorean(\''+w.entry.k.replace(/'/g,"\\'")+'\',this)">'+speakerSVG+'</button>'+
+        '</div></div>').join("")+
+      '</div>';
+  }else{
+    weakHTML='<div class="weak-section"><div class="no-weak">Great job! No weak words detected.</div></div>';
+  }
+  const modeLabel=quizMode==="fib"?"Fill in the Blank":quizMode==="listen"?"🎧 Listening Exam":quizMode==="read"?"✍️ Reading":"Multiple Choice";
+  document.getElementById("qa").innerHTML=
+    '<div class="end-card">'+
+    '<div class="end-emoji">'+emojis[emoji]+'</div>'+
+    '<div class="end-title">'+msg+'</div>'+
+    '<div class="end-sub">Round complete · '+modeLabel+'</div>'+
+    '<div class="end-stats">'+
+    '<div class="end-stat"><div class="end-stat-label">Score</div><div class="end-stat-val">'+score+'</div></div>'+
+    '<div class="end-stat"><div class="end-stat-label">Accuracy</div><div class="end-stat-val">'+pct+'%</div></div>'+
+    '<div class="end-stat"><div class="end-stat-label">Correct</div><div class="end-stat-val">'+cc+'/'+total+'</div></div>'+
+    '<div class="end-stat"><div class="end-stat-label">Category</div><div class="end-stat-val" style="font-size:13px;padding-top:4px">'+af+'</div></div>'+
+    '</div>'+
+    '<button class="replay-btn" onclick="sf(document.querySelector(\'.fbtn.active\'),\''+af.replace(/'/g,"\\'")+'\')">Play again</button>'+
+    '</div>'+weakHTML;
+}
+
+// ===== VOCAB REVIEW PANEL =====
+let reviewCat="All";
+
+function openReview(){
+  reviewCat=af;
+  renderReviewTabs();
+  renderVocabGrid();
+  document.getElementById("review-panel").classList.remove("hidden");
+  document.body.style.overflow="hidden";
+}
+function closeReview(){
+  document.getElementById("review-panel").classList.add("hidden");
+  document.body.style.overflow="";
+}
+function handlePanelClick(e){
+  if(e.target===document.getElementById("review-panel")) closeReview();
+}
+
+// ===== VOCAB SETTINGS PANEL (choose which words appear per category) =====
+let settingsTab="All";
+function openSettings(){
+  settingsTab=af!=="All"?af:(CATS.find(c=>c!=="All")||"All");
+  renderSettingsTabs();
+  renderSettingsBody();
+  document.getElementById("settings-panel").classList.remove("hidden");
+  document.body.style.overflow="hidden";
+}
+function closeSettings(){
+  document.getElementById("settings-panel").classList.add("hidden");
+  document.body.style.overflow="";
+  saveSession();
+  renderFilters();
+  buildPool();
+  updateMasteryBar();
+  if(quizMode==="audio"){ initAudioReview(); }
+  else{ nxt(); }
+}
+function handleSettingsPanelClick(e){
+  if(e.target===document.getElementById("settings-panel")) closeSettings();
+}
+function renderSettingsTabs(){
+  document.getElementById("settings-tabs").innerHTML=
+    CATS.filter(c=>c!=="All").map(c=>
+      '<button class="rct '+(c===settingsTab?'active':'')+'" onclick="stTab(this,\''+c.replace(/'/g,"\\'")+'\')">'+c+'</button>'
+    ).join("");
+}
+function stTab(btn,cat){
+  settingsTab=cat;
+  document.querySelectorAll("#settings-tabs .rct").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderSettingsBody();
+}
+function renderSettingsBody(){
+  const words=V.filter(v=>v.c===settingsTab);
+  const includedCount=words.filter(isIncluded).length;
+  document.getElementById("settings-count").textContent=includedCount+" / "+words.length+" words selected for review";
+  document.getElementById("settings-body").innerHTML=
+    words.map((v,i)=>{
+      const id=vocabId(v);
+      const checked=isIncluded(v);
+      return '<label class="vocab-check-row">'+
+        '<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleVocabInclude(\''+id.replace(/'/g,"\\'")+'\',this.checked)">'+
+        '<span class="vocab-check-text"><div class="vocab-k">'+escHtml(v.k)+'</div><div class="vocab-e">'+escHtml(v.e)+'</div></span>'+
+        '</label>';
+    }).join("");
+}
+function toggleVocabInclude(id,included){
+  if(included) excludedSet.delete(id); else excludedSet.add(id);
+  document.getElementById("settings-count").textContent=
+    V.filter(v=>v.c===settingsTab&&isIncluded(v)).length+" / "+V.filter(v=>v.c===settingsTab).length+" words selected for review";
+}
+function selectAllInCat(){
+  V.filter(v=>v.c===settingsTab).forEach(v=>excludedSet.delete(vocabId(v)));
+  renderSettingsBody();
+}
+function deselectAllInCat(){
+  V.filter(v=>v.c===settingsTab).forEach(v=>excludedSet.add(vocabId(v)));
+  renderSettingsBody();
+}
+function renderReviewTabs(){
+  document.getElementById("review-tabs").innerHTML=
+    CATS.map(c=>{
+      const total=c==="All"?V.length:V.filter(v=>v.c===c).length;
+      const seen=getSeenCount(c);
+      return '<button class="rct '+(c===reviewCat?'active':'')+'" onclick="switchReviewCat(\''+c.replace(/'/g,"\\'")+'\')">'+c+
+        ' <span style="opacity:.6;font-size:10px;margin-left:2px">'+seen+'/'+total+'</span></button>';
+    }).join("");
+}
+function switchReviewCat(cat){
+  reviewCat=cat;
+  renderReviewTabs();
+  renderVocabGrid();
+  // update quiz button label
+  document.getElementById("review-quiz-btn").textContent=
+    cat==="All"?"Start Quiz for All Words":"Start Quiz for \""+cat+"\"";
+}
+function renderVocabGrid(){
+  let words=reviewCat==="All"?V:V.filter(v=>v.c===reviewCat);
+  if(reviewCat==="All"){
+    // Group related/connected vocab together by category, then alphabetically
+    // within each category, while still showing everything in this one tab.
+    words=[...words].sort((a,b)=>{
+      if(a.c!==b.c) return a.c.localeCompare(b.c);
+      return a.k.localeCompare(b.k,"ko");
+    });
+  }
+  document.getElementById("review-count").textContent=words.length+" words"+(reviewCat!=="All"?" in "+reviewCat:"");
+  document.getElementById("review-title").textContent=reviewCat==="All"?"All Vocabulary":reviewCat+" Vocabulary";
+  document.getElementById("review-quiz-btn").textContent=
+    reviewCat==="All"?"Start Quiz for All Words":"Start Quiz for \""+reviewCat+"\"";
+  document.getElementById("vocab-grid").innerHTML=words.map(w=>
+    '<div class="vocab-card">'+
+    '<div class="vocab-left"><div class="vocab-k">'+w.k+'</div><div class="vocab-e">'+w.e+'</div></div>'+
+    '<div style="display:flex;align-items:center;gap:6px">'+
+    (reviewCat==="All"?'<span class="vocab-cat-tag">'+w.c+'</span>':'')+
+    '<button class="vocab-speak" onclick="speakKorean(\''+w.k.replace(/'/g,"\\'")+'\',this)">'+speakerSVG+'</button>'+
+    '</div></div>').join("");
+}
+function startQuizFromReview(){
+  closeReview();
+  const targetBtn=Array.from(document.querySelectorAll(".fbtn")).find(b=>b.textContent===reviewCat);
+  if(targetBtn) sf(targetBtn,reviewCat);
+}
+
+// ===== PARTICLES & COUNTING UNITS DATA =====
+const PARTICLES_DATA=[
+  {k:"이/가",e:"Subject particle",ex:"저가 갑니다. / 밥이 있어요."},
+  {k:"은/는",e:"Topic particle (also used for contrast)",ex:"저는 학생입니다."},
+  {k:"을/를",e:"Object particle",ex:"밥을 먹어요. / 물을 마셔요."},
+  {k:"에",e:"Location/time particle (at, in, on, to)",ex:"학교에 가요. / 3시에 만나요."},
+  {k:"에서",e:"Action location particle (at/in — where action happens)",ex:"도서관에서 공부해요."},
+  {k:"으로/로",e:"Direction/means particle (to, by, with)",ex:"버스로 가요. / 오른쪽으로 가세요."},
+  {k:"와/과",e:"And / with (formal)",ex:"친구와 밥을 먹었어요."},
+  {k:"하고",e:"And / with (casual)",ex:"형하고 놀았어요."},
+  {k:"도",e:"Also / too",ex:"저도 갑니다."},
+  {k:"만",e:"Only / just",ex:"물만 마셔요."},
+  {k:"부터",e:"From (time/place start)",ex:"9시부터 일해요."},
+  {k:"까지",e:"Until / up to (time/place end)",ex:"5시까지 일해요."},
+  {k:"에게/한테",e:"To (a person) — giving/telling",ex:"친구에게 줘요."},
+  {k:"에게서/한테서",e:"From (a person)",ex:"친구한테서 받았어요."},
+  {k:"의",e:"Possessive particle (of / 's)",ex:"선생님의 책이에요."},
+  {k:"보다",e:"More than / compared to",ex:"물보다 커피가 좋아요."},
+  {k:"처럼/같이",e:"Like / as (similarity)",ex:"선생님처럼 가르쳐요."},
+  {k:"마다",e:"Every / each",ex:"날마다 운동해요."},
+  {k:"밖에",e:"Nothing but / only (with negative)",ex:"돈이 천 원밖에 없어요."},
+  {k:"이나/나",e:"Or / as many as",ex:"밥이나 빵을 먹어요."},
+];
+
+const COUNTERS_DATA=[
+  {k:"명/사람",e:"People (persons)",ex:"세 명, 두 사람"},
+  {k:"개",e:"General objects / items",ex:"사과 두 개, 공책 세 개"},
+  {k:"권",e:"Books, notebooks, volumes",ex:"책 한 권"},
+  {k:"장",e:"Flat sheets (paper, tickets, photos)",ex:"종이 다섯 장"},
+  {k:"병",e:"Bottles",ex:"물 한 병"},
+  {k:"잔",e:"Cups / glasses (drinks)",ex:"커피 한 잔"},
+  {k:"그릇",e:"Bowls (of food)",ex:"밥 두 그릇"},
+  {k:"마리",e:"Animals",ex:"개 두 마리, 닭 세 마리"},
+  {k:"벌",e:"Sets of clothes / suits",ex:"옷 두 벌"},
+  {k:"켤레",e:"Pairs (shoes, socks, gloves)",ex:"신발 한 켤레"},
+  {k:"대",e:"Vehicles / machines",ex:"버스 한 대, 컴퓨터 두 대"},
+  {k:"채",e:"Buildings / houses",ex:"집 한 채"},
+  {k:"층",e:"Floors / stories of a building",ex:"3층에 있어요."},
+  {k:"번",e:"Times / occurrences / number",ex:"두 번, 1번 버스"},
+  {k:"번째",e:"Ordinal (1st, 2nd...)",ex:"세 번째 줄에 앉으세요."},
+  {k:"살",e:"Years of age",ex:"스물다섯 살이에요."},
+  {k:"시",e:"O'clock (hour)",ex:"세 시에 만나요."},
+  {k:"분",e:"Minutes",ex:"30분 후에 오세요."},
+  {k:"달/개월",e:"Months (duration)",ex:"세 달, 육 개월"},
+  {k:"년",e:"Years (duration/calendar)",ex:"2년 동안 일했어요."},
+  {k:"주",e:"Weeks",ex:"두 주 후에 돌아와요."},
+  {k:"킬로그램(kg)",e:"Kilograms (weight)",ex:"10킬로그램"},
+  {k:"미터(m)",e:"Meters (length)",ex:"5미터"},
+  {k:"원",e:"Korean Won (currency unit)",ex:"천 원, 만 원"},
+  {k:"포기",e:"Heads of cabbage / bundles",ex:"배추 두 포기"},
+  {k:"묶음",e:"Bundles / packs",ex:"파 한 묶음"},
+  {k:"봉지",e:"Bags / pouches",ex:"쌀 한 봉지"},
+  {k:"상자",e:"Boxes",ex:"사과 한 상자"},
+  {k:"통",e:"Containers / cans",ex:"페인트 한 통"},
+  {k:"줄",e:"Rows / lines",ex:"첫 번째 줄에 앉으세요."},
+];
+
+// Add Particles & Counters as quizzable vocabulary
+const PARTICLES_VOCAB=PARTICLES_DATA.map(p=>({k:p.k,e:p.e+" — e.g. "+p.ex,c:"Particles 조사"}));
+const COUNTERS_VOCAB=COUNTERS_DATA.map(c=>({k:c.k,e:c.e+" — e.g. "+c.ex,c:"Counting Units 단위"}));
+
+// Grammar / degree words (comparatives & superlatives), e.g. 가장 = "The most"
+const GRAMMAR_DATA=[
+  {k:"가장",e:"The most (superlative)",ex:"가장 좋아하는 음식이에요."},
+  {k:"제일",e:"The most / number one (informal superlative)",ex:"제일 맛있어요."},
+  {k:"더",e:"More (comparative)",ex:"더 주세요."},
+  {k:"덜",e:"Less",ex:"덜 매워요."},
+  {k:"훨씬",e:"Much more / by far",ex:"훨씬 커요."},
+  {k:"너무",e:"Too (excessively)",ex:"너무 비싸요."},
+  {k:"아주",e:"Very",ex:"아주 좋아요."},
+  {k:"매우",e:"Very / extremely",ex:"매우 중요해요."},
+  {k:"정말",e:"Really / truly",ex:"정말 고마워요."},
+  {k:"조금",e:"A little / a bit",ex:"조금 기다려 주세요."},
+  {k:"약간",e:"Slightly / somewhat",ex:"약간 짜요."},
+  {k:"거의",e:"Almost / nearly",ex:"거의 다 했어요."},
+];
+const GRAMMAR_VOCAB=GRAMMAR_DATA.map(g=>({k:g.k,e:g.e+" — e.g. "+g.ex,c:"Graph 문법"}));
+
+V.push(...PARTICLES_VOCAB,...COUNTERS_VOCAB,...GRAMMAR_VOCAB);
+CATS=["All",...new Set(V.map(v=>v.c))];
+
+let particlesTab="particles";
+function openParticles(){
+  particlesTab="particles";
+  renderParticlesTabs();
+  renderParticlesGrid();
+  document.getElementById("particles-panel").classList.remove("hidden");
+  document.body.style.overflow="hidden";
+}
+function closeParticles(){
+  document.getElementById("particles-panel").classList.add("hidden");
+  document.body.style.overflow="";
+}
+function handleParticlesPanelClick(e){
+  if(e.target===document.getElementById("particles-panel")) closeParticles();
+}
+function switchParticlesTab(tab,btn){
+  particlesTab=tab;
+  document.querySelectorAll("#particles-tabs .rct").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderParticlesGrid();
+}
+function renderParticlesTabs(){}
+function renderParticlesGrid(){
+  const data=particlesTab==="particles"?PARTICLES_DATA:particlesTab==="counters"?COUNTERS_DATA:GRAMMAR_DATA;
+  const labels={particles:"particles (조사)",counters:"counting units (단위)",grammar:"graph words (문법)"};
+  document.getElementById("particles-count").textContent=
+    data.length+" "+labels[particlesTab];
+  document.getElementById("particles-grid").innerHTML=
+    '<div style="display:grid;gap:8px;padding-bottom:8px">'+
+    data.map(p=>
+      '<div class="particle-card">'+
+      '<div>'+
+        '<div class="particle-k">'+p.k+'</div>'+
+      '</div>'+
+      '<div style="flex:1">'+
+        '<div class="particle-e">'+p.e+'</div>'+
+        '<div class="particle-ex">'+p.ex+'</div>'+
+      '</div>'+
+      '<button class="vocab-speak" onclick="speakKorean(\''+p.k.replace(/'/g,"\\'")+'\',this)" style="background:#ede9fe;flex-shrink:0">'+speakerSVG+'</button>'+
+      '</div>'
+    ).join("")+
+    '</div>';
+}
+
+// ===== RESET SESSION =====
+function confirmResetSession(){
+  if(confirm("Reset all scores, streaks, and mastery progress?\n\nThis cannot be undone.")){
+    Object.keys(weakMap).forEach(k=>delete weakMap[k]);
+    score=0;cc=0;tot=0;stk=0;seenCounter=0;
+    try{localStorage.removeItem(SAVE_KEY);}catch(e){}
+    updateS();
+    buildPool();updateMasteryBar();nxt();
+    showMasteredToast("✅ Reset complete!");
+  }
+}
+
+// ===== EXPORT / IMPORT SAVE =====
+function openCloudSave(){
+  document.getElementById("cloud-status").textContent = "";
+  document.getElementById("cloud-status").className = "cloud-status";
+  document.getElementById("cloud-modal").classList.remove("hidden");
+}
+function closeCloudSave(){
+  document.getElementById("cloud-modal").classList.add("hidden");
+}
+function handleCloudModalClick(e){
+  if(e.target === document.getElementById("cloud-modal")) closeCloudSave();
+}
+
+function exportSave(){
+  const saveData = {
+    weakMap: Object.fromEntries(Object.entries(weakMap).map(([k,v])=>
+      [k,{wrong:v.wrong,correct:v.correct,streak:v.streak,mastered:v.mastered,lastSeen:v.lastSeen||0}]
+    )),
+    af, quizMode, choiceMode, score, cc, tot, stk, seenCounter,
+    savedAt: new Date().toISOString(),
+    version: "korean_quiz_v1"
+  };
+  const blob = new Blob([JSON.stringify(saveData, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const dateStr = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = "korean_quiz_save_" + dateStr + ".json";
+  a.click();
+  URL.revokeObjectURL(url);
+  const el = document.getElementById("cloud-status");
+  el.textContent = "✅ Save file downloaded!";
+  el.className = "cloud-status ok";
+}
+
+function importSave(event){
+  const file = event.target.files[0];
+  if(!file){ return; }
+  const el = document.getElementById("cloud-status");
+  el.textContent = "Loading...";
+  el.className = "cloud-status";
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = JSON.parse(e.target.result);
+      if(data.version !== "korean_quiz_v1"){ el.textContent = "❌ Invalid save file."; el.className="cloud-status err"; return; }
+      Object.keys(weakMap).forEach(k=>delete weakMap[k]);
+      if(data.weakMap){
+        Object.entries(data.weakMap).forEach(([id,val])=>{
+          const entry = V.find(v=>v.k+"|"+v.e===id);
+          if(entry) weakMap[id]={wrong:val.wrong||0,correct:val.correct||0,streak:val.streak||0,mastered:val.mastered||false,lastSeen:val.lastSeen||0,entry};
+        });
+      }
+      if(data.quizMode) quizMode=data.quizMode;
+      if(data.choiceMode) choiceMode=data.choiceMode;
+      if(data.score) score=data.score;
+      if(data.cc) cc=data.cc;
+      if(data.tot) tot=data.tot;
+      if(data.stk) stk=data.stk;
+      if(data.af) af=data.af;
+      if(data.seenCounter) seenCounter=data.seenCounter;
+      saveSession();
+      updateS(); buildPool(); updateMasteryBar(); nxt();
+      const savedAt = data.savedAt ? new Date(data.savedAt).toLocaleString() : "unknown";
+      el.textContent = "✅ Loaded! Saved: " + savedAt;
+      el.className = "cloud-status ok";
+      setTimeout(closeCloudSave, 2000);
+    } catch(err){
+      el.textContent = "❌ Failed to read save file.";
+      el.className = "cloud-status err";
+    }
+  };
+  reader.readAsText(file);
+  // reset input so same file can be re-imported
+  event.target.value = "";
+}
+
+
+loadTheme();
+loadSession();
+if(af!=="All"){const btn=Array.from(document.querySelectorAll(".fbtn")).find(b=>b.textContent.startsWith(af));if(btn){document.querySelectorAll(".fbtn").forEach(b=>b.classList.remove("active"));btn&&btn.classList.add("active");}}
+renderFilters();buildPool();updateMasteryBar();updateS();nxt();
+
+// Press Enter to go to next question — only works AFTER answer is submitted and feedback is shown
+document.addEventListener("keydown", function(e){
+  if(e.key !== "Enter") return;
+  // If focus is in an input, let the input's own handler deal with it
+  const tag = document.activeElement && document.activeElement.tagName;
+  if(tag === "INPUT" || tag === "TEXTAREA") return;
+  // Only proceed if the question has been answered and Next button is showing
+  const nb = document.getElementById("nb");
+  if(answered && nb && nb.style.display !== "none"){
+    e.preventDefault();
+    nxt();
+  }
+});
+</script>
+</body>
+</html>
