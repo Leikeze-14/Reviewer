@@ -577,6 +577,10 @@ function getSeenCount(cat){
   }).length;
 }
 function recordAnswer(entry,isCorrect){
+  if(practiceMode){
+    // Retake mode: don't touch mastery/streak/wrong-right history at all
+    return;
+  }
   const w=getWeak(entry);
   if(isCorrect){
     w.correct++;
@@ -627,11 +631,26 @@ function showMasteredToast(word){
 }
 
 // ===== RESET MASTERY =====
+function confirmResetMastery(){
+  if(confirm("Reset mastery progress for \""+af+"\" only?\n\nOther categories will not be affected. This cannot be undone.")){
+    resetMastery();
+  }
+}
 function resetMastery(){
-  Object.values(weakMap).forEach(w=>{w.mastered=false;w.streak=0;});
+  practiceMode=false;
+  const catWords=(af==="All"?V:V.filter(v=>v.c===af)).filter(isIncluded);
+  catWords.forEach(v=>{
+    const w=weakMap[v.k+"|"+v.e];
+    if(w){ w.mastered=false; w.streak=0; }
+  });
   saveSession();
   updateMasteryBar();
   buildPool();nxt();
+}
+function retakeMastered(){
+  practiceMode=true;
+  buildPool();
+  nxt();
 }
 
 
@@ -666,6 +685,9 @@ function speakKorean(text,btn){
 }
 
 function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function practiceBadgeHtml(){
+  return practiceMode?'<span class="history-tag reviewed-tag" style="margin-left:6px;vertical-align:middle">🔁 Retake — progress not tracked</span>':"";
+}
 
 // ===== AUDIO REVIEW (hands-free, walk & listen) =====
 let audioPool=[],audioIdx=0,audioPlaying=false,audioRate=0.95,audioShuffle=true,audioRepeat=false,wakeLock=null;
@@ -835,6 +857,7 @@ document.addEventListener('visibilitychange',async ()=>{
 });
 
 let noneSelected=false;
+let practiceMode=false;
 function buildPool(){
   // Full category pool (for mastery bar reference), respecting vocab selection
   pool=(af==="All"?[...V]:V.filter(v=>v.c===af)).filter(isIncluded);
@@ -844,6 +867,12 @@ function buildPool(){
     return;
   }
   noneSelected=false;
+  if(practiceMode){
+    // Retake mode: quiz every selected word in this category again without
+    // touching mastery/streak stats — pure review, nothing gets reset.
+    queue=shuf([...pool]).slice(0,Math.min(QL,pool.length));
+    return;
+  }
   // Active pool = unmastered words only
   const active=getUnmastered();
   if(active.length===0){
@@ -906,6 +935,7 @@ function renderFilters(){
 
 function sf(btn,cat){
   af=cat;
+  practiceMode=false;
   document.querySelectorAll(".fbtn").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
   if(quizMode==="audio"){
@@ -977,7 +1007,7 @@ function renderMC(){
     '<div class="choice-toggle"><span class="choice-label">Choices:</span>'+
     '<button class="ctbtn '+(choiceMode===2?'active':'')+'" onclick="setChoices(2)">2</button>'+
     '<button class="ctbtn '+(choiceMode===4?'active':'')+'" onclick="setChoices(4)">4</button></div></div>'+
-    '<span class="cat-badge">'+cur.c+'</span>'+repeatBadge+streakStars+
+    '<span class="cat-badge">'+cur.c+'</span>'+repeatBadge+streakStars+practiceBadgeHtml()+
     '<div class="qcard">'+
     '<div class="korean-row"><div class="korean">'+cur.k+'</div>'+
     '<button class="speak-btn" id="main-speak" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+speakerSVG+'</button></div>'+
@@ -1020,7 +1050,7 @@ function renderFIB(){
     '<div class="choice-toggle"><span class="choice-label">Choices:</span>'+
     '<button class="ctbtn '+(choiceMode===2?'active':'')+'" onclick="setChoices(2)">2</button>'+
     '<button class="ctbtn '+(choiceMode===4?'active':'')+'" onclick="setChoices(4)">4</button></div></div>'+
-    '<span class="cat-badge">'+cur.c+'</span><span class="mode-badge">Fill in the Blank</span>'+repeatBadge+
+    '<span class="cat-badge">'+cur.c+'</span><span class="mode-badge">Fill in the Blank</span>'+repeatBadge+practiceBadgeHtml()+
     '<div class="qcard">'+
     '<div class="fib-sentence">'+sentDisp+'</div>'+
     '<div class="fib-translation">'+transDisp+'</div>'+
@@ -1081,7 +1111,7 @@ function renderListen(){
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
     '<p class="progress" style="margin:0">'+qn+' / '+tot2+'</p></div>'+
     '<span class="cat-badge">'+cur.c+'</span>'+
-    '<span class="listen-mode-badge">🎧 Listening</span>'+
+    '<span class="listen-mode-badge">🎧 Listening</span>'+practiceBadgeHtml()+
     repeatBadge+streakStars+
     '<div class="listen-card">'+
     '<button class="listen-play-btn" id="listen-play-btn" onclick="playListenWord(this)">'+
@@ -1204,7 +1234,7 @@ function renderRead(){
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
     '<p class="progress" style="margin:0">'+qn+' / '+tot2+'</p></div>'+
     '<span class="cat-badge">'+cur.c+'</span>'+
-    '<span class="read-mode-badge">✍️ Reading</span>'+
+    '<span class="read-mode-badge">✍️ Reading</span>'+practiceBadgeHtml()+
     repeatBadge+streakStars+
     '<div class="read-card">'+
       '<div class="read-korean-big">'+cur.k+'</div>'+
@@ -1343,12 +1373,15 @@ function showAllMastered(){
     '<div class="all-mastered-card">'+
     '<div style="font-size:56px;margin-bottom:12px">🏆</div>'+
     '<div class="end-title">All Words Mastered!</div>'+
-    '<div class="end-sub" style="margin-bottom:20px">You mastered all '+total+' words in <strong>'+af+'</strong>!<br>Ready for a fresh challenge?</div>'+
+    '<div class="end-sub" style="margin-bottom:20px">You mastered all '+total+' words in <strong>'+af+'</strong>!<br>Want to review them again?</div>'+
     '<div style="background:#ede9fe;border-radius:12px;padding:16px;margin-bottom:20px">'+
     '<div style="font-size:13px;color:#5b21b6;font-weight:600;margin-bottom:4px">⭐ '+total+' / '+total+' words mastered</div>'+
     '<div style="font-size:12px;color:#7c3aed">Words are mastered by answering correctly 3 times in a row.</div>'+
     '</div>'+
-    '<button class="reset-mastery-btn" onclick="resetMastery()">🔄 Reset & Practice Again</button>'+
+    '<button class="reset-mastery-btn" style="background:#0369a1" onclick="retakeMastered()">🔁 Retake (Keeps Your Progress)</button>'+
+    '<div style="font-size:11px;color:var(--text-dim);margin:-4px 0 14px;line-height:1.4">Practice these words again — your mastery, streaks, and history stay exactly as they are.</div>'+
+    '<button class="reset-mastery-btn" onclick="confirmResetMastery()">🔄 Reset Mastery for '+esc(af)+'</button>'+
+    '<div style="font-size:11px;color:var(--text-dim);margin:-4px 0 14px;line-height:1.4">This clears mastery only for <strong>'+esc(af)+'</strong> — other categories are untouched.</div>'+
     '<button class="replay-btn" style="background:#f5f4f0;color:#1a1a1a" onclick="sf(document.querySelector(\'.fbtn.active\'),\''+esc(af)+'\')">Change Category</button>'+
     '</div>';
 }
