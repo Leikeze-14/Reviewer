@@ -227,6 +227,12 @@
   .vocab-check-row input[type=checkbox]{width:19px;height:19px;flex-shrink:0;accent-color:#3730a3}
   .vocab-check-text{flex:1;min-width:0}
   .vocab-check-row .vocab-e{margin-top:1px}
+  #settings-body.vocab-grid{gap:4px}
+  #settings-body .vocab-check-row{padding:6px 10px;gap:8px;border-radius:8px}
+  #settings-body .vocab-check-row input[type=checkbox]{width:16px;height:16px}
+  #settings-body .vocab-k{font-size:14px;font-weight:600;line-height:1.25}
+  #settings-body .vocab-e{font-size:11px;margin-top:0;line-height:1.25;color:var(--text-mid)}
+  #settings-body .history-tag{font-size:9px;padding:2px 7px}
   .settings-filter-row{padding:8px 16px 0;display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
   .settings-filter-btn{font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid var(--border-light);background:var(--input-bg);color:var(--text-mid);cursor:pointer;font-family:inherit;font-weight:500}
   .settings-filter-btn.active{background:#3730a3;color:#fff;border-color:#3730a3}
@@ -338,8 +344,8 @@
     <div class="settings-filter-row" id="settings-filter-row"></div>
     <div class="review-body">
       <div class="settings-tab-actions">
-        <button class="settings-mini-btn" onclick="selectAllInCat()">Select All</button>
-        <button class="settings-mini-btn" onclick="deselectAllInCat()">Deselect All</button>
+        <button class="settings-mini-btn" id="select-all-btn" onclick="selectAllInCat()">Select All</button>
+        <button class="settings-mini-btn" id="deselect-all-btn" onclick="deselectAllInCat()">Deselect All</button>
       </div>
       <div class="vocab-grid" id="settings-body"></div>
     </div>
@@ -1458,17 +1464,30 @@ function historyTagFor(v){
   if(w&&w.lastSeen>0) return '<span class="history-tag reviewed-tag">✅ '+w.correct+'✓ / '+w.wrong+'✗</span>';
   return '<span class="history-tag not-reviewed">🆕 New</span>';
 }
-function renderSettingsBody(){
+function getFilteredSettingsWords(){
   const words=V.filter(v=>v.c===settingsTab);
-  const includedCount=words.filter(isIncluded).length;
-  document.getElementById("settings-count").textContent=includedCount+" / "+words.length+" words selected for review";
-  const filtered=words.filter(v=>{
+  return words.filter(v=>{
     const w=weakMap[v.k+"|"+v.e];
     if(settingsFilter==="reviewed") return w&&w.lastSeen>0;
     if(settingsFilter==="new") return !w||!w.lastSeen;
     if(settingsFilter==="mastered") return w&&w.mastered;
     return true;
   });
+}
+function updateSettingsActionLabels(){
+  const labels={all:"",new:" (Not Reviewed)",reviewed:" (Reviewed)",mastered:" (Mastered)"};
+  const suffix=labels[settingsFilter]||"";
+  const sBtn=document.getElementById("select-all-btn");
+  const dBtn=document.getElementById("deselect-all-btn");
+  if(sBtn) sBtn.textContent="Select All"+suffix;
+  if(dBtn) dBtn.textContent="Deselect All"+suffix;
+}
+function renderSettingsBody(){
+  const words=V.filter(v=>v.c===settingsTab);
+  const includedCount=words.filter(isIncluded).length;
+  document.getElementById("settings-count").textContent=includedCount+" / "+words.length+" words selected for review";
+  updateSettingsActionLabels();
+  const filtered=getFilteredSettingsWords();
   if(filtered.length===0){
     document.getElementById("settings-body").innerHTML=
       '<div style="text-align:center;color:var(--text-dim);padding:24px 10px;font-size:13px">No words match this filter.</div>';
@@ -1491,11 +1510,11 @@ function toggleVocabInclude(id,included){
     V.filter(v=>v.c===settingsTab&&isIncluded(v)).length+" / "+V.filter(v=>v.c===settingsTab).length+" words selected for review";
 }
 function selectAllInCat(){
-  V.filter(v=>v.c===settingsTab).forEach(v=>excludedSet.delete(vocabId(v)));
+  getFilteredSettingsWords().forEach(v=>excludedSet.delete(vocabId(v)));
   renderSettingsBody();
 }
 function deselectAllInCat(){
-  V.filter(v=>v.c===settingsTab).forEach(v=>excludedSet.add(vocabId(v)));
+  getFilteredSettingsWords().forEach(v=>excludedSet.add(vocabId(v)));
   renderSettingsBody();
 }
 function renderReviewTabs(){
