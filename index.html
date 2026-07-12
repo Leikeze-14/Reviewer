@@ -227,6 +227,13 @@
   .vocab-check-row input[type=checkbox]{width:19px;height:19px;flex-shrink:0;accent-color:#3730a3}
   .vocab-check-text{flex:1;min-width:0}
   .vocab-check-row .vocab-e{margin-top:1px}
+  .settings-filter-row{padding:8px 16px 0;display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+  .settings-filter-btn{font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid var(--border-light);background:var(--input-bg);color:var(--text-mid);cursor:pointer;font-family:inherit;font-weight:500}
+  .settings-filter-btn.active{background:#3730a3;color:#fff;border-color:#3730a3}
+  .history-tag{font-size:10px;padding:3px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0;font-weight:600}
+  .history-tag.not-reviewed{background:var(--divider);color:var(--text-dim)}
+  .history-tag.reviewed-tag{background:#dbeafe;color:#1e40af}
+  .history-tag.mastered-tag{background:#ede9fe;color:#5b21b6}
 </style>
 </head>
 <body>
@@ -328,6 +335,7 @@
     </div>
     <div class="review-cat-tabs" id="settings-tabs"></div>
     <div class="review-count" id="settings-count"></div>
+    <div class="settings-filter-row" id="settings-filter-row"></div>
     <div class="review-body">
       <div class="settings-tab-actions">
         <button class="settings-mini-btn" onclick="selectAllInCat()">Select All</button>
@@ -396,24 +404,83 @@ const V=[
   {k:"편하다",e:"To be comfortable",c:"Adjectives"},{k:"불편하다",e:"To be uncomfortable",c:"Adjectives"},{k:"괜찮다",e:"To be alright, ok",c:"Adjectives"},{k:"이상하다",e:"To be weird, strange",c:"Adjectives"},{k:"복잡하다",e:"To be jammed, crowded",c:"Adjectives"},{k:"편리하다",e:"To be convenient",c:"Adjectives"},{k:"다르다",e:"To be different",c:"Adjectives"},{k:"같다",e:"To be the same",c:"Adjectives"},{k:"착하다",e:"To be good-natured, nice",c:"Adjectives"},{k:"비열하다",e:"To be mean, nasty",c:"Adjectives"},
 ];
 
-// EPS-TOPIK style fill-in-the-blank sentence templates
-const FIB_TEMPLATES=[
+// EPS-TOPIK style fill-in-the-blank sentence templates, matched per category
+// so the sentence context always fits the grammatical/semantic type of the word.
+const FIB_PLACE=[
   {s:"저는 매일 ( ___ )에 갑니다.",t:"I go to ( ___ ) every day."},
-  {s:"그 사람은 ( ___ )입니다.",t:"That person is a/an ( ___ )."},
-  {s:"저는 ( ___ )을/를 좋아합니다.",t:"I like ( ___ )."},
-  {s:"오늘 ( ___ )을/를 탔습니다.",t:"Today I took/rode the ( ___ )."},
-  {s:"제 ( ___ )이/가 아픕니다.",t:"My ( ___ ) hurts."},
-  {s:"저는 ( ___ )를 입었습니다.",t:"I wore ( ___ )."},
-  {s:"집에서 ( ___ )을/를 사용합니다.",t:"I use ( ___ ) at home."},
-  {s:"책상 위에 ( ___ )이/가 있습니다.",t:"There is a/an ( ___ ) on the desk."},
-  {s:"저는 가족과 함께 ( ___ )에 갔습니다.",t:"I went to ( ___ ) with my family."},
-  {s:"어머니가 ( ___ )을/를 샀습니다.",t:"My mother bought ( ___ )."},
-  {s:"저는 매일 아침 ( ___ )을/를 합니다.",t:"I do ( ___ ) every morning."},
-  {s:"가게에서 ( ___ )을/를 팔고 있습니다.",t:"The store sells ( ___ )."},
   {s:"( ___ )은/는 어디에 있습니까?",t:"Where is ( ___ )?"},
-  {s:"저는 ( ___ )이/가 필요합니다.",t:"I need ( ___ )."},
-  {s:"그것의 한국어는 ( ___ )입니다.",t:"The Korean word for it is ( ___ )."},
+  {s:"저는 가족과 함께 ( ___ )에 갔습니다.",t:"I went to ( ___ ) with my family."}
 ];
+const FIB_TEMPLATES_BY_CAT={
+  "Places":FIB_PLACE,
+  "Gov. Offices":FIB_PLACE,
+  "Occupations":[
+    {s:"그 사람은 ( ___ )입니다.",t:"That person is a/an ( ___ )."},
+    {s:"제 직업은 ( ___ )입니다.",t:"My job is ( ___ )."}
+  ],
+  "Transport":[
+    {s:"오늘 ( ___ )을/를 탔습니다.",t:"Today I rode/took the ( ___ )."},
+    {s:"저는 ( ___ )을/를 타고 회사에 갑니다.",t:"I go to work by ( ___ )."}
+  ],
+  "Family":[
+    {s:"이 사람은 ( ___ )입니다.",t:"This person is a/my ( ___ )."}
+  ],
+  "Body Parts":[
+    {s:"제 ( ___ )이/가 아픕니다.",t:"My ( ___ ) hurts."},
+    {s:"( ___ )을/를 다쳤습니다.",t:"I hurt my ( ___ )."}
+  ],
+  "Clothes":[
+    {s:"저는 오늘 ( ___ )을/를 착용했습니다.",t:"I wore/put on ( ___ ) today."}
+  ],
+  "Food":[
+    {s:"저는 ( ___ )을/를 좋아합니다.",t:"I like ( ___ )."},
+    {s:"시장에서 ( ___ )을/를 샀습니다.",t:"I bought ( ___ ) at the market."}
+  ],
+  "Fruits":[
+    {s:"저는 ( ___ )을/를 좋아합니다.",t:"I like ( ___ )."},
+    {s:"시장에서 ( ___ )을/를 샀습니다.",t:"I bought ( ___ ) at the market."}
+  ],
+  "Vegetables":[
+    {s:"저는 ( ___ )을/를 좋아합니다.",t:"I like ( ___ )."},
+    {s:"시장에서 ( ___ )을/를 샀습니다.",t:"I bought ( ___ ) at the market."}
+  ],
+  "Animals":[
+    {s:"저는 ( ___ )을/를 좋아합니다.",t:"I like ( ___ )."},
+    {s:"농장에는 ( ___ )이/가 있습니다.",t:"There is a/an ( ___ ) on the farm."}
+  ],
+  "Home Goods":[
+    {s:"집에 ( ___ )이/가 있습니다.",t:"There is a/an ( ___ ) at home."},
+    {s:"저는 ( ___ )이/가 필요합니다.",t:"I need ( ___ )."}
+  ],
+  "Appliances":[
+    {s:"저는 집에서 ( ___ )을/를 사용합니다.",t:"I use ( ___ ) at home."}
+  ],
+  "School Supplies":[
+    {s:"저는 학교에서 ( ___ )을/를 사용합니다.",t:"I use ( ___ ) at school."}
+  ],
+  "Accessories":[
+    {s:"저는 ( ___ )을/를 가지고 있습니다.",t:"I have ( ___ )."}
+  ]
+};
+// Categories where the vocab is a dictionary-form verb/adjective or a bare
+// number/time word — embedding them mid-sentence needs conjugation we can't
+// safely automate, so we use an always-accurate meaning-based cloze instead.
+const FIB_DEFINITION_CATS=new Set(["Verbs","Adjectives","Numbers","Time & Date"]);
+function fibTemplateFor(v){
+  if(FIB_DEFINITION_CATS.has(v.c)){
+    return {
+      s:'"'+v.e+'"의 뜻을 가진 한국어 단어는 ( ___ )입니다.',
+      t:'The Korean word meaning "'+v.e+'" is ( ___ ).'
+    };
+  }
+  const list=FIB_TEMPLATES_BY_CAT[v.c];
+  if(list&&list.length) return list[Math.floor(Math.random()*list.length)];
+  // Safety fallback for any category not explicitly mapped
+  return {
+    s:'"'+v.e+'"의 뜻을 가진 한국어 단어는 ( ___ )입니다.',
+    t:'The Korean word meaning "'+v.e+'" is ( ___ ).'
+  };
+}
 
 let CATS=["All",...new Set(V.map(v=>v.c))];
 let af="All",pool=[],queue=[],cur=null,answered=false;
@@ -915,9 +982,8 @@ function renderMC(){
     '</div></div>'+
     '<div class="feedback" id="fb"></div>'+
     '<button class="next-btn" id="nb" onclick="nxt()" style="display:none">Next question</button>';
+  setTimeout(()=>{ speakKorean(cur.k, document.getElementById("main-speak")); },300);
 }
-
-// ---- FILL IN THE BLANK ----
 function renderFIB(){
   const isWeak=getWeak(cur).wrong>getWeak(cur).correct;
   const qn=Math.min(QL,pool.length)-queue.length;
@@ -926,7 +992,7 @@ function renderFIB(){
   document.getElementById("total-count").textContent=poolInfo;
   const repeatBadge=isWeak?'<span class="repeat-badge">Repeat - needs practice</span>':"";
 
-  const tpl=FIB_TEMPLATES[Math.floor(Math.random()*FIB_TEMPLATES.length)];
+  const tpl=fibTemplateFor(cur);
   // Korean word distractors — same category first for a fairer challenge
   const sameCatPool=V.filter(v=>v.k!==cur.k&&v.c===cur.c);shuf(sameCatPool);
   let wrongPool;
@@ -976,6 +1042,9 @@ function pick(btn,chosen,correct){
     const streakMsg=stk>=3?'<div class="streak-banner" style="margin-top:6px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':'';
     fb.innerHTML='<div style="padding:12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-weight:600;font-size:15px">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+streakMsg;
     fb.className="feedback ok";
+    updateS();
+    setTimeout(()=>{ nxt(); },1100);
+    return;
   }else{
     btn.classList.add("wrong");stk=0;
     // Find what the wrong chosen option actually means in Korean
@@ -1230,6 +1299,9 @@ function pickFIB(btn,chosen,correct){
     fb.innerHTML='<div style="padding:12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-weight:600;font-size:15px">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+streakMsg;
     fb.className="feedback ok";
     setTimeout(()=>speakKorean(cur.k,null),50);
+    updateS();
+    setTimeout(()=>{ nxt(); },1500);
+    return;
   }else{
     btn.classList.add("wrong");stk=0;
     // Find what the wrong chosen Korean word actually means
@@ -1333,9 +1405,12 @@ function handlePanelClick(e){
 
 // ===== VOCAB SETTINGS PANEL (choose which words appear per category) =====
 let settingsTab="All";
+let settingsFilter="all";
 function openSettings(){
   settingsTab=af!=="All"?af:(CATS.find(c=>c!=="All")||"All");
+  settingsFilter="all";
   renderSettingsTabs();
+  renderSettingsFilters();
   renderSettingsBody();
   document.getElementById("settings-panel").classList.remove("hidden");
   document.body.style.overflow="hidden";
@@ -1365,17 +1440,48 @@ function stTab(btn,cat){
   btn.classList.add("active");
   renderSettingsBody();
 }
+function renderSettingsFilters(){
+  const labels={all:"All",new:"🆕 Not Reviewed",reviewed:"✅ Reviewed",mastered:"⭐ Mastered"};
+  document.getElementById("settings-filter-row").innerHTML=
+    Object.keys(labels).map(f=>
+      '<button class="settings-filter-btn '+(settingsFilter===f?'active':'')+'" onclick="setSettingsFilter(\''+f+'\')">'+labels[f]+'</button>'
+    ).join("");
+}
+function setSettingsFilter(f){
+  settingsFilter=f;
+  renderSettingsFilters();
+  renderSettingsBody();
+}
+function historyTagFor(v){
+  const w=weakMap[v.k+"|"+v.e];
+  if(w&&w.mastered) return '<span class="history-tag mastered-tag">⭐ Mastered</span>';
+  if(w&&w.lastSeen>0) return '<span class="history-tag reviewed-tag">✅ '+w.correct+'✓ / '+w.wrong+'✗</span>';
+  return '<span class="history-tag not-reviewed">🆕 New</span>';
+}
 function renderSettingsBody(){
   const words=V.filter(v=>v.c===settingsTab);
   const includedCount=words.filter(isIncluded).length;
   document.getElementById("settings-count").textContent=includedCount+" / "+words.length+" words selected for review";
+  const filtered=words.filter(v=>{
+    const w=weakMap[v.k+"|"+v.e];
+    if(settingsFilter==="reviewed") return w&&w.lastSeen>0;
+    if(settingsFilter==="new") return !w||!w.lastSeen;
+    if(settingsFilter==="mastered") return w&&w.mastered;
+    return true;
+  });
+  if(filtered.length===0){
+    document.getElementById("settings-body").innerHTML=
+      '<div style="text-align:center;color:var(--text-dim);padding:24px 10px;font-size:13px">No words match this filter.</div>';
+    return;
+  }
   document.getElementById("settings-body").innerHTML=
-    words.map((v,i)=>{
+    filtered.map((v,i)=>{
       const id=vocabId(v);
       const checked=isIncluded(v);
       return '<label class="vocab-check-row">'+
         '<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleVocabInclude(\''+id.replace(/'/g,"\\'")+'\',this.checked)">'+
         '<span class="vocab-check-text"><div class="vocab-k">'+escHtml(v.k)+'</div><div class="vocab-e">'+escHtml(v.e)+'</div></span>'+
+        historyTagFor(v)+
         '</label>';
     }).join("");
 }
