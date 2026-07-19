@@ -1035,7 +1035,7 @@ function renderMC(){
     '<div class="qcard">'+
     '<div class="korean-row"><div class="korean">'+cur.k+'</div>'+
     '<button class="speak-btn" id="main-speak" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+speakerSVG+'</button></div>'+
-    '<div class="hint">What does this mean in English?</div>'+
+    '<div class="hint">What does this mean in English? <span style="opacity:.7">(Alt+1 to replay sound)</span></div>'+
     '<div class="options '+(choiceMode===2?'cols1':'cols2')+'">'+
     opts.map(o=>'<button class="opt" onclick="pick(this,\''+esc(o)+'\',\''+esc(cur.e)+'\')">'+o+'</button>').join("")+
     '</div></div>'+
@@ -1141,7 +1141,7 @@ function renderListen(){
     '<button class="listen-play-btn" id="listen-play-btn" onclick="playListenWord(this)">'+
       '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'+
     '</button>'+
-    '<div class="listen-replay-hint">Tap to play • tap again to replay</div>'+
+    '<div class="listen-replay-hint">Tap to play • tap again to replay • Alt+1</div>'+
     '<div class="listen-prompt">Type the <strong>English meaning</strong> of the Korean word you hear:</div>'+
     '<input class="listen-input" id="listen-input" type="text" placeholder="Type answer here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key===\'Enter\' && !answered){submitListen();setTimeout(function(){var i=document.getElementById(\'listen-input\');if(i)i.blur();},80);}"/>'+
     '<button class="listen-submit" id="listen-submit-btn" onclick="submitListen()">Check Answer ↵</button>'+
@@ -1205,6 +1205,10 @@ function submitListen(){
     inp.classList.add("correct-input");
     const streakMsg=stk>=3?'<div class="streak-banner" style="margin-top:8px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':'';
     fb.innerHTML='<div class="listen-answer-reveal">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+streakMsg;
+    updateS();
+    setTimeout(()=>speakKorean(cur.k,null),50);
+    setTimeout(()=>{ nxt(); },1500);
+    return;
   } else {
     stk=0;
     inp.classList.add("wrong-input");
@@ -1265,7 +1269,7 @@ function renderRead(){
       '<button class="read-speak-btn" id="read-speak-btn" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+
         '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>'+
       '</button>'+
-      '<div class="read-speak-hint">Tap 🔊 to hear pronunciation</div>'+
+      '<div class="read-speak-hint">Tap 🔊 to hear pronunciation • Alt+1</div>'+
       '<div class="read-prompt">Type the <strong>English meaning</strong> of the Korean word above:</div>'+
       '<div id="read-hint" style="display:none;font-size:15px;letter-spacing:1px;font-weight:600;color:#059669;background:#d1fae5;border-radius:10px;padding:8px 12px;margin-bottom:10px;text-align:center"></div>'+
       '<input class="read-input" id="read-input" type="text" placeholder="Type answer here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key===\'Enter\' && !answered){submitRead();setTimeout(function(){var i=document.getElementById(\'read-input\');if(i)i.blur();},80);}"/>'+
@@ -1316,6 +1320,9 @@ function submitRead(){
     fb.innerHTML='<div class="read-answer-reveal">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+
       (stk>=3?'<div class="streak-banner" style="margin-top:8px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':"");
     setTimeout(()=>speakKorean(cur.k,null),50);
+    updateS();
+    setTimeout(()=>{ nxt(); },1500);
+    return;
   } else {
     stk=0;
     inp.classList.add("wrong-input");
@@ -1860,8 +1867,34 @@ loadSession();
 if(af!=="All"){const btn=Array.from(document.querySelectorAll(".fbtn")).find(b=>b.textContent.startsWith(af));if(btn){document.querySelectorAll(".fbtn").forEach(b=>b.classList.remove("active"));btn&&btn.classList.add("active");}}
 renderFilters();buildPool();updateMasteryBar();updateS();nxt();
 
+// Replay the current word's pronunciation — works across every quiz mode
+function replayCurrentSound(){
+  if(quizMode==="listen"){
+    const btn=document.getElementById("listen-play-btn");
+    if(btn) playListenWord(btn);
+  } else if(quizMode==="read"){
+    if(!cur) return;
+    speakKorean(cur.k, document.getElementById("read-speak-btn"));
+  } else if(quizMode==="fib"){
+    // Don't give away the hidden answer before it's been submitted
+    if(!cur || !answered) return;
+    speakKorean(cur.k, null);
+  } else if(quizMode==="audio"){
+    if(typeof speakCurrentAudioItem==="function" && audioPool && audioPool.length) speakCurrentAudioItem();
+  } else {
+    if(!cur) return;
+    speakKorean(cur.k, document.getElementById("main-speak"));
+  }
+}
+
 // Press Enter to go to next question — only works AFTER answer is submitted and feedback is shown
 document.addEventListener("keydown", function(e){
+  // Alt+1 replays the current word's pronunciation, in every quiz mode
+  if(e.altKey && (e.key==="1"||e.code==="Digit1")){
+    e.preventDefault();
+    replayCurrentSound();
+    return;
+  }
   if(e.key !== "Enter") return;
   // If focus is in an input, let the input's own handler deal with it
   const tag = document.activeElement && document.activeElement.tagName;
