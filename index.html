@@ -272,6 +272,19 @@
   <button class="mbtn" id="mbtn-listen" onclick="setMode('listen')" style="border-color:#f9a8d4;color:#be185d">🎧 Listening</button>
   <button class="mbtn" id="mbtn-read" onclick="setMode('read')" style="border-color:#6ee7b7;color:#065f46">✍️ Reading</button>
   <button class="mbtn" id="mbtn-audio" onclick="setMode('audio')" style="border-color:#fcd34d;color:#92400e">🚶 Audio Review</button>
+  <span class="mode-label" style="margin-left:10px">Quiz Length:</span>
+  <select id="ql-select" onchange="setQuizLength(this.value)" style="font-size:12px;padding:5px 10px;border-radius:20px;border:1.5px solid var(--border-light);background:var(--card);color:var(--text-mid);cursor:pointer;font-family:inherit;font-weight:500">
+    <option value="10">10</option>
+    <option value="20" selected>20</option>
+    <option value="30">30</option>
+    <option value="40">40</option>
+    <option value="50">50</option>
+    <option value="60">60</option>
+    <option value="70">70</option>
+    <option value="80">80</option>
+    <option value="90">90</option>
+    <option value="100">100</option>
+  </select>
 </div>
 
 <div class="review-bar">
@@ -518,7 +531,7 @@ function updateThemeIcon(){
 let excludedSet=new Set();
 function vocabId(v){ return v.k+"|"+v.c; }
 function isIncluded(v){ return !excludedSet.has(vocabId(v)); }
-const QL=20;
+let QL=20;
 const MASTERY_THRESHOLD=3;
 const SAVE_KEY="korean_quiz_v1";
 
@@ -529,7 +542,7 @@ function saveSession(){
       weakMap: Object.fromEntries(Object.entries(weakMap).map(([k,v])=>
         [k,{wrong:v.wrong,correct:v.correct,streak:v.streak,mastered:v.mastered,lastSeen:v.lastSeen||0}]
       )),
-      af,quizMode,choiceMode,score,cc,tot,stk,seenCounter,
+      af,quizMode,choiceMode,score,cc,tot,stk,seenCounter,QL,
       excluded:Array.from(excludedSet)
     };
     localStorage.setItem(SAVE_KEY,JSON.stringify(data));
@@ -555,6 +568,11 @@ function loadSession(){
     if(data.af) af=data.af;
     if(data.seenCounter) seenCounter=data.seenCounter;
     if(data.excluded) excludedSet=new Set(data.excluded);
+    if(data.QL){
+      QL=data.QL;
+      const sel=document.getElementById("ql-select");
+      if(sel) sel.value=String(QL);
+    }
   }catch(e){}
 }
 
@@ -985,6 +1003,11 @@ function nxt(){
   else renderMC();
 }
 
+function setQuizLength(n){
+  QL=parseInt(n,10)||20;
+  saveSession();
+  buildPool();updateMasteryBar();nxt();
+}
 function setChoices(n){choiceMode=n;nxt();}
 
 // ---- MULTIPLE CHOICE ----
@@ -1749,7 +1772,7 @@ function exportSave(){
     weakMap: Object.fromEntries(Object.entries(weakMap).map(([k,v])=>
       [k,{wrong:v.wrong,correct:v.correct,streak:v.streak,mastered:v.mastered,lastSeen:v.lastSeen||0}]
     )),
-    af, quizMode, choiceMode, score, cc, tot, stk, seenCounter,
+    af, quizMode, choiceMode, score, cc, tot, stk, seenCounter, QL,
     savedAt: new Date().toISOString(),
     version: "korean_quiz_v1"
   };
@@ -1792,6 +1815,11 @@ function importSave(event){
       if(data.stk) stk=data.stk;
       if(data.af) af=data.af;
       if(data.seenCounter) seenCounter=data.seenCounter;
+      if(data.QL){
+        QL=data.QL;
+        const sel=document.getElementById("ql-select");
+        if(sel) sel.value=String(QL);
+      }
       saveSession();
       updateS(); buildPool(); updateMasteryBar(); nxt();
       const savedAt = data.savedAt ? new Date(data.savedAt).toLocaleString() : "unknown";
