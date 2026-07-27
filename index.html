@@ -624,22 +624,40 @@ function playTTS(text,lang,rate,onend){
     _ttsAudio=audio;
     audio.playbackRate=rate;
     audio.onended=finish;
-    audio.onerror=()=>fallbackSpeak(text,lang,rate,finish);
+    audio.onerror=(e)=>{ console.warn("TTS stream failed",e); fallbackSpeak(text,lang,rate,finish); };
     const p=audio.play();
-    if(p&&p.catch)p.catch(()=>fallbackSpeak(text,lang,rate,finish));
+    if(p&&p.catch)p.catch((e)=>{ console.warn("TTS play() blocked",e); fallbackSpeak(text,lang,rate,finish); });
   }catch(e){
+    console.warn("TTS threw",e);
     fallbackSpeak(text,lang,rate,finish);
   }
 }
+let ttsFailToastShown=false;
+function showTTSFailToast(){
+  if(ttsFailToastShown) return;
+  ttsFailToastShown=true;
+  const el=document.getElementById("mastered-toast");
+  if(!el) return;
+  el.textContent="🔇 No sound? Click the Brave lion icon → turn Shields off for this site → reload";
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),5000);
+}
 function fallbackSpeak(text,lang,rate,onend){
-  if(!window.speechSynthesis){ if(onend)onend(); return; }
+  if(!window.speechSynthesis){ showTTSFailToast(); if(onend)onend(); return; }
   window.speechSynthesis.cancel();
   const utt=new SpeechSynthesisUtterance(text);
   utt.lang=lang==="ko"?"ko-KR":"en-US"; utt.rate=rate||1.0;
   if(lang==="ko"&&koVoice)utt.voice=koVoice;
-  utt.onend=()=>{if(onend)onend();};
-  utt.onerror=()=>{if(onend)onend();};
+  let settled=false;
+  const done=()=>{ if(settled)return; settled=true; if(onend)onend(); };
+  utt.onstart=()=>{settled="started";};
+  utt.onend=()=>{ if(settled!=="started")showTTSFailToast(); done(); };
+  utt.onerror=()=>{ showTTSFailToast(); done(); };
   window.speechSynthesis.speak(utt);
+  // Brave sometimes breaks speechSynthesis so completely that no event ever
+  // fires at all (not even onerror) — this timeout keeps the app from
+  // hanging forever waiting for a callback that will never come.
+  setTimeout(()=>{ if(!settled){ showTTSFailToast(); done(); } },2500);
 }
 function speakKorean(text,btn){
   stopAllTTS();
