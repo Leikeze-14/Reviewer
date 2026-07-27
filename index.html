@@ -99,10 +99,6 @@
   .speak-btn.speaking{background:#c7d2fe;animation:pulse 0.6s infinite alternate}
   @keyframes pulse{from{transform:scale(1)}to{transform:scale(1.12)}}
   .hint{font-size:12px;color:var(--text-dimmer);text-align:center;margin-bottom:20px}
-  .fib-sentence{font-size:16px;line-height:1.9;color:var(--text);text-align:center;margin-bottom:6px;padding:0 4px}
-  .fib-blank{display:inline-block;border-bottom:2.5px solid #3730a3;min-width:80px;padding:0 8px;color:#3730a3;font-weight:700;font-size:16px;text-align:center;vertical-align:middle}
-  .fib-translation{font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:14px;font-style:italic;line-height:1.5}
-  .fib-korean-hint{font-size:11px;color:var(--text-dimmer);text-align:center;margin-bottom:4px}
   .choice-toggle{display:flex;gap:6px;justify-content:flex-end;margin-bottom:10px;align-items:center}
   .choice-label{font-size:11px;color:var(--text-dim)}
   .ctbtn{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid var(--border-light);background:var(--card);color:var(--text-mid);cursor:pointer;font-family:inherit}
@@ -268,7 +264,6 @@
 <div class="mode-bar">
   <span class="mode-label">Quiz Mode:</span>
   <button class="mbtn active" id="mbtn-mc" onclick="setMode('mc')">Multiple Choice</button>
-  <button class="mbtn" id="mbtn-fib" onclick="setMode('fib')">Fill in the Blank</button>
   <button class="mbtn" id="mbtn-listen" onclick="setMode('listen')" style="border-color:#f9a8d4;color:#be185d">🎧 Listening</button>
   <button class="mbtn" id="mbtn-read" onclick="setMode('read')" style="border-color:#6ee7b7;color:#065f46">✍️ Reading</button>
   <button class="mbtn" id="mbtn-audio" onclick="setMode('audio')" style="border-color:#fcd34d;color:#92400e">🚶 Audio Review</button>
@@ -423,84 +418,6 @@ const V=[
   {k:"편하다",e:"To be comfortable",c:"Adjectives"},{k:"불편하다",e:"To be uncomfortable",c:"Adjectives"},{k:"괜찮다",e:"To be alright, ok",c:"Adjectives"},{k:"이상하다",e:"To be weird, strange",c:"Adjectives"},{k:"복잡하다",e:"To be jammed, crowded",c:"Adjectives"},{k:"편리하다",e:"To be convenient",c:"Adjectives"},{k:"다르다",e:"To be different",c:"Adjectives"},{k:"같다",e:"To be the same",c:"Adjectives"},{k:"착하다",e:"To be good-natured, nice",c:"Adjectives"},{k:"비열하다",e:"To be mean, nasty",c:"Adjectives"},
 ];
 
-// EPS-TOPIK style fill-in-the-blank sentence templates, matched per category
-// so the sentence context always fits the grammatical/semantic type of the word.
-const FIB_PLACE=[
-  {s:"저는 매일 ( ___ )에 갑니다.",t:"I go to ( ___ ) every day."},
-  {s:"( ___ )은/는 어디에 있습니까?",t:"Where is ( ___ )?"},
-  {s:"저는 가족과 함께 ( ___ )에 갔습니다.",t:"I went to ( ___ ) with my family."}
-];
-const FIB_TEMPLATES_BY_CAT={
-  "Places":FIB_PLACE,
-  "Gov. Offices":FIB_PLACE,
-  "Occupations":[
-    {s:"그 사람은 ( ___ )입니다.",t:"That person is a/an ( ___ )."},
-    {s:"제 직업은 ( ___ )입니다.",t:"My job is ( ___ )."}
-  ],
-  "Transport":[
-    {s:"오늘 ( ___ )을/를 탔습니다.",t:"Today I rode/took the ( ___ )."},
-    {s:"저는 ( ___ )을/를 타고 회사에 갑니다.",t:"I go to work by ( ___ )."}
-  ],
-  "Family":[
-    {s:"이 사람은 ( ___ )입니다.",t:"This person is a/my ( ___ )."}
-  ],
-  "Body Parts":[
-    {s:"제 ( ___ )이/가 아픕니다.",t:"My ( ___ ) hurts."},
-    {s:"( ___ )을/를 다쳤습니다.",t:"I hurt my ( ___ )."}
-  ],
-  "Clothes":[
-    {s:"저는 오늘 ( ___ )을/를 착용했습니다.",t:"I wore/put on ( ___ ) today."}
-  ],
-  "Food":[
-    {s:"저는 ( ___ )을/를 좋아합니다.",t:"I like ( ___ )."},
-    {s:"시장에서 ( ___ )을/를 샀습니다.",t:"I bought ( ___ ) at the market."}
-  ],
-  "Fruits":[
-    {s:"저는 ( ___ )을/를 좋아합니다.",t:"I like ( ___ )."},
-    {s:"시장에서 ( ___ )을/를 샀습니다.",t:"I bought ( ___ ) at the market."}
-  ],
-  "Vegetables":[
-    {s:"저는 ( ___ )을/를 좋아합니다.",t:"I like ( ___ )."},
-    {s:"시장에서 ( ___ )을/를 샀습니다.",t:"I bought ( ___ ) at the market."}
-  ],
-  "Animals":[
-    {s:"저는 ( ___ )을/를 좋아합니다.",t:"I like ( ___ )."},
-    {s:"농장에는 ( ___ )이/가 있습니다.",t:"There is a/an ( ___ ) on the farm."}
-  ],
-  "Home Goods":[
-    {s:"집에 ( ___ )이/가 있습니다.",t:"There is a/an ( ___ ) at home."},
-    {s:"저는 ( ___ )이/가 필요합니다.",t:"I need ( ___ )."}
-  ],
-  "Appliances":[
-    {s:"저는 집에서 ( ___ )을/를 사용합니다.",t:"I use ( ___ ) at home."}
-  ],
-  "School Supplies":[
-    {s:"저는 학교에서 ( ___ )을/를 사용합니다.",t:"I use ( ___ ) at school."}
-  ],
-  "Accessories":[
-    {s:"저는 ( ___ )을/를 가지고 있습니다.",t:"I have ( ___ )."}
-  ]
-};
-// Categories where the vocab is a dictionary-form verb/adjective or a bare
-// number/time word — embedding them mid-sentence needs conjugation we can't
-// safely automate, so we use an always-accurate meaning-based cloze instead.
-const FIB_DEFINITION_CATS=new Set(["Verbs","Adjectives","Numbers","Time & Date"]);
-function fibTemplateFor(v){
-  if(FIB_DEFINITION_CATS.has(v.c)){
-    return {
-      s:'"'+v.e+'"의 뜻을 가진 한국어 단어는 ( ___ )입니다.',
-      t:'The Korean word meaning "'+v.e+'" is ( ___ ).'
-    };
-  }
-  const list=FIB_TEMPLATES_BY_CAT[v.c];
-  if(list&&list.length) return list[Math.floor(Math.random()*list.length)];
-  // Safety fallback for any category not explicitly mapped
-  return {
-    s:'"'+v.e+'"의 뜻을 가진 한국어 단어는 ( ___ )입니다.',
-    t:'The Korean word meaning "'+v.e+'" is ( ___ ).'
-  };
-}
-
 let CATS=["All",...new Set(V.map(v=>v.c))];
 let af="All",pool=[],queue=[],cur=null,answered=false;
 let score=0,cc=0,tot=0,stk=0;
@@ -559,7 +476,7 @@ function loadSession(){
         if(entry) weakMap[id]={wrong:val.wrong||0,correct:val.correct||0,streak:val.streak||0,mastered:val.mastered||false,lastSeen:val.lastSeen||0,entry};
       });
     }
-    if(data.quizMode) quizMode=data.quizMode;
+    if(data.quizMode) quizMode=data.quizMode==="fib"?"mc":data.quizMode;
     if(data.choiceMode) choiceMode=data.choiceMode;
     if(data.score) score=data.score;
     if(data.cc) cc=data.cc;
@@ -674,32 +591,60 @@ function retakeMastered(){
 
 const speakerSVG='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
 
+// ===== TEXT-TO-SPEECH ENGINE =====
+// Brave's Shields (Fingerprinting Protection) intentionally scrambles or
+// empties window.speechSynthesis.getVoices(), which is why pronunciation
+// can go silent in Brave even though the same code works in Chrome.
+// To sound the same on every browser (Brave included) we primarily stream
+// a Korean voice clip, and only fall back to the on-device speechSynthesis
+// engine if that fails (e.g. no internet connection).
 let koVoice=null;
 function loadVoice(){
+  if(!window.speechSynthesis) return;
   const voices=window.speechSynthesis.getVoices();
   koVoice=voices.find(v=>v.lang==="ko-KR")||voices.find(v=>v.lang.startsWith("ko"))||null;
 }
 if(window.speechSynthesis){
   loadVoice();
   window.speechSynthesis.onvoiceschanged=loadVoice;
-  // Unlock audio context on first user interaction for faster subsequent calls
-  document.addEventListener("click",function unlock(){
-    const u=new SpeechSynthesisUtterance("");u.volume=0;u.lang="ko-KR";
-    window.speechSynthesis.speak(u);
-    document.removeEventListener("click",unlock);
-  },{once:true});
+}
+let _ttsAudio=null;
+function stopAllTTS(){
+  if(_ttsAudio){ try{_ttsAudio.pause();}catch(e){} _ttsAudio=null; }
+  if(window.speechSynthesis){ try{window.speechSynthesis.cancel();}catch(e){} }
+}
+// lang: "ko" or "en" · rate: playback speed, 1.0 = normal
+function playTTS(text,lang,rate,onend){
+  rate=rate||1.0;
+  let done=false;
+  const finish=()=>{ if(done)return; done=true; if(onend)onend(); };
+  try{
+    const url="https://translate.google.com/translate_tts?ie=UTF-8&tl="+lang+"&client=tw-ob&q="+encodeURIComponent(text);
+    const audio=new Audio(url);
+    _ttsAudio=audio;
+    audio.playbackRate=rate;
+    audio.onended=finish;
+    audio.onerror=()=>fallbackSpeak(text,lang,rate,finish);
+    const p=audio.play();
+    if(p&&p.catch)p.catch(()=>fallbackSpeak(text,lang,rate,finish));
+  }catch(e){
+    fallbackSpeak(text,lang,rate,finish);
+  }
+}
+function fallbackSpeak(text,lang,rate,onend){
+  if(!window.speechSynthesis){ if(onend)onend(); return; }
+  window.speechSynthesis.cancel();
+  const utt=new SpeechSynthesisUtterance(text);
+  utt.lang=lang==="ko"?"ko-KR":"en-US"; utt.rate=rate||1.0;
+  if(lang==="ko"&&koVoice)utt.voice=koVoice;
+  utt.onend=()=>{if(onend)onend();};
+  utt.onerror=()=>{if(onend)onend();};
+  window.speechSynthesis.speak(utt);
 }
 function speakKorean(text,btn){
-  if(!window.speechSynthesis)return;
-  window.speechSynthesis.cancel();
-  // Use setTimeout(0) to let cancel() flush before queuing new utterance
-  setTimeout(()=>{
-    const utt=new SpeechSynthesisUtterance(text);
-    utt.lang="ko-KR"; utt.rate=1.0;
-    if(koVoice)utt.voice=koVoice;
-    if(btn){btn.classList.add("speaking");utt.onend=()=>btn.classList.remove("speaking");utt.onerror=()=>btn.classList.remove("speaking");}
-    window.speechSynthesis.speak(utt);
-  },0);
+  stopAllTTS();
+  if(btn)btn.classList.add("speaking");
+  playTTS(text,"ko",1.0,()=>{ if(btn)btn.classList.remove("speaking"); });
 }
 
 function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -761,7 +706,7 @@ function playAudioReview(){
 function pauseAudioReview(){
   audioPlaying=false;
   updateAudioPlayBtn();
-  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  stopAllTTS();
   releaseAudioWakeLock();
   stopKeepAliveAudio();
   if('mediaSession' in navigator) navigator.mediaSession.playbackState="paused";
@@ -795,45 +740,31 @@ function updateMediaSessionMetadata(){
   }catch(e){}
 }
 function speakCurrentAudioItem(){
-  if(!audioPlaying||!window.speechSynthesis) return;
+  if(!audioPlaying) return;
   const item=audioPool[audioIdx];
   const mEl=document.getElementById("audio-meaning");
   if(mEl) mEl.style.visibility="hidden";
-  window.speechSynthesis.cancel();
-  setTimeout(()=>{
+  stopAllTTS();
+  playTTS(item.k,"ko",audioRate,()=>{
     if(!audioPlaying) return;
-    const utt=new SpeechSynthesisUtterance(item.k);
-    utt.lang="ko-KR";utt.rate=audioRate;
-    if(koVoice) utt.voice=koVoice;
-    utt.onend=()=>{
+    setTimeout(()=>{
       if(!audioPlaying) return;
-      setTimeout(()=>{
-        if(!audioPlaying) return;
-        if(audioRepeat){
-          const utt2=new SpeechSynthesisUtterance(item.k);
-          utt2.lang="ko-KR";utt2.rate=audioRate;
-          if(koVoice) utt2.voice=koVoice;
-          utt2.onend=()=>{ if(audioPlaying) speakAudioMeaning(item); };
-          window.speechSynthesis.speak(utt2);
-        }else{
-          speakAudioMeaning(item);
-        }
-      },350);
-    };
-    window.speechSynthesis.speak(utt);
-  },50);
+      if(audioRepeat){
+        playTTS(item.k,"ko",audioRate,()=>{ if(audioPlaying) speakAudioMeaning(item); });
+      }else{
+        speakAudioMeaning(item);
+      }
+    },350);
+  });
 }
 function speakAudioMeaning(item){
-  if(!audioPlaying||!window.speechSynthesis) return;
+  if(!audioPlaying) return;
   const mEl=document.getElementById("audio-meaning");
   if(mEl) mEl.style.visibility="visible";
-  const utt=new SpeechSynthesisUtterance(item.e);
-  utt.lang="en-US";utt.rate=Math.min(audioRate+0.05,1.3);
-  utt.onend=()=>{
+  playTTS(item.e,"en",Math.min(audioRate+0.05,1.3),()=>{
     if(!audioPlaying) return;
     setTimeout(()=>{ if(audioPlaying) advanceAudio(); },900);
-  };
-  window.speechSynthesis.speak(utt);
+  });
 }
 function advanceAudio(){
   audioIdx=(audioIdx+1)%audioPool.length;
@@ -841,13 +772,13 @@ function advanceAudio(){
   if(audioPlaying) speakCurrentAudioItem();
 }
 function audioNext(){
-  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  stopAllTTS();
   audioIdx=(audioIdx+1)%audioPool.length;
   renderAudioReview();
   if(audioPlaying) speakCurrentAudioItem();
 }
 function audioPrev(){
-  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  stopAllTTS();
   audioIdx=(audioIdx-1+audioPool.length)%audioPool.length;
   renderAudioReview();
   if(audioPlaying) speakCurrentAudioItem();
@@ -922,7 +853,6 @@ function setMode(m){
   const wasAudio=quizMode==="audio";
   quizMode=m;
   document.getElementById("mbtn-mc").classList.toggle("active",m==="mc");
-  document.getElementById("mbtn-fib").classList.toggle("active",m==="fib");
   const listenBtn=document.getElementById("mbtn-listen");
   listenBtn.classList.remove("active","listen-active");
   if(m==="listen") listenBtn.classList.add("listen-active");
@@ -1000,7 +930,6 @@ function nxt(){
   renderFilters();
   if(quizMode==="listen") renderListen();
   else if(quizMode==="read") renderRead();
-  else if(quizMode==="fib") renderFIB();
   else renderMC();
 }
 
@@ -1043,49 +972,6 @@ function renderMC(){
     '<button class="next-btn" id="nb" onclick="nxt()" style="display:none">Next question</button>';
   setTimeout(()=>{ speakKorean(cur.k, document.getElementById("main-speak")); },300);
 }
-function renderFIB(){
-  const isWeak=getWeak(cur).wrong>getWeak(cur).correct;
-  const qn=roundSize()-queue.length;
-  const tot2=queue.length+qn;
-  const poolInfo=af==="All"?pool.length+" words":pool.length+" words in "+af;
-  document.getElementById("total-count").textContent=poolInfo;
-  const repeatBadge=isWeak?'<span class="repeat-badge">Repeat - needs practice</span>':"";
-
-  const tpl=fibTemplateFor(cur);
-  // Korean word distractors — same category first for a fairer challenge
-  const sameCatPool=V.filter(v=>v.k!==cur.k&&v.c===cur.c);shuf(sameCatPool);
-  let wrongPool;
-  if(sameCatPool.length>=choiceMode-1){
-    wrongPool=sameCatPool;
-  }else{
-    const othersPool=V.filter(v=>v.k!==cur.k&&v.c!==cur.c);shuf(othersPool);
-    wrongPool=[...sameCatPool,...othersPool];
-  }
-  const wrongOpts=wrongPool.slice(0,choiceMode-1).map(v=>v.k);
-  const opts=shuf([cur.k,...wrongOpts]);
-  const esc=s=>s.replace(/'/g,"\\'").replace(/"/g,"&quot;");
-
-  const sentDisp=tpl.s.replace("( ___ )",'<span class="fib-blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>');
-  const transDisp=tpl.t.replace("( ___ )",'<strong style="color:#3730a3">'+cur.e+'</strong>');
-
-  document.getElementById("qa").innerHTML=
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
-    '<p class="progress" style="margin:0">'+qn+' / '+tot2+'</p>'+
-    '<div class="choice-toggle"><span class="choice-label">Choices:</span>'+
-    '<button class="ctbtn '+(choiceMode===2?'active':'')+'" onclick="setChoices(2)">2</button>'+
-    '<button class="ctbtn '+(choiceMode===4?'active':'')+'" onclick="setChoices(4)">4</button></div></div>'+
-    '<span class="cat-badge">'+cur.c+'</span><span class="mode-badge">Fill in the Blank</span>'+repeatBadge+practiceBadgeHtml()+
-    '<div class="qcard">'+
-    '<div class="fib-sentence">'+sentDisp+'</div>'+
-    '<div class="fib-translation">'+transDisp+'</div>'+
-    '<div class="fib-korean-hint">Choose the correct Korean word for the blank:</div>'+
-    '<div class="options '+(choiceMode===2?'cols1':'cols2')+'" style="margin-top:10px">'+
-    opts.map(o=>'<button class="opt" onclick="pickFIB(this,\''+esc(o)+'\',\''+esc(cur.k)+'\')">'+o+'</button>').join("")+
-    '</div></div>'+
-    '<div class="feedback" id="fb"></div>'+
-    '<button class="next-btn" id="nb" onclick="nxt()" style="display:none">Next question</button>';
-}
-
 function pick(btn,chosen,correct){
   if(answered)return;
   answered=true;tot++;
@@ -1155,18 +1041,10 @@ function renderListen(){
 }
 
 function playListenWord(btn){
-  if(!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  setTimeout(()=>{
-    btn.classList.add("playing");
-    const utt=new SpeechSynthesisUtterance(cur.k);
-    utt.lang="ko-KR"; utt.rate=1.0;
-    if(koVoice) utt.voice=koVoice;
-    utt.onend=()=>btn.classList.remove("playing");
-    utt.onerror=()=>btn.classList.remove("playing");
-    window.speechSynthesis.speak(utt);
-    setTimeout(()=>{const inp=document.getElementById("listen-input");if(inp)inp.focus();},200);
-  },0);
+  stopAllTTS();
+  btn.classList.add("playing");
+  playTTS(cur.k,"ko",1.0,()=>btn.classList.remove("playing"));
+  setTimeout(()=>{const inp=document.getElementById("listen-input");if(inp)inp.focus();},200);
 }
 
 function normalizeAnswer(s){
@@ -1366,41 +1244,6 @@ function skipRead(){
   setTimeout(()=>speakKorean(cur.k,null),50);
 }
 
-function pickFIB(btn,chosen,correct){
-  if(answered)return;
-  answered=true;tot++;
-  document.querySelectorAll(".opt").forEach(b=>{
-    b.disabled=true;
-    if(b.textContent.trim()===correct)b.classList.add("correct");
-  });
-  const isCorrect=chosen===correct;
-  recordAnswer(cur,isCorrect);
-  const fb=document.getElementById("fb");
-  if(isCorrect){
-    cc++;stk++;score+=10+Math.min(stk-1,5)*2;
-    const streakMsg=stk>=3?'<div class="streak-banner" style="margin-top:6px">🔥 Streak x'+stk+'!</div>':'';
-    fb.innerHTML='<div style="padding:12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-weight:600;font-size:15px">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+streakMsg;
-    fb.className="feedback ok";
-    setTimeout(()=>speakKorean(cur.k,null),50);
-    updateS();
-    setTimeout(()=>{ nxt(); },1500);
-    return;
-  }else{
-    btn.classList.add("wrong");stk=0;
-    // Find what the wrong chosen Korean word actually means
-    const wrongEntry=V.find(v=>v.k===chosen);
-    const wrongHint=wrongEntry
-      ? '<div style="font-size:12px;margin-top:5px;padding:6px 10px;background:#fee2e2;border-radius:8px;color:#991b1b">Your choice: <strong>'+chosen+'</strong> = <span style="font-weight:700">'+wrongEntry.e+'</span></div>'
-      : '';
-    fb.innerHTML='Wrong! Answer: <strong>'+correct+'</strong> ('+cur.e+')'+wrongHint;
-    fb.className="feedback bad";
-    const ins=Math.max(0,Math.floor(Math.random()*Math.min(3,queue.length)));
-    queue.splice(ins,0,cur);
-  }
-  updateS();
-  document.getElementById("nb").style.display="block";
-}
-
 function showNoneSelected(){
   document.getElementById("total-count").textContent="";
   document.getElementById("qa").innerHTML=
@@ -1455,7 +1298,7 @@ function showEnd(){
   }else{
     weakHTML='<div class="weak-section"><div class="no-weak">Great job! No weak words detected.</div></div>';
   }
-  const modeLabel=quizMode==="fib"?"Fill in the Blank":quizMode==="listen"?"🎧 Listening Exam":quizMode==="read"?"✍️ Reading":"Multiple Choice";
+  const modeLabel=quizMode==="listen"?"🎧 Listening Exam":quizMode==="read"?"✍️ Reading":"Multiple Choice";
   document.getElementById("qa").innerHTML=
     '<div class="end-card">'+
     '<div class="end-emoji">'+emojis[emoji]+'</div>'+
@@ -1832,7 +1675,7 @@ function importSave(event){
           if(entry) weakMap[id]={wrong:val.wrong||0,correct:val.correct||0,streak:val.streak||0,mastered:val.mastered||false,lastSeen:val.lastSeen||0,entry};
         });
       }
-      if(data.quizMode) quizMode=data.quizMode;
+      if(data.quizMode) quizMode=data.quizMode==="fib"?"mc":data.quizMode;
       if(data.choiceMode) choiceMode=data.choiceMode;
       if(data.score) score=data.score;
       if(data.cc) cc=data.cc;
@@ -1875,10 +1718,6 @@ function replayCurrentSound(){
   } else if(quizMode==="read"){
     if(!cur) return;
     speakKorean(cur.k, document.getElementById("read-speak-btn"));
-  } else if(quizMode==="fib"){
-    // Don't give away the hidden answer before it's been submitted
-    if(!cur || !answered) return;
-    speakKorean(cur.k, null);
   } else if(quizMode==="audio"){
     if(typeof speakCurrentAudioItem==="function" && audioPool && audioPool.length) speakCurrentAudioItem();
   } else {
