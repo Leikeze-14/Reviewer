@@ -592,12 +592,15 @@ function retakeMastered(){
 const speakerSVG='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
 
 // ===== TEXT-TO-SPEECH ENGINE =====
-// Brave's Shields (Fingerprinting Protection) intentionally scrambles or
-// empties window.speechSynthesis.getVoices(), which is why pronunciation
-// can go silent in Brave even though the same code works in Chrome.
-// To sound the same on every browser (Brave included) we primarily stream
-// a Korean voice clip, and only fall back to the on-device speechSynthesis
-// engine if that fails (e.g. no internet connection).
+// Chrome quietly ships with Google account keys that let it reach Google's
+// cloud voices for languages your OS doesn't have installed locally. Brave
+// strips those keys out for privacy, so Brave can ONLY use voices actually
+// installed on your device. If Korean isn't installed at the OS level,
+// Brave has zero Korean voices available — see showTTSFailToast() below
+// for the fix (installing the Korean voice pack in Windows/Mac/phone
+// settings). (A cross-origin audio-fetch workaround was tried first, but
+// Chromium's CORB security feature blocks that response entirely, so it's
+// not usable here.)
 let koVoice=null;
 function loadVoice(){
   if(!window.speechSynthesis) return;
@@ -608,29 +611,8 @@ if(window.speechSynthesis){
   loadVoice();
   window.speechSynthesis.onvoiceschanged=loadVoice;
 }
-let _ttsAudio=null;
 function stopAllTTS(){
-  if(_ttsAudio){ try{_ttsAudio.pause();}catch(e){} _ttsAudio=null; }
   if(window.speechSynthesis){ try{window.speechSynthesis.cancel();}catch(e){} }
-}
-// lang: "ko" or "en" · rate: playback speed, 1.0 = normal
-function playTTS(text,lang,rate,onend){
-  rate=rate||1.0;
-  let done=false;
-  const finish=()=>{ if(done)return; done=true; if(onend)onend(); };
-  try{
-    const url="https://translate.google.com/translate_tts?ie=UTF-8&tl="+lang+"&client=tw-ob&q="+encodeURIComponent(text);
-    const audio=new Audio(url);
-    _ttsAudio=audio;
-    audio.playbackRate=rate;
-    audio.onended=finish;
-    audio.onerror=(e)=>{ console.warn("TTS stream failed",e); fallbackSpeak(text,lang,rate,finish); };
-    const p=audio.play();
-    if(p&&p.catch)p.catch((e)=>{ console.warn("TTS play() blocked",e); fallbackSpeak(text,lang,rate,finish); });
-  }catch(e){
-    console.warn("TTS threw",e);
-    fallbackSpeak(text,lang,rate,finish);
-  }
 }
 let ttsFailToastShown=false;
 function showTTSFailToast(){
@@ -638,12 +620,15 @@ function showTTSFailToast(){
   ttsFailToastShown=true;
   const el=document.getElementById("mastered-toast");
   if(!el) return;
-  el.textContent="🔇 No sound? Click the Brave lion icon → turn Shields off for this site → reload";
+  el.textContent="🔇 No Korean voice found — install a Korean voice pack in your device's system settings, then reload";
   el.classList.add("show");
-  setTimeout(()=>el.classList.remove("show"),5000);
+  setTimeout(()=>el.classList.remove("show"),6000);
 }
-function fallbackSpeak(text,lang,rate,onend){
+// lang: "ko" or "en" · rate: playback speed, 1.0 = normal
+function playTTS(text,lang,rate,onend){
   if(!window.speechSynthesis){ showTTSFailToast(); if(onend)onend(); return; }
+  loadVoice();
+  if(lang==="ko"&&!koVoice){ showTTSFailToast(); if(onend)onend(); return; }
   window.speechSynthesis.cancel();
   const utt=new SpeechSynthesisUtterance(text);
   utt.lang=lang==="ko"?"ko-KR":"en-US"; utt.rate=rate||1.0;
@@ -654,9 +639,9 @@ function fallbackSpeak(text,lang,rate,onend){
   utt.onend=()=>{ if(settled!=="started")showTTSFailToast(); done(); };
   utt.onerror=()=>{ showTTSFailToast(); done(); };
   window.speechSynthesis.speak(utt);
-  // Brave sometimes breaks speechSynthesis so completely that no event ever
-  // fires at all (not even onerror) — this timeout keeps the app from
-  // hanging forever waiting for a callback that will never come.
+  // Some browsers can break speechSynthesis so completely that no event
+  // ever fires — this timeout keeps the app from hanging forever waiting
+  // for a callback that will never come.
   setTimeout(()=>{ if(!settled){ showTTSFailToast(); done(); } },2500);
 }
 function speakKorean(text,btn){
