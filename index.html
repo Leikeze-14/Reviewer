@@ -93,6 +93,7 @@
   .qcard{background:var(--card);border-radius:16px;padding:24px 20px 20px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
   .korean-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px}
   .korean{font-size:40px;font-weight:700;text-align:center;color:var(--text);line-height:1.2}
+  .roman{font-size:14px;font-weight:600;text-align:center;color:var(--text-dim);letter-spacing:.3px;margin-top:2px}
   .speak-btn{background:#eef2ff;border:none;border-radius:50%;width:42px;height:42px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s}
   .speak-btn:active{background:#c7d2fe}
   .speak-btn svg{width:20px;height:20px;fill:#3730a3}
@@ -418,6 +419,61 @@ const V=[
   {k:"편하다",e:"To be comfortable",c:"Adjectives"},{k:"불편하다",e:"To be uncomfortable",c:"Adjectives"},{k:"괜찮다",e:"To be alright, ok",c:"Adjectives"},{k:"이상하다",e:"To be weird, strange",c:"Adjectives"},{k:"복잡하다",e:"To be jammed, crowded",c:"Adjectives"},{k:"편리하다",e:"To be convenient",c:"Adjectives"},{k:"다르다",e:"To be different",c:"Adjectives"},{k:"같다",e:"To be the same",c:"Adjectives"},{k:"착하다",e:"To be good-natured, nice",c:"Adjectives"},{k:"비열하다",e:"To be mean, nasty",c:"Adjectives"},
 ];
 
+// Korean translations for category names, shown as "English (한국어)".
+// Categories that already contain Hangul in their name (e.g. "Particles 조사")
+// are left untouched.
+const CAT_KO={
+  "Places":"장소","Gov. Offices":"관공서","Occupations":"직업","Transport":"교통수단",
+  "Family":"가족","Body Parts":"신체 부위","Clothes":"옷","Food":"음식","Fruits":"과일",
+  "Vegetables":"채소","Animals":"동물","Home Goods":"생활용품","Appliances":"가전제품",
+  "School Supplies":"학용품","Accessories":"액세서리","Numbers":"숫자","Time & Date":"시간과 날짜",
+  "Verbs":"동사","Adjectives":"형용사"
+};
+function catLabel(c){
+  if(c==="All") return c;
+  if(/[\uAC00-\uD7A3]/.test(c)) return c; // already has Korean in it
+  return CAT_KO[c] ? c+" ("+CAT_KO[c]+")" : c;
+}
+
+// ===== ROMANIZATION (Revised Romanization of Korean, simplified) =====
+// Decomposes each Hangul syllable block into initial/medial/final jamo and
+// maps them to standard romanization, including basic liaison (linking a
+// final consonant into a following syllable that starts with a silent ㅇ,
+// e.g. 한국어 -> han-gu-geo instead of han-guk-eo). Non-Hangul characters
+// (spaces, slashes, Latin letters) pass through unchanged.
+const RR_CHO=["g","kk","n","d","tt","r","m","b","pp","s","ss","","j","jj","ch","k","t","p","h"];
+const RR_JUNG=["a","ae","ya","yae","eo","e","yeo","ye","o","wa","wae","oe","yo","u","wo","we","wi","yu","eu","ui","i"];
+const RR_JONG=["","k","k","k","n","n","n","t","l","k","m","l","l","l","l","l","m","p","p","t","t","ng","t","t","k","t","p","t"];
+const RR_LIAISON=[-1,0,1,-1,2,-1,-1,3,5,-1,-1,-1,-1,-1,-1,-1,6,7,-1,9,10,-1,12,14,15,16,17,-1];
+function romanize(str){
+  const chars=[...str];
+  const syl=chars.map(ch=>{
+    const code=ch.charCodeAt(0)-0xAC00;
+    if(code<0||code>11171) return {raw:ch};
+    return {cho:Math.floor(code/588), jung:Math.floor((code%588)/28), jong:code%28};
+  });
+  let out="", prevWasSyl=false;
+  for(let i=0;i<syl.length;i++){
+    const s=syl[i];
+    if(s.raw!==undefined){ out+=s.raw; prevWasSyl=false; continue; }
+    let choIdx=s._liaisonCho!==undefined ? s._liaisonCho : s.cho;
+    let jongOut="";
+    const next=syl[i+1];
+    if(s.jong!==0){
+      if(next && next.raw===undefined && next.cho===11 && RR_LIAISON[s.jong]!==-1){
+        next._liaisonCho=RR_LIAISON[s.jong];
+      }else{
+        jongOut=RR_JONG[s.jong];
+      }
+    }
+    const piece=RR_CHO[choIdx]+RR_JUNG[s.jung]+jongOut;
+    out += (prevWasSyl?"-"+piece:piece);
+    prevWasSyl=true;
+  }
+  return out;
+}
+
+
 let CATS=["All",...new Set(V.map(v=>v.c))];
 let af="All",pool=[],queue=[],cur=null,answered=false;
 let score=0,cc=0,tot=0,stk=0;
@@ -676,8 +732,9 @@ function renderAudioReview(){
   updateMediaSessionMetadata();
   qa.innerHTML=
     '<div class="audio-card">'+
-      '<div class="audio-progress">'+(audioIdx+1)+' / '+audioPool.length+' &middot; '+escHtml(af)+'</div>'+
+      '<div class="audio-progress">'+(audioIdx+1)+' / '+audioPool.length+' &middot; '+escHtml(catLabel(af))+'</div>'+
       '<div class="audio-word" id="audio-word">'+escHtml(item.k)+'</div>'+
+      '<div class="roman" id="audio-roman">'+romanize(item.k)+'</div>'+
       '<div class="audio-meaning" id="audio-meaning" style="visibility:hidden">'+escHtml(item.e)+'</div>'+
       '<div class="audio-controls">'+
         '<button class="audio-btn" onclick="audioPrev()">⏮</button>'+
@@ -880,7 +937,7 @@ function renderFilters(){
     CATS.map(c=>{
       const total=(c==="All"?V:V.filter(v=>v.c===c)).filter(isIncluded).length;
       const seen=getSeenCount(c);
-      return '<button class="fbtn '+(c===af?'active':'')+'" onclick="sf(this,\''+c.replace(/'/g,"\\'")+'\')" >'+c+
+      return '<button class="fbtn '+(c===af?'active':'')+'" onclick="sf(this,\''+c.replace(/'/g,"\\'")+'\')" >'+catLabel(c)+
         ' <span style="opacity:.55;font-size:10px;margin-left:2px">'+seen+'/'+total+'</span></button>';
     }).join("");
 }
@@ -963,10 +1020,11 @@ function renderMC(){
     '<div class="choice-toggle"><span class="choice-label">Choices:</span>'+
     '<button class="ctbtn '+(choiceMode===2?'active':'')+'" onclick="setChoices(2)">2</button>'+
     '<button class="ctbtn '+(choiceMode===4?'active':'')+'" onclick="setChoices(4)">4</button></div></div>'+
-    '<span class="cat-badge">'+cur.c+'</span>'+repeatBadge+streakStars+practiceBadgeHtml()+
+    '<span class="cat-badge">'+catLabel(cur.c)+'</span>'+repeatBadge+streakStars+practiceBadgeHtml()+
     '<div class="qcard">'+
     '<div class="korean-row"><div class="korean">'+cur.k+'</div>'+
     '<button class="speak-btn" id="main-speak" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+speakerSVG+'</button></div>'+
+    '<div class="roman">'+romanize(cur.k)+'</div>'+
     '<div class="hint">What does this mean in English? <span style="opacity:.7">(Alt+1 to replay sound)</span></div>'+
     '<div class="options '+(choiceMode===2?'cols1':'cols2')+'">'+
     opts.map(o=>'<button class="opt" onclick="pick(this,\''+esc(o)+'\',\''+esc(cur.e)+'\')">'+o+'</button>').join("")+
@@ -1023,7 +1081,7 @@ function renderListen(){
   document.getElementById("qa").innerHTML=
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
     '<p class="progress" style="margin:0">'+qn+' / '+tot2+'</p></div>'+
-    '<span class="cat-badge">'+cur.c+'</span>'+
+    '<span class="cat-badge">'+catLabel(cur.c)+'</span>'+
     '<span class="listen-mode-badge">🎧 Listening</span>'+practiceBadgeHtml()+
     repeatBadge+streakStars+
     '<div class="listen-card">'+
@@ -1085,7 +1143,7 @@ function submitListen(){
     cc++; stk++; score+=10+Math.min(stk-1,5)*2;
     inp.classList.add("correct-input");
     const streakMsg=stk>=3?'<div class="streak-banner" style="margin-top:8px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':'';
-    fb.innerHTML='<div class="listen-answer-reveal">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+streakMsg;
+    fb.innerHTML='<div class="listen-answer-reveal">✅ Correct! <strong>'+cur.k+'</strong> ('+romanize(cur.k)+') = '+cur.e+'</div>'+streakMsg;
     updateS();
     setTimeout(()=>speakKorean(cur.k,null),50);
     setTimeout(()=>{ nxt(); },1500);
@@ -1099,7 +1157,7 @@ function submitListen(){
     const typedMeaningHint=matched
       ? '<div style="font-size:12px;margin-top:6px;padding:7px 10px;background:#ffe4e6;border-radius:8px;color:#9f1239">💬 "<em>'+typed+'</em>" = <strong>'+matched.k+'</strong> ('+matched.e+')</div>'
       : '<div style="font-size:12px;margin-top:6px;color:#be185d;font-style:italic">💬 "<em>'+typed+'</em>" — not found in vocab list</div>';
-    fb.innerHTML='<div class="listen-answer-reveal wrong-reveal">❌ Wrong answer!<br><span style="font-size:13px">Correct: <strong>'+cur.e+'</strong> → <strong>'+cur.k+'</strong></span>'+typedMeaningHint+'</div>';
+    fb.innerHTML='<div class="listen-answer-reveal wrong-reveal">❌ Wrong answer!<br><span style="font-size:13px">Correct: <strong>'+cur.e+'</strong> → <strong>'+cur.k+'</strong> ('+romanize(cur.k)+')</span>'+typedMeaningHint+'</div>';
     const ins=Math.max(0,Math.floor(Math.random()*Math.min(3,queue.length)));
     queue.splice(ins,0,cur);
   }
@@ -1119,7 +1177,7 @@ function skipListen(){
   recordAnswer(cur, false);
   stk=0;
   const fb=document.getElementById("listen-feedback");
-  fb.innerHTML='<div class="listen-answer-reveal wrong-reveal">⏭ Skipped — Answer: <strong>'+cur.e+'</strong><br><span style="font-size:13px;color:#be185d">Korean: '+cur.k+'</span></div>';
+  fb.innerHTML='<div class="listen-answer-reveal wrong-reveal">⏭ Skipped — Answer: <strong>'+cur.e+'</strong><br><span style="font-size:13px;color:#be185d">Korean: '+cur.k+' ('+romanize(cur.k)+')</span></div>';
   const ins=Math.max(0,Math.floor(Math.random()*Math.min(3,queue.length)));
   queue.splice(ins,0,cur);
   updateS();
@@ -1142,11 +1200,12 @@ function renderRead(){
   document.getElementById("qa").innerHTML=
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
     '<p class="progress" style="margin:0">'+qn+' / '+tot2+'</p></div>'+
-    '<span class="cat-badge">'+cur.c+'</span>'+
+    '<span class="cat-badge">'+catLabel(cur.c)+'</span>'+
     '<span class="read-mode-badge">✍️ Reading</span>'+practiceBadgeHtml()+
     repeatBadge+streakStars+
     '<div class="read-card">'+
       '<div class="read-korean-big">'+cur.k+'</div>'+
+      '<div class="roman">'+romanize(cur.k)+'</div>'+
       '<button class="read-speak-btn" id="read-speak-btn" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+
         '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>'+
       '</button>'+
@@ -1363,7 +1422,7 @@ function handleSettingsPanelClick(e){
 function renderSettingsTabs(){
   document.getElementById("settings-tabs").innerHTML=
     CATS.filter(c=>c!=="All").map(c=>
-      '<button class="rct '+(c===settingsTab?'active':'')+'" onclick="stTab(this,\''+c.replace(/'/g,"\\'")+'\')">'+c+'</button>'
+      '<button class="rct '+(c===settingsTab?'active':'')+'" onclick="stTab(this,\''+c.replace(/'/g,"\\'")+'\')">'+catLabel(c)+'</button>'
     ).join("");
 }
 function stTab(btn,cat){
@@ -1448,7 +1507,7 @@ function renderReviewTabs(){
     CATS.map(c=>{
       const total=c==="All"?V.length:V.filter(v=>v.c===c).length;
       const seen=getSeenCount(c);
-      return '<button class="rct '+(c===reviewCat?'active':'')+'" onclick="switchReviewCat(\''+c.replace(/'/g,"\\'")+'\')">'+c+
+      return '<button class="rct '+(c===reviewCat?'active':'')+'" onclick="switchReviewCat(\''+c.replace(/'/g,"\\'")+'\')">'+catLabel(c)+
         ' <span style="opacity:.6;font-size:10px;margin-left:2px">'+seen+'/'+total+'</span></button>';
     }).join("");
 }
@@ -1470,15 +1529,15 @@ function renderVocabGrid(){
       return a.k.localeCompare(b.k,"ko");
     });
   }
-  document.getElementById("review-count").textContent=words.length+" words"+(reviewCat!=="All"?" in "+reviewCat:"");
-  document.getElementById("review-title").textContent=reviewCat==="All"?"All Vocabulary":reviewCat+" Vocabulary";
+  document.getElementById("review-count").textContent=words.length+" words"+(reviewCat!=="All"?" in "+catLabel(reviewCat):"");
+  document.getElementById("review-title").textContent=reviewCat==="All"?"All Vocabulary":catLabel(reviewCat)+" Vocabulary";
   document.getElementById("review-quiz-btn").textContent=
-    reviewCat==="All"?"Start Quiz for All Words":"Start Quiz for \""+reviewCat+"\"";
+    reviewCat==="All"?"Start Quiz for All Words":"Start Quiz for \""+catLabel(reviewCat)+"\"";
   document.getElementById("vocab-grid").innerHTML=words.map(w=>
     '<div class="vocab-card">'+
-    '<div class="vocab-left"><div class="vocab-k">'+w.k+'</div><div class="vocab-e">'+w.e+'</div></div>'+
+    '<div class="vocab-left"><div class="vocab-k">'+w.k+'</div><div class="roman" style="text-align:left;margin-top:0">'+romanize(w.k)+'</div><div class="vocab-e">'+w.e+'</div></div>'+
     '<div style="display:flex;align-items:center;gap:6px">'+
-    (reviewCat==="All"?'<span class="vocab-cat-tag">'+w.c+'</span>':'')+
+    (reviewCat==="All"?'<span class="vocab-cat-tag">'+catLabel(w.c)+'</span>':'')+
     '<button class="vocab-speak" onclick="speakKorean(\''+w.k.replace(/'/g,"\\'")+'\',this)">'+speakerSVG+'</button>'+
     '</div></div>').join("");
 }
