@@ -824,15 +824,15 @@ function playCorrectSound(){
   const ctx=getSfxCtx();
   if(!ctx) return;
   const now=ctx.currentTime;
-  playTone(ctx,880,now,0.14,"sine",0.18);
-  playTone(ctx,1318.5,now+0.1,0.2,"sine",0.18);
+  playTone(ctx,880,now,0.14,"sine",0.35);
+  playTone(ctx,1318.5,now+0.1,0.2,"sine",0.35);
 }
 function playWrongSound(){
   const ctx=getSfxCtx();
   if(!ctx) return;
   const now=ctx.currentTime;
-  playTone(ctx,220,now,0.22,"square",0.1);
-  playTone(ctx,174.6,now+0.13,0.26,"square",0.1);
+  playTone(ctx,220,now,0.22,"square",0.28);
+  playTone(ctx,174.6,now+0.13,0.26,"square",0.28);
 }
 let ttsFailToastShown=false;
 function showTTSFailToast(){
