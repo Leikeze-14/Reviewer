@@ -160,6 +160,16 @@
   .vocab-cat-tag{font-size:10px;padding:2px 8px;border-radius:20px;background:#eef2ff;color:#3730a3;white-space:nowrap;flex-shrink:0}
   .vocab-speak{background:#eef2ff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .vocab-speak svg{width:15px;height:15px;fill:#3730a3}
+  .verb-card{flex-direction:column;align-items:stretch}
+  .verb-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .tense-rows{display:flex;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border-light)}
+  .tense-row{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:10px;padding:7px 10px}
+  .tense-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#7c3aed;background:#ede9fe;border-radius:8px;padding:3px 7px;flex-shrink:0;width:52px;text-align:center;box-sizing:border-box}
+  .tense-word-wrap{flex:1;min-width:0}
+  .tense-word{font-size:15px;font-weight:600;color:var(--text)}
+  .tense-roman{font-size:11px;color:var(--text-dim);margin-top:1px}
+  .tense-speak{background:#ede9fe;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .tense-speak svg{width:12px;height:12px;fill:#7c3aed}
   .review-start-bar{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--card)}
   .review-quiz-btn{display:block;width:100%;padding:13px;border-radius:12px;background:#3730a3;color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
   .mastery-bar{padding:0 16px 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -473,6 +483,125 @@ function romanize(str){
   return out;
 }
 
+// ===== VERB / ADJECTIVE CONJUGATION (Present / Past / Future) =====
+// Rule-based conjugator that decomposes the dictionary ("-다") form into
+// Hangul jamo and applies standard conjugation patterns: -하다 verbs,
+// ㅂ/ㄷ/ㅅ/르/으 irregulars, genuine ㄹ-stems, and regular vowel-final
+// contractions (오다->와요, 마시다->마셔요, etc). Handles a small set of
+// known irregular words explicitly since a handful of common words don't
+// follow the mechanical rules.
+function decomposeHangul(ch){
+  const code=ch.charCodeAt(0)-0xAC00;
+  if(code<0||code>11171) return null;
+  return {cho:Math.floor(code/588), jung:Math.floor((code%588)/28), jong:code%28};
+}
+function composeHangul(cho,jung,jong){
+  return String.fromCharCode(0xAC00+(cho*21+jung)*28+jong);
+}
+function isBrightVowel(jung){ return jung===0||jung===8; } // ㅏ or ㅗ
+const CONJ_DIEUT_IRREGULAR=new Set(["듣다","걷다","묻다"]);
+const CONJ_SIOT_IRREGULAR=new Set(["휘젓다"]);
+const CONJ_BIEUP_REGULAR_EXCEPTIONS=new Set(["좁다","입다"]);
+function conjugateBase(last){
+  // last = a single dictionary-form token ending in "다", no leading words
+  if(!last.endsWith("다")) return null;
+  const stem=last.slice(0,-1);
+  const chars=[...stem];
+  const n=chars.length;
+  if(n===0) return null;
+  const dec=decomposeHangul(chars[n-1]);
+  if(!dec) return null;
+  let present,past,future;
+
+  if(dec.cho===18 && dec.jung===0 && dec.jong===0){
+    // -하다 verbs/adjectives
+    const base=chars.slice(0,-1).join("");
+    present=base+"해요"; past=base+"했어요"; future=base+"할 거예요";
+  }else if(CONJ_DIEUT_IRREGULAR.has(last)){
+    const newLast=composeHangul(dec.cho,dec.jung,8);
+    const base=chars.slice(0,-1).join("")+newLast;
+    const bright=isBrightVowel(dec.jung);
+    present=base+(bright?"아요":"어요");
+    past=base+(bright?"았어요":"었어요");
+    future=base+"을 거예요";
+  }else if(CONJ_SIOT_IRREGULAR.has(last)){
+    const noBatchim=composeHangul(dec.cho,dec.jung,0);
+    const base=chars.slice(0,-1).join("")+noBatchim;
+    const bright=isBrightVowel(dec.jung);
+    present=base+(bright?"아요":"어요");
+    past=base+(bright?"았어요":"었어요");
+    future=base+"을 거예요";
+  }else if(dec.jong===17 && !CONJ_BIEUP_REGULAR_EXCEPTIONS.has(last)){
+    // ㅂ irregular
+    const noBatchim=composeHangul(dec.cho,dec.jung,0);
+    const base=chars.slice(0,-1).join("")+noBatchim;
+    present=base+"워요"; past=base+"웠어요"; future=base+"울 거예요";
+  }else if(dec.cho===5 && dec.jung===18 && dec.jong===0 && n>=2){
+    // 르 irregular
+    const precChar=chars[n-2];
+    const precDec=decomposeHangul(precChar);
+    const bright=precDec?isBrightVowel(precDec.jung):false;
+    const precModified=precDec?composeHangul(precDec.cho,precDec.jung,8):precChar;
+    const suffix=bright?"라":"러";
+    const baseBeforePrec=chars.slice(0,-2).join("");
+    present=baseBeforePrec+precModified+suffix+"요";
+    past=baseBeforePrec+precModified+(bright?"랐":"렀")+"어요";
+    const futSyl=composeHangul(dec.cho,dec.jung,8);
+    future=chars.slice(0,-1).join("")+futSyl+" 거예요";
+  }else if(dec.jung===18 && dec.jong===0){
+    // 으 irregular (bare eu stem)
+    const precChar=n>=2?chars[n-2]:null;
+    const precDec=precChar?decomposeHangul(precChar):null;
+    const bright=precDec?isBrightVowel(precDec.jung):false;
+    const targetVowel=bright?0:4;
+    const newSyl=composeHangul(dec.cho,targetVowel,0);
+    const base=chars.slice(0,-1).join("");
+    present=base+newSyl+"요";
+    past=base+composeHangul(dec.cho,targetVowel,20)+"어요";
+    const futSyl=composeHangul(dec.cho,dec.jung,8);
+    future=base+futSyl+" 거예요";
+  }else if(dec.jong===0){
+    // regular vowel-final contraction (only vowels that actually merge/drop
+    // with -아/어 are listed; anything else — 쉬다,사귀다 등 — just takes
+    // a separate 아/어 syllable with no contraction)
+    const mergeMap={0:0,8:9,4:4,13:14,20:6,1:1,5:5,6:6,11:10};
+    const base=chars.slice(0,-1).join("");
+    if(mergeMap.hasOwnProperty(dec.jung)){
+      const mergedJung=mergeMap[dec.jung];
+      present=base+composeHangul(dec.cho,mergedJung,0)+"요";
+      past=base+composeHangul(dec.cho,mergedJung,20)+"어요";
+    }else{
+      const bright=isBrightVowel(dec.jung);
+      present=stem+(bright?"아요":"어요");
+      past=stem+(bright?"았어요":"었어요");
+    }
+    future=base+composeHangul(dec.cho,dec.jung,8)+" 거예요";
+  }else if(dec.jong===8){
+    // genuine ㄹ-final dictionary stem (살다, 만들다, 팔다...)
+    const bright=isBrightVowel(dec.jung);
+    present=stem+(bright?"아요":"어요");
+    past=stem+(bright?"았어요":"었어요");
+    future=stem+" 거예요";
+  }else{
+    // regular consonant-final stem
+    const bright=isBrightVowel(dec.jung);
+    present=stem+(bright?"아요":"어요");
+    past=stem+(bright?"았어요":"었어요");
+    future=stem+"을 거예요";
+  }
+  return {present,past,future};
+}
+function conjugate(word){
+  const tokens=word.split(" ");
+  const last=tokens[tokens.length-1];
+  const prefix=tokens.length>1?tokens.slice(0,-1).join(" ")+" ":"";
+  const r=conjugateBase(last);
+  if(!r) return {present:word,past:word,future:word};
+  return {present:prefix+r.present, past:prefix+r.past, future:prefix+r.future};
+}
+function isConjugatable(v){
+  return v.c==="Verbs"||v.c==="Adjectives";
+}
 
 let CATS=["All",...new Set(V.map(v=>v.c))];
 let af="All",pool=[],queue=[],cur=null,answered=false;
@@ -669,6 +798,41 @@ if(window.speechSynthesis){
 }
 function stopAllTTS(){
   if(window.speechSynthesis){ try{window.speechSynthesis.cancel();}catch(e){} }
+}
+// ===== ANSWER FEEDBACK SOUNDS (correct / wrong chimes) =====
+let sfxCtx=null;
+function getSfxCtx(){
+  if(!sfxCtx){
+    try{ sfxCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  if(sfxCtx.state==="suspended"){ try{ sfxCtx.resume(); }catch(e){} }
+  return sfxCtx;
+}
+function playTone(ctx,freq,startTime,duration,type,peakGain){
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  osc.type=type||"sine";
+  osc.frequency.value=freq;
+  gain.gain.setValueAtTime(0,startTime);
+  gain.gain.linearRampToValueAtTime(peakGain,startTime+0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001,startTime+duration);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime+duration+0.03);
+}
+function playCorrectSound(){
+  const ctx=getSfxCtx();
+  if(!ctx) return;
+  const now=ctx.currentTime;
+  playTone(ctx,880,now,0.14,"sine",0.18);
+  playTone(ctx,1318.5,now+0.1,0.2,"sine",0.18);
+}
+function playWrongSound(){
+  const ctx=getSfxCtx();
+  if(!ctx) return;
+  const now=ctx.currentTime;
+  playTone(ctx,220,now,0.22,"square",0.1);
+  playTone(ctx,174.6,now+0.13,0.26,"square",0.1);
 }
 let ttsFailToastShown=false;
 function showTTSFailToast(){
@@ -1042,6 +1206,7 @@ function pick(btn,chosen,correct){
   });
   const isCorrect=chosen===correct;
   recordAnswer(cur,isCorrect);
+  if(isCorrect) playCorrectSound(); else playWrongSound();
   const fb=document.getElementById("fb");
   if(isCorrect){
     cc++;stk++;score+=10+Math.min(stk-1,5)*2;
@@ -1137,6 +1302,7 @@ function submitListen(){
 
   const isCorrect=checkListenAnswer(typed, cur.e);
   recordAnswer(cur, isCorrect);
+  if(isCorrect) playCorrectSound(); else playWrongSound();
 
   const fb=document.getElementById("listen-feedback");
   if(isCorrect){
@@ -1252,6 +1418,7 @@ function submitRead(){
 
   const isCorrect=checkListenAnswer(typed, cur.e);
   recordAnswer(cur, isCorrect);
+  if(isCorrect) playCorrectSound(); else playWrongSound();
 
   const fb=document.getElementById("read-feedback");
   if(isCorrect){
@@ -1533,13 +1700,33 @@ function renderVocabGrid(){
   document.getElementById("review-title").textContent=reviewCat==="All"?"All Vocabulary":catLabel(reviewCat)+" Vocabulary";
   document.getElementById("review-quiz-btn").textContent=
     reviewCat==="All"?"Start Quiz for All Words":"Start Quiz for \""+catLabel(reviewCat)+"\"";
-  document.getElementById("vocab-grid").innerHTML=words.map(w=>
-    '<div class="vocab-card">'+
-    '<div class="vocab-left"><div class="vocab-k">'+w.k+'</div><div class="roman" style="text-align:left;margin-top:0">'+romanize(w.k)+'</div><div class="vocab-e">'+w.e+'</div></div>'+
+  document.getElementById("vocab-grid").innerHTML=words.map(w=>renderVocabCardHTML(w,reviewCat==="All")).join("");
+}
+function tenseRowHTML(label,koWord){
+  return '<div class="tense-row">'+
+    '<span class="tense-label">'+label+'</span>'+
+    '<div class="tense-word-wrap"><div class="tense-word">'+escHtml(koWord)+'</div><div class="tense-roman">'+romanize(koWord)+'</div></div>'+
+    '<button class="tense-speak" onclick="speakKorean(\''+koWord.replace(/'/g,"\\'")+'\',this)">'+speakerSVG+'</button>'+
+    '</div>';
+}
+function renderVocabCardHTML(w,showCatTag){
+  const topHTML=
+    '<div class="verb-card-top">'+
+    '<div class="vocab-left"><div class="vocab-k">'+escHtml(w.k)+'</div><div class="roman" style="text-align:left;margin-top:0">'+romanize(w.k)+'</div><div class="vocab-e">'+escHtml(w.e)+'</div></div>'+
     '<div style="display:flex;align-items:center;gap:6px">'+
-    (reviewCat==="All"?'<span class="vocab-cat-tag">'+catLabel(w.c)+'</span>':'')+
+    (showCatTag?'<span class="vocab-cat-tag">'+catLabel(w.c)+'</span>':'')+
     '<button class="vocab-speak" onclick="speakKorean(\''+w.k.replace(/'/g,"\\'")+'\',this)">'+speakerSVG+'</button>'+
-    '</div></div>').join("");
+    '</div></div>';
+  if(!isConjugatable(w)){
+    return '<div class="vocab-card">'+topHTML+'</div>';
+  }
+  const t=conjugate(w.k);
+  const tenseHTML='<div class="tense-rows">'+
+    tenseRowHTML("Present",t.present)+
+    tenseRowHTML("Past",t.past)+
+    tenseRowHTML("Future",t.future)+
+    '</div>';
+  return '<div class="vocab-card verb-card">'+topHTML+tenseHTML+'</div>';
 }
 function startQuizFromReview(){
   closeReview();
