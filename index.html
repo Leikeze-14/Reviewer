@@ -173,6 +173,8 @@
   .tenses-group-heading{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#5b21b6;background:#f5f3ff;border-radius:8px;padding:7px 12px;margin:14px 0 8px;display:flex;align-items:center;gap:8px}
   .tenses-group-heading:first-child{margin-top:0}
   .tenses-group-count{font-size:10px;font-weight:700;background:#ede9fe;color:#7c3aed;border-radius:20px;padding:1px 8px}
+  .feedback-tense-rows{margin-top:10px;padding-top:0;border-top:none}
+  .tense-feedback-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-dim);margin-bottom:6px}
   .review-start-bar{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--card)}
   .review-quiz-btn{display:block;width:100%;padding:13px;border-radius:12px;background:#3730a3;color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
   .mastery-bar{padding:0 16px 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -1209,7 +1211,9 @@ function wrongs(c){
   return combined.slice(0,choiceMode-1).map(v=>v.e);
 }
 
+let autoAdvanceTimer=null;
 function nxt(){
+  if(autoAdvanceTimer){ clearTimeout(autoAdvanceTimer); autoAdvanceTimer=null; }
   answered=false;
   if(noneSelected){
     showNoneSelected();
@@ -1283,10 +1287,15 @@ function pick(btn,chosen,correct){
   if(isCorrect){
     cc++;stk++;score+=10+Math.min(stk-1,5)*2;
     const streakMsg=stk>=3?'<div class="streak-banner" style="margin-top:6px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':'';
-    fb.innerHTML='<div style="padding:12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-weight:600;font-size:15px">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+streakMsg;
+    fb.innerHTML='<div style="padding:12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-weight:600;font-size:15px">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+streakMsg+tenseFeedbackHTML(cur);
     fb.className="feedback ok";
     updateS();
-    setTimeout(()=>{ nxt(); },1100);
+    if(isConjugatable(cur)){
+      document.getElementById("nb").style.display="block";
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },5000);
+    }else{
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },1100);
+    }
     return;
   }else{
     btn.classList.add("wrong");stk=0;
@@ -1381,10 +1390,15 @@ function submitListen(){
     cc++; stk++; score+=10+Math.min(stk-1,5)*2;
     inp.classList.add("correct-input");
     const streakMsg=stk>=3?'<div class="streak-banner" style="margin-top:8px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':'';
-    fb.innerHTML='<div class="listen-answer-reveal">✅ Correct! <strong>'+cur.k+'</strong> ('+romanize(cur.k)+') = '+cur.e+'</div>'+streakMsg;
+    fb.innerHTML='<div class="listen-answer-reveal">✅ Correct! <strong>'+cur.k+'</strong> ('+romanize(cur.k)+') = '+cur.e+'</div>'+streakMsg+tenseFeedbackHTML(cur);
     updateS();
     setTimeout(()=>speakKorean(cur.k,null),50);
-    setTimeout(()=>{ nxt(); },1500);
+    if(isConjugatable(cur)){
+      document.getElementById("nb").style.display="block";
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },5500);
+    }else{
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },1500);
+    }
     return;
   } else {
     stk=0;
@@ -1497,10 +1511,15 @@ function submitRead(){
     cc++; stk++; score+=10+Math.min(stk-1,5)*2;
     inp.classList.add("correct-input");
     fb.innerHTML='<div class="read-answer-reveal">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+
-      (stk>=3?'<div class="streak-banner" style="margin-top:8px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':"");
+      (stk>=3?'<div class="streak-banner" style="margin-top:8px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':"")+tenseFeedbackHTML(cur);
     setTimeout(()=>speakKorean(cur.k,null),50);
     updateS();
-    setTimeout(()=>{ nxt(); },1500);
+    if(isConjugatable(cur)){
+      document.getElementById("nb").style.display="block";
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },5500);
+    }else{
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },1500);
+    }
     return;
   } else {
     stk=0;
@@ -1853,6 +1872,16 @@ function tenseRowHTML(label,koWord){
     '<span class="tense-label">'+label+'</span>'+
     '<div class="tense-word-wrap"><div class="tense-word">'+escHtml(koWord)+'</div><div class="tense-roman">'+romanize(koWord)+'</div></div>'+
     '<button class="tense-speak" onclick="speakKorean(\''+koWord.replace(/'/g,"\\'")+'\',this)">'+speakerSVG+'</button>'+
+    '</div>';
+}
+function tenseFeedbackHTML(word){
+  if(!isConjugatable(word)) return "";
+  const t=conjugate(word.k);
+  return '<div class="tense-rows feedback-tense-rows">'+
+    '<div class="tense-feedback-label">Present / Past / Future</div>'+
+    tenseRowHTML("Present",t.present)+
+    tenseRowHTML("Past",t.past)+
+    tenseRowHTML("Future",t.future)+
     '</div>';
 }
 function renderVocabCardHTML(w,showCatTag){
