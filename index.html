@@ -170,6 +170,9 @@
   .tense-roman{font-size:11px;color:var(--text-dim);margin-top:1px}
   .tense-speak{background:#ede9fe;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .tense-speak svg{width:12px;height:12px;fill:#7c3aed}
+  .tenses-group-heading{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#5b21b6;background:#f5f3ff;border-radius:8px;padding:7px 12px;margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+  .tenses-group-heading:first-child{margin-top:0}
+  .tenses-group-count{font-size:10px;font-weight:700;background:#ede9fe;color:#7c3aed;border-radius:20px;padding:1px 8px}
   .review-start-bar{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--card)}
   .review-quiz-btn{display:block;width:100%;padding:13px;border-radius:12px;background:#3730a3;color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
   .mastery-bar{padding:0 16px 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -298,6 +301,10 @@
     <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
     Review Vocab
   </button>
+  <button class="rev-btn" onclick="openTenses()" style="border-color:#c4b5fd;color:#5b21b6">
+    <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#5b21b6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 5v5.25l4.5 2.67-.75 1.23L11 13V7h1.5z"/></svg>
+    Verb &amp; Adj. Tenses
+  </button>
   <button class="cloud-btn" onclick="openCloudSave()">
     <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
     <span id="cloud-btn-label">Save / Load</span>
@@ -328,6 +335,25 @@
     </div>
     <div class="review-start-bar">
       <button class="review-quiz-btn" id="review-quiz-btn" onclick="startQuizFromReview()">Start Quiz for This Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- VERB & ADJECTIVE TENSES PANEL -->
+<div class="review-panel hidden" id="tenses-panel" onclick="handleTensesPanelClick(event)">
+  <div class="review-sheet" id="tenses-sheet">
+    <div class="review-header">
+      <h2>⏳ Verb &amp; Adjective Tenses</h2>
+      <button class="review-close" onclick="closeTenses()">x</button>
+    </div>
+    <div class="review-cat-tabs" id="tenses-cat-tabs">
+      <button class="rct active" onclick="switchTensesCat('Verbs',this)">Verbs (동사)</button>
+      <button class="rct" onclick="switchTensesCat('Adjectives',this)">Adjectives (형용사)</button>
+    </div>
+    <div class="review-cat-tabs" id="tenses-group-tabs" style="border-bottom:1px solid var(--divider)"></div>
+    <div class="review-count" id="tenses-count"></div>
+    <div class="review-body">
+      <div class="vocab-grid" id="tenses-grid"></div>
     </div>
   </div>
 </div>
@@ -601,6 +627,41 @@ function conjugate(word){
 }
 function isConjugatable(v){
   return v.c==="Verbs"||v.c==="Adjectives";
+}
+
+// Semantic groupings so related verbs/adjectives (e.g. movement, cooking,
+// emotions) are listed together in the Tenses tab instead of dictionary order.
+const VERB_GROUPS = {
+  "Movement & Travel": ["오다","가다","걷다","운전하다","타다","나가다","들어오다","출발하다","도착하다","서두르다"],
+  "Daily Routine & Leisure": ["자다","씻다","일어나다","춤추다","기다리다","청소하다","일하다","쉬다","운동하다"],
+  "Eating & Cooking": ["마시다","먹다","주문하다","요리하다","끓이다","썰다","튀기다","재다","섞다","굽다","볶다","찌다","휘젓다"],
+  "Learning & Thinking": ["배우다","쓰다","공부하다","읽다","가르치다","생각하다","알다","모르다","연습하다","기억하다","꿈꾸다"],
+  "Communication": ["전화하다","말하다","걸다","물어보다","이야기하다","묻다","축하하다","약속하다","거짓말하다","고백하다","죄송하다","대답하다","소개하다"],
+  "Emotions & Relationships": ["울다","웃다","만나다","사랑하다","좋아하다","싫어하다","걱정하다","싸우다","이기다","지다","사랑해 빠지다","도와주다"],
+  "Senses & Technology": ["듣다","보다","찍다"],
+  "Possession, Exchange & Commerce": ["주다","갖다","사다","받다","빌리다","필요하다","있다","없다","내다","찾다","가지다","보내다","사용하다","팔다"],
+  "Clothing": ["입다","신다","벗다"],
+  "Household & General Actions": ["앉다","만들다","열다","닫다","하다","준비하다"],
+  "Life Events": ["살다","죽다","태어나다","결혼하다","시작하다","끝나다"]
+};
+const ADJ_GROUPS = {
+  "Emotions & Feelings": ["행복하다","기쁘다","화나다","슬프다","걱정하다","무섭다","짜증나다","놀라다","수줍다","심심하다","재미 있다","재미 없다","지루하다"],
+  "Physical Sensations": ["아프다","배가 고프다","목이 마르다","피곤하다","졸리다"],
+  "Weather & Environment": ["덥다","뜨겁다","따뜻하다","춥다","차갑다","싸늘하다","습하다","건조하다","흐리다","시원하다","신선하다","밝다","조용하다","시끄럽다"],
+  "Appearance & Looks": ["아름답다","예쁘다","귀엽다","잘생기다","못생기다"],
+  "Size, Quantity & Weight": ["크다","작다","많다","적다","좁다","넓다","무겁다","가볍다"],
+  "Body Shape": ["뚱뚱하다","통통하다","날씬하다","깡마르다"],
+  "Difficulty, Speed & Time": ["어렵다","쉽다","빠르다","천천하다","느리다","급하다","늦다","이르다"],
+  "Cleanliness & Texture": ["깨끗하다","더럽다","새롭다","오래되다","딱딱하다","부드럽다","말랑하다","촉촉하다","축축하다","젖다","미끄럽다","뾰족하다"],
+  "Personality & Ability": ["똑똑하다","멍청하다","튼튼하다","씩씩하다","약하다","건강하다","착하다","비열하다"],
+  "Taste & Food Quality": ["쓰다","짜다","시다","맵다","달다","기름지다","맛있다","맛없다","가득하다","비어 있다"],
+  "General Evaluation": ["좋다","나쁘다","괜찮다","이상하다","복잡하다","편리하다","편하다","불편하다","다르다","같다","싸다","비싸다"]
+};
+function groupsForCat(cat){ return cat==="Verbs"?VERB_GROUPS:ADJ_GROUPS; }
+function groupOf(word,cat){
+  const groups=groupsForCat(cat);
+  for(const g in groups){ if(groups[g].includes(word.k)) return g; }
+  return "Other";
 }
 
 let CATS=["All",...new Set(V.map(v=>v.c))];
@@ -1560,6 +1621,80 @@ function closeReview(){
 function handlePanelClick(e){
   if(e.target===document.getElementById("review-panel")) closeReview();
 }
+
+// ===== VERB & ADJECTIVE TENSES PANEL =====
+let tensesCat="Verbs";
+function openTenses(){
+  tensesCat="Verbs";
+  Array.from(document.querySelectorAll("#tenses-cat-tabs .rct")).forEach((b,i)=>b.classList.toggle("active",i===0));
+  renderTensesGroupTabs();
+  renderTensesGrid();
+  document.getElementById("tenses-panel").classList.remove("hidden");
+  document.body.style.overflow="hidden";
+}
+function closeTenses(){
+  document.getElementById("tenses-panel").classList.add("hidden");
+  document.body.style.overflow="";
+}
+function handleTensesPanelClick(e){
+  if(e.target===document.getElementById("tenses-panel")) closeTenses();
+}
+function switchTensesCat(cat,btn){
+  tensesCat=cat;
+  Array.from(document.querySelectorAll("#tenses-cat-tabs .rct")).forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderTensesGroupTabs();
+  renderTensesGrid();
+}
+let tensesGroupFilter="All";
+function renderTensesGroupTabs(){
+  tensesGroupFilter="All";
+  const groups=Object.keys(groupsForCat(tensesCat));
+  const tabsEl=document.getElementById("tenses-group-tabs");
+  tabsEl.innerHTML=['All',...groups].map(g=>
+    '<button class="rct '+(g==="All"?"active":"")+'" onclick="switchTensesGroup(\''+g.replace(/'/g,"\\'")+'\',this)">'+escHtml(g)+'</button>'
+  ).join("");
+}
+function switchTensesGroup(g,btn){
+  tensesGroupFilter=g;
+  Array.from(document.querySelectorAll("#tenses-group-tabs .rct")).forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderTensesGrid();
+}
+function renderTensesGrid(){
+  const words=V.filter(v=>v.c===tensesCat);
+  const groups=groupsForCat(tensesCat);
+  const orderedGroupNames=Object.keys(groups);
+  // Bucket words by their semantic group, preserving group definition order
+  // and the order words are listed within each group.
+  const buckets={};
+  orderedGroupNames.forEach(g=>buckets[g]=[]);
+  buckets["Other"]=[];
+  words.forEach(w=>{
+    const g=groupOf(w,tensesCat);
+    if(!buckets[g]) buckets[g]=[];
+    buckets[g].push(w);
+  });
+  // Sort each bucket to match the curated list order (so related words like
+  // walk/ride/hurry within "Movement" stay grouped in a sensible sequence).
+  orderedGroupNames.forEach(g=>{
+    const order=groups[g];
+    buckets[g].sort((a,b)=>order.indexOf(a.k)-order.indexOf(b.k));
+  });
+  const namesToShow=tensesGroupFilter==="All"?orderedGroupNames:[tensesGroupFilter];
+  let html="";
+  let total=0;
+  namesToShow.forEach(g=>{
+    const list=buckets[g]||[];
+    if(!list.length) return;
+    total+=list.length;
+    html+='<div class="tenses-group-heading">'+escHtml(g)+' <span class="tenses-group-count">'+list.length+'</span></div>';
+    html+=list.map(w=>renderVocabCardHTML(w,false)).join("");
+  });
+  document.getElementById("tenses-grid").innerHTML=html||'<div style="padding:20px;text-align:center;color:var(--text-dim)">No words in this group.</div>';
+  document.getElementById("tenses-count").textContent=total+" words"+(tensesGroupFilter!=="All"?" in "+tensesGroupFilter:"");
+}
+
 
 // ===== VOCAB SETTINGS PANEL (choose which words appear per category) =====
 let settingsTab="All";
