@@ -26,6 +26,7 @@
   .header p{font-size:12px;color:var(--text-dim);margin-top:2px}
   .header-btns{display:flex;gap:8px;align-items:center;flex-shrink:0}
   .icon-toggle-btn{background:var(--input-bg);border:1px solid var(--border-light);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .icon-toggle-btn.autonext-on{background:#dcfce7;border-color:#86efac}
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px}
   .stat{background:var(--card);border-radius:10px;padding:10px 8px;text-align:center}
   .stat-label{font-size:10px;color:var(--text-dim);margin-bottom:3px}
@@ -262,6 +263,7 @@
     <p id="total-label">Loading...</p>
   </div>
   <div class="header-btns">
+    <button class="icon-toggle-btn" id="autonext-toggle-btn" onclick="toggleAutoNext()" title="Auto-next: OFF (tap to turn on)">⏸️</button>
     <button class="icon-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
   </div>
 </div>
@@ -691,6 +693,30 @@ function toggleTheme(){
 function updateThemeIcon(){
   const btn=document.getElementById("theme-toggle-btn");
   if(btn) btn.textContent=document.body.classList.contains("dark")?"☀️":"🌙";
+}
+
+// ===== AUTO-NEXT (after correct answer) =====
+const AUTO_NEXT_KEY="korean_quiz_autonext";
+let autoNextEnabled=false;
+function loadAutoNext(){
+  try{
+    const v=localStorage.getItem(AUTO_NEXT_KEY);
+    autoNextEnabled = (v==="on");
+  }catch(e){ autoNextEnabled=false; }
+  updateAutoNextIcon();
+}
+function toggleAutoNext(){
+  autoNextEnabled=!autoNextEnabled;
+  try{ localStorage.setItem(AUTO_NEXT_KEY, autoNextEnabled?"on":"off"); }catch(e){}
+  updateAutoNextIcon();
+}
+function updateAutoNextIcon(){
+  const btn=document.getElementById("autonext-toggle-btn");
+  if(btn){
+    btn.textContent=autoNextEnabled?"⏭️":"⏸️";
+    btn.title=autoNextEnabled?"Auto-next: ON (tap to turn off)":"Auto-next: OFF (tap to turn on)";
+    btn.classList.toggle("autonext-on",autoNextEnabled);
+  }
 }
 
 // ===== VOCAB SELECTION (per-category include/exclude) =====
@@ -1290,11 +1316,9 @@ function pick(btn,chosen,correct){
     fb.innerHTML='<div style="padding:12px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-weight:600;font-size:15px">✅ Correct! <strong>'+cur.k+'</strong> = '+cur.e+'</div>'+streakMsg+tenseFeedbackHTML(cur);
     fb.className="feedback ok";
     updateS();
-    if(isConjugatable(cur)){
-      document.getElementById("nb").style.display="block";
-      autoAdvanceTimer=setTimeout(()=>{ nxt(); },5000);
-    }else{
-      autoAdvanceTimer=setTimeout(()=>{ nxt(); },1100);
+    document.getElementById("nb").style.display="block";
+    if(autoNextEnabled){
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },isConjugatable(cur)?5000:1100);
     }
     return;
   }else{
@@ -1393,11 +1417,9 @@ function submitListen(){
     fb.innerHTML='<div class="listen-answer-reveal">✅ Correct! <strong>'+cur.k+'</strong> ('+romanize(cur.k)+') = '+cur.e+'</div>'+streakMsg+tenseFeedbackHTML(cur);
     updateS();
     setTimeout(()=>speakKorean(cur.k,null),50);
-    if(isConjugatable(cur)){
-      document.getElementById("nb").style.display="block";
-      autoAdvanceTimer=setTimeout(()=>{ nxt(); },5500);
-    }else{
-      autoAdvanceTimer=setTimeout(()=>{ nxt(); },1500);
+    document.getElementById("nb").style.display="block";
+    if(autoNextEnabled){
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },isConjugatable(cur)?5500:1500);
     }
     return;
   } else {
@@ -1457,7 +1479,6 @@ function renderRead(){
     repeatBadge+streakStars+
     '<div class="read-card">'+
       '<div class="read-korean-big">'+cur.k+'</div>'+
-      '<div class="roman">'+romanize(cur.k)+'</div>'+
       '<button class="read-speak-btn" id="read-speak-btn" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+
         '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>'+
       '</button>'+
@@ -1514,11 +1535,9 @@ function submitRead(){
       (stk>=3?'<div class="streak-banner" style="margin-top:8px">🔥 Streak x'+stk+'! +'+(10+Math.min(stk-1,5)*2)+' pts</div>':"")+tenseFeedbackHTML(cur);
     setTimeout(()=>speakKorean(cur.k,null),50);
     updateS();
-    if(isConjugatable(cur)){
-      document.getElementById("nb").style.display="block";
-      autoAdvanceTimer=setTimeout(()=>{ nxt(); },5500);
-    }else{
-      autoAdvanceTimer=setTimeout(()=>{ nxt(); },1500);
+    document.getElementById("nb").style.display="block";
+    if(autoNextEnabled){
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },isConjugatable(cur)?5500:1500);
     }
     return;
   } else {
@@ -2130,6 +2149,7 @@ function importSave(event){
 
 
 loadTheme();
+loadAutoNext();
 loadSession();
 if(af!=="All"){const btn=Array.from(document.querySelectorAll(".fbtn")).find(b=>b.textContent.startsWith(af));if(btn){document.querySelectorAll(".fbtn").forEach(b=>b.classList.remove("active"));btn&&btn.classList.add("active");}}
 renderFilters();buildPool();updateMasteryBar();updateS();nxt();
