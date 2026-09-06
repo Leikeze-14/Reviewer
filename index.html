@@ -40,7 +40,8 @@
   .mbtn.listen-active{background:#be185d;color:#fff;border-color:#be185d}
 
   /* LISTENING EXAM */
-  .listen-card{background:var(--card);border-radius:16px;padding:28px 20px 22px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center}
+  @keyframes quizFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .listen-card{background:var(--card);border-radius:16px;padding:28px 20px 22px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;animation:quizFadeIn 0.18s ease-out}
   .listen-play-btn{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#be185d,#9d174d);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 4px 14px rgba(190,24,93,0.35);transition:transform 0.15s,box-shadow 0.15s}
   .listen-play-btn:active{transform:scale(0.94)}
   .listen-play-btn.playing{animation:listenPulse 0.7s infinite alternate;box-shadow:0 0 0 8px rgba(190,24,93,0.18)}
@@ -60,7 +61,7 @@
   .listen-answer-reveal.wrong-reveal{background:#fff1f2;border-color:#fecdd3;color:#9f1239}
   .listen-mode-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#fce7f3;color:#be185d;margin-bottom:10px;margin-left:6px}
   .read-mode-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#d1fae5;color:#065f46;margin-bottom:10px;margin-left:6px}
-  .read-card{background:var(--card);border-radius:16px;padding:28px 20px 22px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center}
+  .read-card{background:var(--card);border-radius:16px;padding:28px 20px 22px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;animation:quizFadeIn 0.18s ease-out}
   .read-korean-big{font-size:52px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.2}
   .read-speak-btn{background:#d1fae5;border:none;border-radius:50%;width:46px;height:46px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;transition:background 0.15s}
   .read-speak-btn:active{background:#a7f3d0}
@@ -90,7 +91,7 @@
   .progress{font-size:12px;color:var(--text-dim);text-align:right;margin-bottom:8px}
   .cat-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#3730a3;margin-bottom:10px}
   .mode-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#92400e;margin-bottom:10px;margin-left:6px}
-  .qcard{background:var(--card);border-radius:16px;padding:24px 20px 20px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+  .qcard{background:var(--card);border-radius:16px;padding:24px 20px 20px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);animation:quizFadeIn 0.18s ease-out}
   .korean-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px}
   .korean{font-size:40px;font-weight:700;text-align:center;color:var(--text);line-height:1.2}
   .roman{font-size:14px;font-weight:600;text-align:center;color:var(--text-dim);letter-spacing:.3px;margin-top:2px}
@@ -1328,7 +1329,7 @@ function pick(btn,chosen,correct){
     updateS();
     document.getElementById("nb").style.display="block";
     if(autoNextEnabled){
-      autoAdvanceTimer=setTimeout(()=>{ nxt(); },isConjugatable(cur)?5000:1100);
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },0);
     }
     return;
   }else{
@@ -1436,7 +1437,7 @@ function submitListen(){
     setTimeout(()=>speakKorean(cur.k,null),50);
     document.getElementById("nb").style.display="block";
     if(autoNextEnabled){
-      autoAdvanceTimer=setTimeout(()=>{ nxt(); },isConjugatable(cur)?5500:1500);
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },0);
     }
     return;
   } else {
@@ -1554,7 +1555,7 @@ function submitRead(){
     updateS();
     document.getElementById("nb").style.display="block";
     if(autoNextEnabled){
-      autoAdvanceTimer=setTimeout(()=>{ nxt(); },isConjugatable(cur)?5500:1500);
+      autoAdvanceTimer=setTimeout(()=>{ nxt(); },0);
     }
     return;
   } else {
