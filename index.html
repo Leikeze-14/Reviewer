@@ -26,7 +26,6 @@
   .header p{font-size:12px;color:var(--text-dim);margin-top:2px}
   .header-btns{display:flex;gap:8px;align-items:center;flex-shrink:0}
   .icon-toggle-btn{background:var(--input-bg);border:1px solid var(--border-light);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .icon-toggle-btn.autonext-on{background:#dcfce7;border-color:#86efac}
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px}
   .stat{background:var(--card);border-radius:10px;padding:10px 8px;text-align:center}
   .stat-label{font-size:10px;color:var(--text-dim);margin-bottom:3px}
@@ -87,7 +86,7 @@
   .rev-btn svg{width:14px;height:14px;fill:#166534}
   .settings-btn{font-size:12px;padding:6px 14px;border-radius:20px;border:1.5px solid #c4b5fd;background:#ede9fe;color:#5b21b6;cursor:pointer;font-family:inherit;font-weight:600;display:flex;align-items:center;gap:5px;transition:all 0.15s}
   .settings-btn:hover{background:#ddd6fe}
-  .quiz-area{padding:0 16px 32px}
+  .quiz-area{padding:0 16px 100px}
   .progress{font-size:12px;color:var(--text-dim);text-align:right;margin-bottom:8px}
   .cat-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#3730a3;margin-bottom:10px}
   .mode-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#92400e;margin-bottom:10px;margin-left:6px}
@@ -116,7 +115,7 @@
   .feedback{text-align:center;font-size:14px;font-weight:600;padding:10px 0 4px;min-height:36px}
   .feedback.ok{color:#16a34a}
   .feedback.bad{color:#dc2626}
-  .next-btn{display:block;width:100%;padding:14px;border-radius:12px;background:var(--text);color:var(--card);border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:6px}
+  .next-btn{display:block;width:calc(100% - 32px);max-width:480px;padding:14px;border-radius:12px;background:var(--text);color:var(--card);border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:6px;position:fixed;left:50%;bottom:14px;transform:translateX(-50%);box-shadow:0 4px 20px rgba(0,0,0,0.22);z-index:40}
   .end-card{background:var(--card);border-radius:16px;padding:32px 20px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
   .end-emoji{font-size:48px;margin-bottom:12px}
   .end-title{font-size:22px;font-weight:700;margin-bottom:8px}
@@ -263,7 +262,6 @@
     <p id="total-label">Loading...</p>
   </div>
   <div class="header-btns">
-    <button class="icon-toggle-btn" id="autonext-toggle-btn" onclick="toggleAutoNext()" title="Auto-next: OFF (tap to turn on)">⏸️</button>
     <button class="icon-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
   </div>
 </div>
@@ -301,6 +299,10 @@
 </div>
 
 <div class="review-bar">
+  <button class="rev-btn" id="autonext-toggle-btn" onclick="toggleAutoNext()" style="border-color:#fca5a5;background:#fee2e2;color:#991b1b">
+    <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#991b1b"><path d="M8 5v14l11-7z"/></svg>
+    Auto-Next: Off
+  </button>
   <button class="rev-btn" onclick="openReview()">
     <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
     Review Vocab
@@ -713,9 +715,17 @@ function toggleAutoNext(){
 function updateAutoNextIcon(){
   const btn=document.getElementById("autonext-toggle-btn");
   if(btn){
-    btn.textContent=autoNextEnabled?"⏭️":"⏸️";
-    btn.title=autoNextEnabled?"Auto-next: ON (tap to turn off)":"Auto-next: OFF (tap to turn on)";
-    btn.classList.toggle("autonext-on",autoNextEnabled);
+    btn.title=autoNextEnabled?"Tap to turn off":"Tap to turn on";
+    btn.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:'+(autoNextEnabled?'#166534':'#991b1b')+'"><path d="M8 5v14l11-7z"/></svg>Auto-Next: '+(autoNextEnabled?'On':'Off');
+    if(autoNextEnabled){
+      btn.style.borderColor="#86efac";
+      btn.style.background="#dcfce7";
+      btn.style.color="#166534";
+    }else{
+      btn.style.borderColor="#fca5a5";
+      btn.style.background="#fee2e2";
+      btn.style.color="#991b1b";
+    }
   }
 }
 
