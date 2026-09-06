@@ -1391,15 +1391,22 @@ function playListenWord(btn){
 function normalizeAnswer(s){
   return s.toLowerCase().replace(/[^a-z0-9\s\/\-]/g,"").replace(/\s+/g," ").trim();
 }
+function stripToPrefix(s){
+  return s.replace(/^to\s+/,"").trim();
+}
 
 function checkListenAnswer(typed, correct){
   const t=normalizeAnswer(typed);
   const c=normalizeAnswer(correct);
   if(t===c) return true;
+  const tNoTo=stripToPrefix(t);
+  const cNoTo=stripToPrefix(c);
+  if(tNoTo===cNoTo) return true;
   // Accept partial: typed matches start of any key meaning segment
   const segments=c.split(/[\/,;]+/).map(s=>s.trim());
   for(const seg of segments){
-    if(t===seg || seg.startsWith(t) && t.length>=3) return true;
+    const segNoTo=stripToPrefix(seg);
+    if(t===seg || tNoTo===segNoTo || (seg.startsWith(t) && t.length>=3) || (segNoTo.startsWith(tNoTo) && tNoTo.length>=3)) return true;
   }
   return false;
 }
