@@ -471,7 +471,7 @@ const CAT_KO={
   "Family":"가족","Body Parts":"신체 부위","Clothes":"옷","Food":"음식","Fruits":"과일",
   "Vegetables":"채소","Animals":"동물","Home Goods":"생활용품","Appliances":"가전제품",
   "School Supplies":"학용품","Accessories":"액세서리","Numbers":"숫자","Time & Date":"시간과 날짜",
-  "Verbs":"동사","Adjectives":"형용사"
+  "Verbs":"동사","Adjectives":"형용사","Most Useful Verbs":"필수 동사"
 };
 function catLabel(c){
   if(c==="All") return c;
@@ -2024,7 +2024,44 @@ const GRAMMAR_DATA=[
 ];
 const GRAMMAR_VOCAB=GRAMMAR_DATA.map(g=>({k:g.k,e:g.e+" — e.g. "+g.ex,c:"Graph 문법"}));
 
-V.push(...PARTICLES_VOCAB,...COUNTERS_VOCAB,...GRAMMAR_VOCAB);
+// ===== MOST USEFUL VERBS DATA =====
+const MOST_USEFUL_VERBS_DATA=[
+  {k:"두드리다",e:"Beat"},{k:"구부리다",e:"Bend"},{k:"묶다",e:"Bind"},{k:"꺾다",e:"Break (snap)"},
+  {k:"부수다",e:"Break (destroy)"},{k:"부딪히다",e:"Bumped into"},{k:"태우다",e:"Burn"},
+  {k:"부르다",e:"Call (call by name)"},{k:"잡다",e:"Catch / grab"},{k:"바꾸다",e:"Change / switch"},
+  {k:"씹다",e:"Chew"},{k:"썰다",e:"Chop"},{k:"무너지다",e:"Collapse"},{k:"빗다",e:"Comb"},
+  {k:"식히다",e:"Cool"},{k:"덮다",e:"Cover"},{k:"끊다 / 자르다",e:"Cut"},{k:"(춤)추다",e:"Dance"},
+  {k:"파다",e:"Dig"},{k:"운전하다",e:"Drive"},{k:"떨어뜨리다",e:"Drop"},{k:"지우다",e:"Erase"},
+  {k:"넘어지다",e:"Fall"},{k:"고치다",e:"Fix / repair"},{k:"접다",e:"Fold"},{k:"찡그리다",e:"Frown"},
+  {k:"튀기다",e:"Fry (deep-fry)"},{k:"갈다",e:"Grind / sharpen"},{k:"매달다",e:"Hang (suspend)"},
+  {k:"걸다",e:"Hang (put on the wall)"},{k:"갖다 / 가지다",e:"Have / possess"},{k:"듣다",e:"Hear"},
+  {k:"달구다",e:"Heat (metal)"},{k:"끼다",e:"Hold (between fingers / fit in)"},{k:"쥐다",e:"Hold (grasp)"},
+  {k:"들어 올리다",e:"Hold up / lift up"},{k:"외치다",e:"Holler"},{k:"증진하다",e:"Improve (formal)"},
+  {k:"차다",e:"Kick"},{k:"눕다",e:"Lie down"},{k:"잠그다",e:"Lock"},{k:"잃다",e:"Lose (object)"},
+  {k:"시키다",e:"Make (make someone do something)"},{k:"녹이다",e:"Melt"},{k:"놓치다",e:"Miss (bus/chances)"},
+  {k:"펼치다",e:"Open (something flat like a book)"},{k:"바싹 타다",e:"Parch (to burn / scorched lightly)"},
+  {k:"바르다",e:"Paste"},{k:"지불하다",e:"Pay (formal)"},{k:"사진을 찍다",e:"Photograph"},
+  {k:"따다 / 고르다",e:"Pick"},{k:"집다",e:"Pick up (by hand)"},{k:"쌓다",e:"Pile up"},{k:"놀다",e:"Play"},
+  {k:"닦다",e:"Polish"},{k:"따르다",e:"Pour"},{k:"누르다",e:"Press"},{k:"감싸다",e:"Protect (wrap)"},
+  {k:"당기다",e:"Pull (toward)"},{k:"끌다",e:"Pull (drag)"},{k:"꺼내다",e:"Pull out (take out from inside)"},
+  {k:"밀다",e:"Push"},{k:"놓다",e:"Put"},{k:"끼우다",e:"Put between"},{k:"내리다 / 놓다",e:"Put down"},
+  {k:"넣다",e:"Put in"},{k:"벗다",e:"Take off (for clothes)"},{k:"얹다",e:"Put on (place on)"},
+  {k:"입다",e:"Put on (for clothes)"},{k:"신다",e:"Put on (for shoes)"},{k:"차다",e:"Put on (accessories)"},
+  {k:"붙이다",e:"Put on (stick)"},{k:"올리다",e:"Raise / lift up"},{k:"고치다",e:"Repair"},
+  {k:"헹구다",e:"Rinse (wash away soap)"},{k:"말다",e:"Roll up"},{k:"문지르다",e:"Rub / scrub"},
+  {k:"달리다",e:"Run"},{k:"서두르다",e:"Rush / hurry"},{k:"긁다",e:"Scratch"},
+  {k:"털다",e:"Shake off (dust / snow)"},{k:"깎다",e:"Shave (trim)"},{k:"밀다",e:"Shave"},
+  {k:"소리치다",e:"Shout"},{k:"닫다",e:"Shut (close)"},{k:"다물다",e:"Shut up"},
+  {k:"피우다",e:"Smoke (cigarette)"},{k:"담그다",e:"Soak / immerse"},{k:"펴다",e:"Spread / unfold"},
+  {k:"뿌리다",e:"Sprinkle / scatter"},{k:"묻다",e:"Stained"},{k:"(도장을) 찍다",e:"Stamp (stamp a seal)"},
+  {k:"일어나다",e:"Stand up"},{k:"젓다",e:"Stir (liquid)"},{k:"멈추다",e:"Stop"},
+  {k:"치다",e:"Strike / hit (object)"},{k:"때리다",e:"Strike / beat (person)"},{k:"맞다",e:"Struck"},
+  {k:"빨다",e:"Suck"},{k:"내리다",e:"Take off (get off)"},{k:"떼다",e:"Take off (detach / remove)"},
+  {k:"빼다",e:"Take out"},{k:"찢다",e:"Tear"},{k:"던지다",e:"Throw"},
+];
+const MOST_USEFUL_VERBS_VOCAB=MOST_USEFUL_VERBS_DATA.map(v=>({k:v.k,e:v.e,c:"Most Useful Verbs"}));
+
+V.push(...PARTICLES_VOCAB,...COUNTERS_VOCAB,...GRAMMAR_VOCAB,...MOST_USEFUL_VERBS_VOCAB);
 CATS=["All",...new Set(V.map(v=>v.c))];
 
 let particlesTab="particles";
