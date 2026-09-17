@@ -1028,10 +1028,10 @@ function playTTS(text,lang,rate,onend){
   const utt=new SpeechSynthesisUtterance(text);
   utt.lang=lang==="ko"?"ko-KR":"en-US"; utt.rate=rate||1.0;
   if(lang==="ko"&&koVoice)utt.voice=koVoice;
-  let settled=false;
+  let started=false,settled=false;
   const done=()=>{ if(settled)return; settled=true; if(onend)onend(); };
-  utt.onstart=()=>{settled="started";};
-  utt.onend=()=>{ if(settled!=="started")showTTSFailToast(); done(); };
+  utt.onstart=()=>{started=true;};
+  utt.onend=()=>{ if(!started)showTTSFailToast(); done(); };
   utt.onerror=()=>{ showTTSFailToast(); done(); };
   window.speechSynthesis.speak(utt);
   // Some browsers can break speechSynthesis so completely that no event
@@ -1059,6 +1059,7 @@ function initAudioReview(){
   buildAudioPool();
   audioIdx=0;
   renderAudioReview();
+  if(audioPool.length) playAudioReview();
 }
 function buildAudioPool(){
   const list=(af==="All"?[...V]:V.filter(v=>v.c===af)).filter(isIncluded);
@@ -1074,7 +1075,7 @@ function renderAudioReview(){
       '<div class="audio-progress">'+(audioIdx+1)+' / '+audioPool.length+' &middot; '+escHtml(catLabel(af))+'</div>'+
       '<div class="audio-word" id="audio-word">'+escHtml(item.k)+'</div>'+
       '<div class="roman" id="audio-roman">'+romanize(item.k)+'</div>'+
-      '<div class="audio-meaning" id="audio-meaning" style="visibility:hidden">'+escHtml(item.e)+'</div>'+
+      '<div class="audio-meaning" id="audio-meaning">'+escHtml(item.e)+'</div>'+
       '<div class="audio-controls">'+
         '<button class="audio-btn" onclick="audioPrev()">⏮</button>'+
         '<button class="audio-btn audio-play" id="audio-play-btn" onclick="toggleAudioPlay()">'+(audioPlaying?'⏸':'▶️')+'</button>'+
@@ -1141,8 +1142,6 @@ function updateMediaSessionMetadata(){
 function speakCurrentAudioItem(){
   if(!audioPlaying) return;
   const item=audioPool[audioIdx];
-  const mEl=document.getElementById("audio-meaning");
-  if(mEl) mEl.style.visibility="hidden";
   stopAllTTS();
   playTTS(item.k,"ko",audioRate,()=>{
     if(!audioPlaying) return;
@@ -1158,8 +1157,6 @@ function speakCurrentAudioItem(){
 }
 function speakAudioMeaning(item){
   if(!audioPlaying) return;
-  const mEl=document.getElementById("audio-meaning");
-  if(mEl) mEl.style.visibility="visible";
   playTTS(item.e,"en",Math.min(audioRate+0.05,1.3),()=>{
     if(!audioPlaying) return;
     setTimeout(()=>{ if(audioPlaying) advanceAudio(); },900);
