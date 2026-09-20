@@ -267,10 +267,11 @@
   .audio-hint{font-size:12px;color:var(--text-dimmer);margin-top:16px;line-height:1.5}
 
   /* VOCAB SETTINGS (per-category word selection) */
-  .settings-tab-actions{display:flex;gap:8px;margin-bottom:10px}
+  .settings-tab-actions{display:flex;gap:8px;padding:8px 16px 0;flex-shrink:0}
   .settings-mini-btn{flex:1;font-size:12px;padding:8px;border-radius:10px;border:1px solid var(--border-light);background:var(--input-bg);color:var(--text-mid);cursor:pointer;font-family:inherit;font-weight:600}
   .settings-mini-btn:hover{background:var(--divider)}
-  .vocab-check-row{display:flex;align-items:center;gap:10px;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+  .vocab-check-row{display:flex;align-items:center;gap:10px;background:var(--input-bg);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer;transition:background 0.12s,border-color 0.12s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:pan-y}
+  .vocab-check-row.checked{background:rgba(55,48,163,0.14);border-color:#3730a3}
   .vocab-check-row input[type=checkbox]{width:19px;height:19px;flex-shrink:0;accent-color:#3730a3}
   .vocab-check-text{flex:1;min-width:0}
   .vocab-check-row .vocab-e{margin-top:1px}
@@ -459,11 +460,11 @@
     <div class="review-cat-tabs" id="settings-tabs"></div>
     <div class="review-count" id="settings-count"></div>
     <div class="settings-filter-row" id="settings-filter-row"></div>
+    <div class="settings-tab-actions">
+      <button class="settings-mini-btn" id="select-all-btn" onclick="selectAllInCat()">Select All</button>
+      <button class="settings-mini-btn" id="deselect-all-btn" onclick="deselectAllInCat()">Deselect All</button>
+    </div>
     <div class="review-body">
-      <div class="settings-tab-actions">
-        <button class="settings-mini-btn" id="select-all-btn" onclick="selectAllInCat()">Select All</button>
-        <button class="settings-mini-btn" id="deselect-all-btn" onclick="deselectAllInCat()">Deselect All</button>
-      </div>
       <div class="vocab-grid" id="settings-body"></div>
     </div>
   </div>
@@ -1064,6 +1065,7 @@ function practiceBadgeHtml(){
 // ===== AUDIO REVIEW (hands-free, walk & listen) =====
 let audioPool=[],audioIdx=0,audioPlaying=false,audioRate=0.95,audioShuffle=true,audioRepeat=false,wakeLock=null;
 function escHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function escAttr(s){return escHtml(s).replace(/"/g,"&quot;");}
 
 function initAudioReview(){
   pauseAudioReview();
@@ -1846,6 +1848,7 @@ function openSettings(){
   renderSettingsBody();
   document.getElementById("settings-panel").classList.remove("hidden");
   document.body.style.overflow="hidden";
+  initVocabDragSelect();
 }
 function closeSettings(){
   document.getElementById("settings-panel").classList.add("hidden");
@@ -1923,15 +1926,16 @@ function renderSettingsBody(){
     filtered.map((v,i)=>{
       const id=vocabId(v);
       const checked=isIncluded(v);
-      return '<label class="vocab-check-row">'+
-        '<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleVocabInclude(\''+id.replace(/'/g,"\\'")+'\',this.checked)">'+
+      return '<label class="vocab-check-row'+(checked?' checked':'')+'" data-id="'+escAttr(id)+'">'+
+        '<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleVocabInclude(\''+id.replace(/'/g,"\\'")+'\',this.checked,this)">'+
         '<span class="vocab-check-text"><div class="vocab-k">'+escHtml(v.k)+'</div><div class="vocab-e">'+escHtml(v.e)+'</div></span>'+
         historyTagFor(v)+
         '</label>';
     }).join("");
 }
-function toggleVocabInclude(id,included){
+function toggleVocabInclude(id,included,el){
   if(included) excludedSet.delete(id); else excludedSet.add(id);
+  if(el&&el.closest) { const row=el.closest(".vocab-check-row"); if(row) row.classList.toggle("checked",included); }
   document.getElementById("settings-count").textContent=
     V.filter(v=>v.c===settingsTab&&isIncluded(v)).length+" / "+V.filter(v=>v.c===settingsTab).length+" words selected for review";
 }
@@ -1942,6 +1946,75 @@ function selectAllInCat(){
 function deselectAllInCat(){
   getFilteredSettingsWords().forEach(v=>excludedSet.add(vocabId(v)));
   renderSettingsBody();
+}
+
+// Press-and-hold on a row, then drag over other rows, to check/uncheck several
+// at once ("paint" selection). A quick tap still just toggles that one row, and
+// a normal swipe (finger moving right away) still scrolls the list as usual.
+const vocabDrag={active:false,mode:false,timer:null,pointerId:null,startX:0,startY:0,moved:false,startRow:null,touched:null,justFinished:false};
+function initVocabDragSelect(){
+  const body=document.getElementById("settings-body");
+  if(!body||body._dragBound)return;
+  body._dragBound=true;
+  body.addEventListener("pointerdown",vocabDragPointerDown);
+  document.addEventListener("pointermove",vocabDragPointerMove,{passive:false});
+  document.addEventListener("pointerup",vocabDragPointerEnd);
+  document.addEventListener("pointercancel",vocabDragPointerEnd);
+  body.addEventListener("click",vocabDragClickGuard,true);
+}
+function vocabDragPointerDown(e){
+  if(e.pointerType==="mouse"&&e.button!==0)return;
+  const row=e.target.closest(".vocab-check-row");
+  if(!row)return;
+  clearTimeout(vocabDrag.timer);
+  vocabDrag.pointerId=e.pointerId;
+  vocabDrag.startX=e.clientX;
+  vocabDrag.startY=e.clientY;
+  vocabDrag.moved=false;
+  vocabDrag.active=false;
+  vocabDrag.startRow=row;
+  vocabDrag.touched=new Set();
+  const activate=()=>{
+    vocabDrag.active=true;
+    vocabDrag.mode=!row.classList.contains("checked");
+    applyVocabDrag(row);
+    if(navigator.vibrate) navigator.vibrate(12);
+  };
+  if(e.pointerType==="mouse"){
+    activate();
+  } else {
+    vocabDrag.timer=setTimeout(()=>{ if(!vocabDrag.moved) activate(); },320);
+  }
+}
+function vocabDragPointerMove(e){
+  if(vocabDrag.pointerId===null||e.pointerId!==vocabDrag.pointerId)return;
+  if(!vocabDrag.active){
+    const dx=e.clientX-vocabDrag.startX,dy=e.clientY-vocabDrag.startY;
+    if(Math.hypot(dx,dy)>10){ vocabDrag.moved=true; clearTimeout(vocabDrag.timer); }
+    return;
+  }
+  e.preventDefault();
+  const el=document.elementFromPoint(e.clientX,e.clientY);
+  const row=el&&el.closest?el.closest(".vocab-check-row"):null;
+  if(row) applyVocabDrag(row);
+}
+function vocabDragPointerEnd(){
+  clearTimeout(vocabDrag.timer);
+  if(vocabDrag.active){ vocabDrag.justFinished=true; setTimeout(()=>{vocabDrag.justFinished=false;},60); }
+  vocabDrag.active=false;
+  vocabDrag.pointerId=null;
+}
+function vocabDragClickGuard(e){
+  if(vocabDrag.justFinished){ e.preventDefault(); e.stopPropagation(); }
+}
+function applyVocabDrag(row){
+  const id=row.dataset.id;
+  if(!id||vocabDrag.touched.has(id))return;
+  vocabDrag.touched.add(id);
+  const cb=row.querySelector('input[type=checkbox]');
+  if(cb) cb.checked=vocabDrag.mode;
+  row.classList.toggle("checked",vocabDrag.mode);
+  toggleVocabInclude(id,vocabDrag.mode);
 }
 function renderReviewTabs(){
   document.getElementById("review-tabs").innerHTML=
