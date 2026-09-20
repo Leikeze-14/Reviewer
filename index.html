@@ -250,6 +250,10 @@
   .cloud-status.ok{color:#16a34a}
   .cloud-status.err{color:#dc2626}
   .cloud-file-label{display:block;width:100%;padding:13px;border-radius:12px;background:#f0fdf4;color:#166534;border:2px solid #86efac;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;margin-top:0}
+  .profile-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--overlay2);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
+  .profile-modal.hidden{display:none}
+  .profile-btn{padding:16px;border-radius:14px;background:var(--input-bg);border:2px solid var(--border);font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text);width:100%;margin-bottom:10px;transition:border-color 0.15s,background 0.15s}
+  .profile-btn:hover,.profile-btn:active{border-color:#3730a3;background:rgba(55,48,163,0.1)}
   .cloud-file-label:hover{background:#dcfce7}
 
   /* AUDIO REVIEW (walk & listen) */
@@ -360,6 +364,10 @@
   <button class="reset-session-btn" onclick="confirmResetSession()">
     <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#991b1b"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
     Reset
+  </button>
+  <button class="cloud-btn" onclick="switchProfile()" id="switch-user-btn">
+    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+    <span id="switch-user-label">Switch User</span>
   </button>
 </div>
 
@@ -485,11 +493,21 @@
   </div>
 </div>
 
+<div class="profile-modal hidden" id="profile-picker">
+  <div class="cloud-sheet">
+    <div class="cloud-title">👋 Who's studying?</div>
+    <div class="cloud-sub">Each person keeps their own separate progress, scores, and mastery on this device.</div>
+    <div id="profile-btn-list"></div>
+  </div>
+</div>
+
 <div class="mastered-toast" id="mastered-toast"></div>
 <script>
 const V=[
   {k:"오다",e:"To come",c:"Verbs"},{k:"마시다",e:"To drink",c:"Verbs"},{k:"먹다",e:"To eat",c:"Verbs"},{k:"주다",e:"To give",c:"Verbs"},{k:"가다",e:"To go",c:"Verbs"},{k:"듣다",e:"To hear",c:"Verbs"},{k:"배우다",e:"To learn",c:"Verbs"},{k:"앉다",e:"To sit",c:"Verbs"},{k:"자다",e:"To sleep",c:"Verbs"},{k:"씻다",e:"To wash",c:"Verbs"},{k:"쓰다",e:"To write / use / wear (headwear)",c:"Verbs"},{k:"울다",e:"To cry",c:"Verbs"},{k:"갖다",e:"To have",c:"Verbs"},{k:"만들다",e:"To make",c:"Verbs"},{k:"웃다",e:"To laugh",c:"Verbs"},{k:"보다",e:"To see",c:"Verbs"},{k:"일어나다",e:"To get up",c:"Verbs"},{k:"걷다",e:"To walk",c:"Verbs"},{k:"춤추다",e:"To dance",c:"Verbs"},{k:"만나다",e:"To meet",c:"Verbs"},{k:"공부하다",e:"To study",c:"Verbs"},{k:"운전하다",e:"To drive",c:"Verbs"},{k:"사다",e:"To buy",c:"Verbs"},{k:"읽다",e:"To read",c:"Verbs"},{k:"주문하다",e:"To order",c:"Verbs"},{k:"입다",e:"To wear (bodywear)",c:"Verbs"},{k:"찍다",e:"To take a picture",c:"Verbs"},{k:"받다",e:"To receive",c:"Verbs"},{k:"신다",e:"To wear (footwear)",c:"Verbs"},{k:"빌리다",e:"To borrow",c:"Verbs"},{k:"전화하다",e:"To telephone",c:"Verbs"},{k:"말하다",e:"To talk",c:"Verbs"},{k:"가르치다",e:"To teach",c:"Verbs"},{k:"기다리다",e:"To wait",c:"Verbs"},{k:"걸다",e:"To call",c:"Verbs"},{k:"청소하다",e:"To clean",c:"Verbs"},{k:"타다",e:"To ride",c:"Verbs"},{k:"나가다",e:"To exit",c:"Verbs"},{k:"들어오다",e:"To enter",c:"Verbs"},{k:"물어보다",e:"To ask",c:"Verbs"},{k:"필요하다",e:"To need",c:"Verbs"},{k:"도와주다",e:"To help",c:"Verbs"},{k:"열다",e:"To open",c:"Verbs"},{k:"닫다",e:"To close",c:"Verbs"},{k:"일하다",e:"To work",c:"Verbs"},{k:"쉬다",e:"To rest",c:"Verbs"},{k:"운동하다",e:"To exercise",c:"Verbs"},{k:"생각하다",e:"To think",c:"Verbs"},{k:"알다",e:"To know",c:"Verbs"},{k:"모르다",e:"To not know",c:"Verbs"},{k:"요리하다",e:"To cook",c:"Verbs"},{k:"끓이다",e:"To boil",c:"Verbs"},{k:"썰다",e:"To chop / slice",c:"Verbs"},{k:"튀기다",e:"To deep fry",c:"Verbs"},{k:"재다",e:"To measure / weigh",c:"Verbs"},{k:"섞다",e:"To mix / blend",c:"Verbs"},{k:"굽다",e:"To roast / grill / bake",c:"Verbs"},{k:"볶다",e:"To fry",c:"Verbs"},{k:"찌다",e:"To steam",c:"Verbs"},{k:"휘젓다",e:"To stir",c:"Verbs"},{k:"하다",e:"To do",c:"Verbs"},{k:"있다",e:"To have / exist",c:"Verbs"},{k:"없다",e:"To not have",c:"Verbs"},{k:"이야기하다",e:"To talk / chat",c:"Verbs"},{k:"연습하다",e:"To practice",c:"Verbs"},{k:"묻다",e:"To ask a question",c:"Verbs"},{k:"내다",e:"To pay",c:"Verbs"},{k:"살다",e:"To live",c:"Verbs"},{k:"죽다",e:"To die",c:"Verbs"},{k:"태어나다",e:"To be born",c:"Verbs"},{k:"사랑하다",e:"To love",c:"Verbs"},{k:"좋아하다",e:"To like",c:"Verbs"},{k:"싫어하다",e:"To hate / dislike",c:"Verbs"},{k:"결혼하다",e:"To marry",c:"Verbs"},{k:"축하하다",e:"To congratulate",c:"Verbs"},{k:"걱정하다",e:"To worry",c:"Verbs"},{k:"약속하다",e:"To promise",c:"Verbs"},{k:"거짓말하다",e:"To lie",c:"Verbs"},{k:"고백하다",e:"To confess",c:"Verbs"},{k:"죄송하다",e:"To be sorry",c:"Verbs"},{k:"찾다",e:"To find / look for",c:"Verbs"},{k:"준비하다",e:"To prepare",c:"Verbs"},{k:"가지다",e:"To have (possess)",c:"Verbs"},{k:"기억하다",e:"To remember",c:"Verbs"},{k:"꿈꾸다",e:"To dream",c:"Verbs"},{k:"시작하다",e:"To start",c:"Verbs"},{k:"끝나다",e:"To finish",c:"Verbs"},{k:"보내다",e:"To send",c:"Verbs"},{k:"사용하다",e:"To use",c:"Verbs"},{k:"팔다",e:"To sell",c:"Verbs"},{k:"싸우다",e:"To fight",c:"Verbs"},{k:"대답하다",e:"To answer",c:"Verbs"},{k:"소개하다",e:"To introduce",c:"Verbs"},{k:"출발하다",e:"To depart",c:"Verbs"},{k:"도착하다",e:"To arrive",c:"Verbs"},{k:"벗다",e:"To undress / take off",c:"Verbs"},{k:"이기다",e:"To win",c:"Verbs"},{k:"지다",e:"To lose",c:"Verbs"},{k:"서두르다",e:"To hurry / rush",c:"Verbs"},{k:"사랑해 빠지다",e:"To fall in love",c:"Verbs"},
-  {k:"회사 / 작업장",e:"Workplace",c:"Places"},{k:"사무실",e:"Office",c:"Places"},{k:"화장실",e:"Restroom",c:"Places"},{k:"식당",e:"Restaurant",c:"Places"},{k:"집",e:"House",c:"Places"},{k:"기숙사",e:"Dormitory",c:"Places"},{k:"세탁소",e:"Laundromat",c:"Places"},{k:"미용실",e:"Hair salon",c:"Places"},{k:"시장",e:"Market",c:"Places"},{k:"마트",e:"Mart",c:"Places"},{k:"편의점",e:"Convenience store",c:"Places"},{k:"슈퍼마켓",e:"Supermarket",c:"Places"},{k:"공원",e:"Park",c:"Places"},{k:"커피숍",e:"Cafe shop",c:"Places"},{k:"서점",e:"Bookstore",c:"Places"},{k:"도서관",e:"Library",c:"Places"},{k:"백화점",e:"Department store",c:"Places"},{k:"노래방",e:"Singing room (karaoke)",c:"Places"},{k:"영화관",e:"Theatre / cinema",c:"Places"},{k:"호텔",e:"Hotel",c:"Places"},{k:"버스 정류장",e:"Bus stop",c:"Places"},{k:"버스 터미널",e:"Bus terminal",c:"Places"},{k:"택시 승강장",e:"Taxi stop",c:"Places"},{k:"기차역",e:"Train station",c:"Places"},{k:"지하철역",e:"Subway station",c:"Places"},{k:"공항",e:"Airport",c:"Places"},{k:"교실",e:"Classroom",c:"Places"},{k:"은행",e:"Bank",c:"Places"},{k:"돈사",e:"Pigsty",c:"Places"},{k:"축사 / 우사",e:"Cattle shed",c:"Places"},{k:"양계장",e:"Poultry farm",c:"Places"},{k:"양식장",e:"Fish farm",c:"Places"},{k:"농장",e:"Farm",c:"Places"},{k:"병원",e:"Hospital",c:"Places"},{k:"운동장",e:"Playground",c:"Places"},{k:"창고",e:"Warehouse",c:"Places"},{k:"회의실",e:"Meeting room",c:"Places"},{k:"꽃집",e:"Flower shop",c:"Places"},{k:"환전소",e:"Money changer",c:"Places"},{k:"주차장",e:"Parking area",c:"Places"},{k:"가구점",e:"Furniture shop",c:"Places"},{k:"농구장",e:"Basketball court",c:"Places"},{k:"비닐하우스",e:"Greenhouse",c:"Places"},{k:"계단",e:"Staircase",c:"Places"},{k:"해수욕장",e:"Beach",c:"Places"},{k:"수영장",e:"Swimming pool",c:"Places"},{k:"치과병원",e:"Dental clinic",c:"Places"},{k:"부엌",e:"Kitchen",c:"Places"},{k:"건설현장",e:"Construction site",c:"Places"},{k:"우체국",e:"Post office",c:"Places"},{k:"샤워실",e:"Shower room",c:"Places"},{k:"공장",e:"Factory",c:"Places"},{k:"다리",e:"Bridge",c:"Places"},{k:"탁구장",e:"Table tennis room",c:"Places"},{k:"테니스장",e:"Tennis court",c:"Places"},{k:"약국",e:"Pharmacy",c:"Places"},{k:"사거리 / 교차로",e:"Intersection",c:"Places"},{k:"빵집",e:"Bakery",c:"Places"},{k:"이발소",e:"Barber shop",c:"Places"},{k:"터널",e:"Tunnel",c:"Places"},{k:"문구점",e:"Stationery store",c:"Places"},{k:"미술관",e:"Art gallery",c:"Places"},{k:"체육사",e:"Sports goods store",c:"Places"},
+  {k:"회사 / 작업장",e:"Workplace",c:"Places"},{k:"사무실",e:"Office",c:"Places"},{k:"화장실",e:"Restroom",c:"Places"},{k:"식당",e:"Restaurant",c:"Places"},{k:"집",e:"House",c:"Places"},{k:"기숙사",e:"Dormitory",c:"Places"},{k:"세탁소",e:"Laundromat",c:"Places"},{k:"미용실",e:"Hair salon",c:"Places"},{k:"시장",e:"Market",c:"Places"},{k:"마트",e:"Mart",c:"Places"},{k:"편의점",e:"Convenience store",c:"Places"},{k:"슈퍼마켓",e:"Supermarket",c:"Places"},{k:"공원",e:"Park",c:"Places"},{k:"커피숍",e:"Cafe shop",c:"Places"},{k:"서점",e:"Bookstore",c:"Places"},{k:"도서관",e:"Library",c:"Places"},{k:"백화점",e:"Department store",c:"Places"},{k:"노래방",e:"Singing room (karaoke)",c:"Places"},{k:"영화관",e:"Theatre / cinema",c:"Places"},{k:"호텔",e:"Hotel",c:"Places"},{k:"버스 정류장",e:"Bus stop",c:"Places"},{k:"버스 터미널",e:"Bus terminal",c:"Places"},{k:"택시 승강장",e:"Taxi stop",c:"Places"},{k:"기차역",e:"Train station",c:"Places"},{k:"지하철역",e:"Subway station",c:"Places"},{k:"공항",e:"Airport",c:"Places"},{k:"교실",e:"Classroom",c:"Places"},{k:"은행",e:"Bank",c:"Places"},{k:"돈사",e:"Pigsty",c:"Places"},{k:"축사 / 우사",e:"Cattle shed",c:"Places"},{k:"양계장",e:"Poultry farm",c:"Places"},{k:"양식장",e:"Fish farm",c:"Places"},{k:"농장",e:"Farm",c:"Places"},{k:"병원",e:"Hospital",c:"Places"},{k:"운동장",e:"Playground",c:"Places"},{k:"창고",e:"Warehouse",c:"Places"},{k:"회의실",e:"Meeting room",c:"Places"},{k:"꽃집",e:"Flower shop",c:"Places"},{k:"환전소",e:"Money changer",c:"Places"},{k:"주차장",e:"Parking area",c:"Places"},{k:"가구점",e:"Furniture shop",c:"Places"},{k:"농구장",e:"Basketball court",c:"Places"},{k:"비닐하우스",e:"Greenhouse",c:"Places"},{k:"계단",e:"Staircase",c:"Places"},{k:"해수욕장",e:"Beach",c:"Places"},{k:"수영장",e:"Swimming pool",c:"Places"},{k:"치과병원",e:"Dental clinic",c:"Places"},{k:"부엌",e:"Kitchen",c:"Places"},{k:"건설현장",e:"Construction site",c:"Places"},{k:"우체국",e:"Post office",c:"Places"},{k:"샤워실",e:"Shower room",c:"Places"},{k:"공장",e:"Factory",c:"Places"},{k:"다리",e:"Bridge",c:"Places"},{k:"탁구장",e:"Table tennis room",c:"Places"},{k:"테니스장",e:"Tennis court",c:"Places"},{k:"약국",e:"Pharmacy",c:"Places"},{k:"사거리 / 교차로",e:"Intersection",c:"Places"},{k:"빵집",e:"Bakery",c:"Places"},{k:"이발소",e:"Barber shop",c:"Places"},{k:"터널",e:"Tunnel",c:"Places"},{k:"문구점",e:"Stationery store",c:"Places"},{k:"미술관",e:"Art gallery",c:"Places"},{k:"체육사",e:"Sports goods store",c:"Places"},{k:"콘서트장",e:"Concert hall",c:"Places"},{k:"동물원",e:"Zoo",c:"Places"},{k:"당구장",e:"Billiard room",c:"Places"},
+  {k:"비",e:"Rain",c:"Nature"},{k:"눈",e:"Snow",c:"Nature"},{k:"나무",e:"Tree",c:"Nature"},{k:"해변",e:"Beach",c:"Nature"},{k:"동굴",e:"Cave",c:"Nature"},{k:"온천",e:"Hot spring",c:"Nature"},{k:"호수",e:"Lake",c:"Nature"},
+  {k:"독서",e:"Reading",c:"Hobby / Sports"},{k:"등산",e:"Mountain climbing / Hiking",c:"Hobby / Sports"},{k:"요리",e:"Cooking",c:"Hobby / Sports"},{k:"수영",e:"Swimming",c:"Hobby / Sports"},{k:"권투",e:"Boxing",c:"Hobby / Sports"},{k:"농구",e:"Basketball",c:"Hobby / Sports"},{k:"탁구",e:"Table tennis",c:"Hobby / Sports"},{k:"야구",e:"Baseball",c:"Hobby / Sports"},{k:"배구",e:"Volleyball",c:"Hobby / Sports"},{k:"축구",e:"Soccer",c:"Hobby / Sports"},{k:"테니스",e:"Tennis",c:"Hobby / Sports"},{k:"골프",e:"Golf",c:"Hobby / Sports"},
   {k:"도청",e:"Provincial government building",c:"Gov. Offices"},{k:"시청",e:"City hall",c:"Gov. Offices"},{k:"구청",e:"Borough office",c:"Gov. Offices"},{k:"경찰서",e:"Police station",c:"Gov. Offices"},{k:"소방서",e:"Fire station",c:"Gov. Offices"},{k:"출입국관리사무소",e:"Immigration office",c:"Gov. Offices"},{k:"보건소",e:"Public health center",c:"Gov. Offices"},{k:"주민센터",e:"Community service center",c:"Gov. Offices"},
   {k:"선생님",e:"Teacher",c:"Occupations"},{k:"학생",e:"Student",c:"Occupations"},{k:"회사원",e:"Company employee",c:"Occupations"},{k:"주부",e:"Homemaker",c:"Occupations"},{k:"경찰관",e:"Police officer",c:"Occupations"},{k:"소방관",e:"Firefighter",c:"Occupations"},{k:"공무원",e:"Public official",c:"Occupations"},{k:"점원",e:"Clerk",c:"Occupations"},{k:"의사",e:"Doctor",c:"Occupations"},{k:"간호사",e:"Nurse",c:"Occupations"},{k:"요리사",e:"Cook / chef",c:"Occupations"},{k:"운전기사",e:"Driver",c:"Occupations"},{k:"기술자",e:"Technician",c:"Occupations"},{k:"목수",e:"Carpenter",c:"Occupations"},{k:"농부",e:"Farmer",c:"Occupations"},{k:"어부",e:"Fisherman",c:"Occupations"},{k:"가수",e:"Singer",c:"Occupations"},{k:"화가",e:"Painter",c:"Occupations"},{k:"청소부",e:"Cleaner / janitor",c:"Occupations"},{k:"기자",e:"Reporter",c:"Occupations"},{k:"변호사",e:"Lawyer",c:"Occupations"},{k:"사장님",e:"Boss",c:"Occupations"},{k:"사원",e:"Employee",c:"Occupations"},{k:"사업가",e:"Business person",c:"Occupations"},
   {k:"버스",e:"Bus",c:"Transport"},{k:"택시",e:"Taxi / cab",c:"Transport"},{k:"기차",e:"Train",c:"Transport"},{k:"지하철",e:"Subway",c:"Transport"},{k:"비행기",e:"Airplane",c:"Transport"},{k:"배",e:"Ship",c:"Transport"},{k:"승용차",e:"Passenger vehicle",c:"Transport"},{k:"소방차",e:"Fire truck",c:"Transport"},{k:"트럭",e:"Truck",c:"Transport"},{k:"앰블런스",e:"Ambulance",c:"Transport"},{k:"오토바이",e:"Motorcycle",c:"Transport"},{k:"자전거",e:"Bicycle",c:"Transport"},{k:"자동차",e:"Car / vehicle",c:"Transport"},
@@ -531,11 +549,11 @@ const V=[
   {k:"무섭다",e:"To be scared",c:"Adjectives"},{k:"짜증나다",e:"To be annoyed",c:"Adjectives"},{k:"놀라다",e:"To be surprised",c:"Adjectives"},{k:"수줍다",e:"To be shy",c:"Adjectives"},{k:"재미 있다",e:"To be interesting",c:"Adjectives"},{k:"재미 없다",e:"To be not interesting",c:"Adjectives"},{k:"심심하다",e:"To be bored",c:"Adjectives"},{k:"지루하다",e:"To be boring, dull",c:"Adjectives"},{k:"조용하다",e:"To be quiet",c:"Adjectives"},{k:"시끄럽다",e:"To be loud, noisy",c:"Adjectives"},
   {k:"무겁다",e:"To be heavy",c:"Adjectives"},{k:"가볍다",e:"To be light",c:"Adjectives"},{k:"밝다",e:"To be bright",c:"Adjectives"},{k:"시원하다",e:"To be cool, refreshing",c:"Adjectives"},{k:"신선하다",e:"To be fresh",c:"Adjectives"},{k:"아름답다",e:"To be beautiful",c:"Adjectives"},{k:"예쁘다",e:"To be pretty",c:"Adjectives"},{k:"귀엽다",e:"To be cute",c:"Adjectives"},{k:"잘생기다",e:"To be good-looking",c:"Adjectives"},{k:"못생기다",e:"To be ugly",c:"Adjectives"},
   {k:"크다",e:"To be big",c:"Adjectives"},{k:"작다",e:"To be small",c:"Adjectives"},{k:"많다",e:"To be many",c:"Adjectives"},{k:"적다",e:"To be short",c:"Adjectives"},{k:"좁다",e:"To be narrow",c:"Adjectives"},{k:"넓다",e:"To be wide, broad",c:"Adjectives"},{k:"뚱뚱하다",e:"To be fat, overweight",c:"Adjectives"},{k:"통통하다",e:"To be chubby",c:"Adjectives"},{k:"날씬하다",e:"To be slim, slender",c:"Adjectives"},{k:"깡마르다",e:"To be skinny, scrawny",c:"Adjectives"},
-  {k:"덥다",e:"To be hot (regarding weather)",c:"Adjectives"},{k:"뜨겁다",e:"To be hot (regarding objects)",c:"Adjectives"},{k:"따뜻하다",e:"To be warm (both weather and objects)",c:"Adjectives"},{k:"춥다",e:"To be cold (regarding weather)",c:"Adjectives"},{k:"차갑다",e:"To be cold (regarding objects)",c:"Adjectives"},{k:"싸늘하다",e:"To be chilly, frosty",c:"Adjectives"},{k:"습하다",e:"To be damp, moist, humid",c:"Adjectives"},{k:"건조하다",e:"To be dry",c:"Adjectives"},{k:"흐리다",e:"To be cloudy",c:"Adjectives"},{k:"좋다",e:"To be good, fine",c:"Adjectives"},
+  {k:"덥다",e:"To be hot (regarding weather)",c:"Adjectives"},{k:"뜨겁다",e:"To be hot (regarding objects)",c:"Adjectives"},{k:"따뜻하다",e:"To be warm (both weather and objects)",c:"Adjectives"},{k:"춥다",e:"To be cold (regarding weather)",c:"Adjectives"},{k:"차갑다",e:"To be cold (regarding objects)",c:"Adjectives"},{k:"싸늘하다",e:"To be chilly, frosty",c:"Adjectives"},{k:"습하다",e:"To be damp, moist, humid",c:"Adjectives"},{k:"건조하다",e:"To be dry, arid",c:"Adjectives"},{k:"흐리다",e:"To be cloudy",c:"Adjectives"},{k:"좋다",e:"To be good, fine",c:"Adjectives"},
   {k:"어렵다",e:"To be difficult",c:"Adjectives"},{k:"쉽다",e:"To be easy",c:"Adjectives"},{k:"깨끗하다",e:"To be clean",c:"Adjectives"},{k:"더럽다",e:"To be dirty",c:"Adjectives"},{k:"빠르다",e:"To be fast",c:"Adjectives"},{k:"천천하다",e:"To be slowly",c:"Adjectives"},{k:"느리다",e:"To be slow",c:"Adjectives"},{k:"급하다",e:"To be urgent",c:"Adjectives"},{k:"늦다",e:"To be late",c:"Adjectives"},{k:"이르다",e:"To be early",c:"Adjectives"},
   {k:"똑똑하다",e:"To be smart, clever",c:"Adjectives"},{k:"멍청하다",e:"To be stupid, foolish",c:"Adjectives"},{k:"싸다",e:"To be cheap",c:"Adjectives"},{k:"비싸다",e:"To be expensive",c:"Adjectives"},{k:"새롭다",e:"To be new, fresh",c:"Adjectives"},{k:"오래되다",e:"To be old (regarding objects)",c:"Adjectives"},{k:"튼튼하다",e:"To be strong, sturdy",c:"Adjectives"},{k:"씩씩하다",e:"To be brave",c:"Adjectives"},{k:"약하다",e:"To be weak, feeble",c:"Adjectives"},{k:"건강하다",e:"To be healthy",c:"Adjectives"},
   {k:"쓰다",e:"To be bitter",c:"Adjectives"},{k:"짜다",e:"To be salty",c:"Adjectives"},{k:"시다",e:"To be sour",c:"Adjectives"},{k:"맵다",e:"To be spicy",c:"Adjectives"},{k:"달다",e:"To be sweet",c:"Adjectives"},{k:"기름지다",e:"To be fatty, greasy, oily",c:"Adjectives"},{k:"맛있다",e:"To be tasty, delicious",c:"Adjectives"},{k:"맛없다",e:"To be not tasty",c:"Adjectives"},{k:"가득하다",e:"To be full, crammed",c:"Adjectives"},{k:"비어 있다",e:"To be empty",c:"Adjectives"},
-  {k:"나쁘다",e:"To be bad, poor",c:"Adjectives"},{k:"딱딱하다",e:"To be hard, stiff",c:"Adjectives"},{k:"뾰족하다",e:"To be sharp, pointed",c:"Adjectives"},{k:"부드럽다",e:"To be soft",c:"Adjectives"},{k:"말랑하다",e:"To be soft, tender, ripe",c:"Adjectives"},{k:"촉촉하다",e:"To be moist",c:"Adjectives"},{k:"축축하다",e:"To be damp, clammy, wet",c:"Adjectives"},{k:"젖다",e:"To get wet, damp",c:"Adjectives"},{k:"건조하다",e:"To be dry, arid",c:"Adjectives"},{k:"미끄럽다",e:"To be slippery",c:"Adjectives"},
+  {k:"나쁘다",e:"To be bad, poor",c:"Adjectives"},{k:"딱딱하다",e:"To be hard, stiff",c:"Adjectives"},{k:"뾰족하다",e:"To be sharp, pointed",c:"Adjectives"},{k:"부드럽다",e:"To be soft",c:"Adjectives"},{k:"말랑하다",e:"To be soft, tender, ripe",c:"Adjectives"},{k:"촉촉하다",e:"To be moist",c:"Adjectives"},{k:"축축하다",e:"To be damp, clammy, wet",c:"Adjectives"},{k:"젖다",e:"To get wet, damp",c:"Adjectives"},{k:"미끄럽다",e:"To be slippery",c:"Adjectives"},
   {k:"편하다",e:"To be comfortable",c:"Adjectives"},{k:"불편하다",e:"To be uncomfortable",c:"Adjectives"},{k:"괜찮다",e:"To be alright, ok",c:"Adjectives"},{k:"이상하다",e:"To be weird, strange",c:"Adjectives"},{k:"복잡하다",e:"To be jammed, crowded",c:"Adjectives"},{k:"편리하다",e:"To be convenient",c:"Adjectives"},{k:"다르다",e:"To be different",c:"Adjectives"},{k:"같다",e:"To be the same",c:"Adjectives"},{k:"착하다",e:"To be good-natured, nice",c:"Adjectives"},{k:"비열하다",e:"To be mean, nasty",c:"Adjectives"},
 ];
 
@@ -827,7 +845,39 @@ function vocabId(v){ return v.k+"|"+v.c; }
 function isIncluded(v){ return !excludedSet.has(vocabId(v)); }
 let QL=20;
 const MASTERY_THRESHOLD=3;
-const SAVE_KEY="korean_quiz_v1";
+let SAVE_KEY="korean_quiz_v1";
+
+// ===== USER PROFILES (separate local progress per person, no login needed) =====
+const PROFILES=["Joanna","Ezekiel"];
+const ACTIVE_PROFILE_KEY="korean_quiz_active_profile";
+let activeProfile=null;
+function saveKeyFor(name){ return "korean_quiz_v1_"+name.toLowerCase(); }
+function getSavedProfile(){
+  try{ return localStorage.getItem(ACTIVE_PROFILE_KEY); }catch(e){ return null; }
+}
+function renderProfilePicker(){
+  document.getElementById("profile-btn-list").innerHTML=PROFILES.map(p=>
+    '<button class="profile-btn" onclick="selectProfile(\''+p+'\')">'+p+'</button>'
+  ).join("");
+}
+function selectProfile(name){
+  activeProfile=name;
+  SAVE_KEY=saveKeyFor(name);
+  try{ localStorage.setItem(ACTIVE_PROFILE_KEY,name); }catch(e){}
+  document.getElementById("profile-picker").classList.add("hidden");
+  startAppForActiveProfile();
+}
+function switchProfile(){
+  saveSession();
+  document.getElementById("profile-picker").classList.remove("hidden");
+}
+function startAppForActiveProfile(){
+  const lbl=document.getElementById("switch-user-label");
+  if(lbl) lbl.textContent=activeProfile;
+  loadSession();
+  if(af!=="All"){const btn=Array.from(document.querySelectorAll(".fbtn")).find(b=>b.textContent.startsWith(af));if(btn){document.querySelectorAll(".fbtn").forEach(b=>b.classList.remove("active"));btn&&btn.classList.add("active");}}
+  renderFilters();buildPool();updateMasteryBar();updateS();nxt();
+}
 
 // ===== PERSISTENCE =====
 function saveSession(){
@@ -2169,6 +2219,7 @@ const PARTICLES_VOCAB=PARTICLES_DATA.map(p=>({k:p.k,e:p.e+" — e.g. "+p.ex,c:"P
 const COUNTERS_VOCAB=COUNTERS_DATA.map(c=>({k:c.k,e:c.e+" — e.g. "+c.ex,c:"Counting Units 단위"}));
 
 // Grammar / degree words (comparatives & superlatives), e.g. 가장 = "The most"
+// Includes graph-reading vocabulary (most/least/highest/lowest/half/etc.)
 const GRAMMAR_DATA=[
   {k:"가장",e:"The most (superlative)",ex:"가장 좋아하는 음식이에요."},
   {k:"제일",e:"The most / number one (informal superlative)",ex:"제일 맛있어요."},
@@ -2182,8 +2233,32 @@ const GRAMMAR_DATA=[
   {k:"조금",e:"A little / a bit",ex:"조금 기다려 주세요."},
   {k:"약간",e:"Slightly / somewhat",ex:"약간 짜요."},
   {k:"거의",e:"Almost / nearly",ex:"거의 다 했어요."},
+  {k:"보다",e:"Than (comparison particle)",ex:"이것이 저것보다 커요."},
+  {k:"많다",e:"Many / a lot"},
+  {k:"가장 많다 / 제일 많다",e:"The most (in quantity)"},
+  {k:"적다",e:"Few / little"},
+  {k:"가장 적다 / 제일 적다",e:"The fewest / the least"},
+  {k:"높다",e:"High"},
+  {k:"가장 높다 / 제일 높다",e:"The highest"},
+  {k:"낮다",e:"Low"},
+  {k:"가장 낮다 / 제일 낮다",e:"The lowest"},
+  {k:"중요하다",e:"Important"},
+  {k:"가장 중요하다 / 제일 중요하다",e:"The most important"},
+  {k:"좋아하다",e:"To like"},
+  {k:"가장 좋아하다 / 제일 좋아하다",e:"To like the most"},
+  {k:"차지하다",e:"To occupy / to make up (a portion/share)"},
+  {k:"대부분",e:"Most / the majority"},
+  {k:"첫 번째 / 첫째",e:"First (1st)"},
+  {k:"두 번째 / 둘째",e:"Second (2nd)"},
+  {k:"세 번째 / 셋째",e:"Third (3rd)"},
+  {k:"네 번째 / 넷째",e:"Fourth (4th)"},
+  {k:"절반 / 반 / 과반",e:"Half (50%)"},
+  {k:"넘다 / 이상",e:"To exceed / or more"},
+  {k:"절반 넘다",e:"More than half"},
+  {k:"절반이 안 된다",e:"Less than half"},
+  {k:"절반 가깝다 / 절반 가까이 된다",e:"Close to half (45%–54%)"},
 ];
-const GRAMMAR_VOCAB=GRAMMAR_DATA.map(g=>({k:g.k,e:g.e+" — e.g. "+g.ex,c:"Graph 문법"}));
+const GRAMMAR_VOCAB=GRAMMAR_DATA.map(g=>({k:g.k,e:g.ex?g.e+" — e.g. "+g.ex:g.e,c:"Graph 문법"}));
 
 // ===== MOST USEFUL VERBS DATA =====
 const MOST_USEFUL_VERBS_DATA=[
@@ -2198,20 +2273,20 @@ const MOST_USEFUL_VERBS_DATA=[
   {k:"걸다",e:"Hang (put on the wall)"},{k:"갖다 / 가지다",e:"Have / possess"},{k:"듣다",e:"Hear"},
   {k:"달구다",e:"Heat (metal)"},{k:"끼다",e:"Hold (between fingers / fit in)"},{k:"쥐다",e:"Hold (grasp)"},
   {k:"들어 올리다",e:"Hold up / lift up"},{k:"외치다",e:"Holler"},{k:"증진하다",e:"Improve (formal)"},
-  {k:"차다",e:"Kick"},{k:"눕다",e:"Lie down"},{k:"잠그다",e:"Lock"},{k:"잃다",e:"Lose (object)"},
+  {k:"차다",e:"Kick / Put on (accessories)"},{k:"눕다",e:"Lie down"},{k:"잠그다",e:"Lock"},{k:"잃다",e:"Lose (object)"},
   {k:"시키다",e:"Make (make someone do something)"},{k:"녹이다",e:"Melt"},{k:"놓치다",e:"Miss (bus/chances)"},
   {k:"펼치다",e:"Open (something flat like a book)"},{k:"바싹 타다",e:"Parch (to burn / scorched lightly)"},
   {k:"바르다",e:"Paste"},{k:"지불하다",e:"Pay (formal)"},{k:"사진을 찍다",e:"Photograph"},
   {k:"따다 / 고르다",e:"Pick"},{k:"집다",e:"Pick up (by hand)"},{k:"쌓다",e:"Pile up"},{k:"놀다",e:"Play"},
   {k:"닦다",e:"Polish"},{k:"따르다",e:"Pour"},{k:"누르다",e:"Press"},{k:"감싸다",e:"Protect (wrap)"},
   {k:"당기다",e:"Pull (toward)"},{k:"끌다",e:"Pull (drag)"},{k:"꺼내다",e:"Pull out (take out from inside)"},
-  {k:"밀다",e:"Push"},{k:"놓다",e:"Put"},{k:"끼우다",e:"Put between"},{k:"내리다 / 놓다",e:"Put down"},
+  {k:"밀다",e:"Push / Shave (hair)"},{k:"놓다",e:"Put"},{k:"끼우다",e:"Put between"},{k:"내리다 / 놓다",e:"Put down"},
   {k:"넣다",e:"Put in"},{k:"벗다",e:"Take off (for clothes)"},{k:"얹다",e:"Put on (place on)"},
-  {k:"입다",e:"Put on (for clothes)"},{k:"신다",e:"Put on (for shoes)"},{k:"차다",e:"Put on (accessories)"},
-  {k:"붙이다",e:"Put on (stick)"},{k:"올리다",e:"Raise / lift up"},{k:"고치다",e:"Repair"},
+  {k:"입다",e:"Put on (for clothes)"},{k:"신다",e:"Put on (for shoes)"},
+  {k:"붙이다",e:"Put on (stick)"},{k:"올리다",e:"Raise / lift up"},
   {k:"헹구다",e:"Rinse (wash away soap)"},{k:"말다",e:"Roll up"},{k:"문지르다",e:"Rub / scrub"},
   {k:"달리다",e:"Run"},{k:"서두르다",e:"Rush / hurry"},{k:"긁다",e:"Scratch"},
-  {k:"털다",e:"Shake off (dust / snow)"},{k:"깎다",e:"Shave (trim)"},{k:"밀다",e:"Shave"},
+  {k:"털다",e:"Shake off (dust / snow)"},{k:"깎다",e:"Shave (trim)"},
   {k:"소리치다",e:"Shout"},{k:"닫다",e:"Shut (close)"},{k:"다물다",e:"Shut up"},
   {k:"피우다",e:"Smoke (cigarette)"},{k:"담그다",e:"Soak / immerse"},{k:"펴다",e:"Spread / unfold"},
   {k:"뿌리다",e:"Sprinkle / scatter"},{k:"묻다",e:"Stained"},{k:"(도장을) 찍다",e:"Stamp (stamp a seal)"},
@@ -2308,7 +2383,7 @@ function exportSave(){
   const a = document.createElement("a");
   const dateStr = new Date().toISOString().slice(0,10);
   a.href = url;
-  a.download = "korean_quiz_save_" + dateStr + ".json";
+  a.download = "korean_quiz_save_" + (activeProfile||"user").toLowerCase() + "_" + dateStr + ".json";
   a.click();
   URL.revokeObjectURL(url);
   const el = document.getElementById("cloud-status");
@@ -2367,9 +2442,16 @@ function importSave(event){
 loadTheme();
 loadAutoNext();
 loadShowRoman();
-loadSession();
-if(af!=="All"){const btn=Array.from(document.querySelectorAll(".fbtn")).find(b=>b.textContent.startsWith(af));if(btn){document.querySelectorAll(".fbtn").forEach(b=>b.classList.remove("active"));btn&&btn.classList.add("active");}}
-renderFilters();buildPool();updateMasteryBar();updateS();nxt();
+try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+renderProfilePicker();
+const savedProfile=getSavedProfile();
+if(savedProfile && PROFILES.includes(savedProfile)){
+  activeProfile=savedProfile;
+  SAVE_KEY=saveKeyFor(savedProfile);
+  startAppForActiveProfile();
+} else {
+  document.getElementById("profile-picker").classList.remove("hidden");
+}
 
 // Replay the current word's pronunciation — works across every quiz mode
 function replayCurrentSound(){
