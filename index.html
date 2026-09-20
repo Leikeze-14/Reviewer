@@ -806,6 +806,21 @@ function updateAutoNextIcon(){
   }
 }
 
+// ===== ROMANIZATION TOGGLE (Multiple Choice mode) =====
+const SHOW_ROMAN_KEY="korean_quiz_showroman";
+let showRomanMC=true;
+function loadShowRoman(){
+  try{
+    const v=localStorage.getItem(SHOW_ROMAN_KEY);
+    showRomanMC = v===null ? true : v==="on";
+  }catch(e){ showRomanMC=true; }
+}
+function toggleShowRoman(){
+  showRomanMC=!showRomanMC;
+  try{ localStorage.setItem(SHOW_ROMAN_KEY, showRomanMC?"on":"off"); }catch(e){}
+  if(quizMode==="mc") renderMC();
+}
+
 // ===== VOCAB SELECTION (per-category include/exclude) =====
 let excludedSet=new Set();
 function vocabId(v){ return v.k+"|"+v.c; }
@@ -1370,12 +1385,13 @@ function renderMC(){
     '<p class="progress" style="margin:0">'+qn+' / '+tot2+'</p>'+
     '<div class="choice-toggle"><span class="choice-label">Choices:</span>'+
     '<button class="ctbtn '+(choiceMode===2?'active':'')+'" onclick="setChoices(2)">2</button>'+
-    '<button class="ctbtn '+(choiceMode===4?'active':'')+'" onclick="setChoices(4)">4</button></div></div>'+
+    '<button class="ctbtn '+(choiceMode===4?'active':'')+'" onclick="setChoices(4)">4</button>'+
+    '<button class="ctbtn '+(showRomanMC?'active':'')+'" onclick="toggleShowRoman()" title="Show/hide romanization" style="margin-left:6px">Aa</button></div></div>'+
     '<span class="cat-badge">'+catLabel(cur.c)+'</span>'+repeatBadge+streakStars+practiceBadgeHtml()+
     '<div class="qcard">'+
     '<div class="korean-row"><div class="korean">'+cur.k+'</div>'+
     '<button class="speak-btn" id="main-speak" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+speakerSVG+'</button></div>'+
-    '<div class="roman">'+romanize(cur.k)+'</div>'+
+    (showRomanMC?'<div class="roman">'+romanize(cur.k)+'</div>':'')+
     '<div class="hint">What does this mean in English? <span style="opacity:.7">(Alt+1 to replay sound)</span></div>'+
     '<div class="options '+(choiceMode===2?'cols1':'cols2')+'">'+
     opts.map(o=>'<button class="opt" onclick="pick(this,\''+esc(o)+'\',\''+esc(cur.e)+'\')">'+o+'</button>').join("")+
@@ -2350,6 +2366,7 @@ function importSave(event){
 
 loadTheme();
 loadAutoNext();
+loadShowRoman();
 loadSession();
 if(af!=="All"){const btn=Array.from(document.querySelectorAll(".fbtn")).find(b=>b.textContent.startsWith(af));if(btn){document.querySelectorAll(".fbtn").forEach(b=>b.classList.remove("active"));btn&&btn.classList.add("active");}}
 renderFilters();buildPool();updateMasteryBar();updateS();nxt();
