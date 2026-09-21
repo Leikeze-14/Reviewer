@@ -41,7 +41,7 @@
 
   /* LISTENING EXAM */
   @keyframes quizFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-  .listen-card{background:var(--card);border-radius:16px;padding:28px 20px 22px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;animation:quizFadeIn 0.18s ease-out}
+  .listen-card{position:relative;background:var(--card);border-radius:16px;padding:28px 20px 22px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;animation:quizFadeIn 0.18s ease-out}
   .listen-play-btn{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#be185d,#9d174d);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 4px 14px rgba(190,24,93,0.35);transition:transform 0.15s,box-shadow 0.15s}
   .listen-play-btn:active{transform:scale(0.94)}
   .listen-play-btn.playing{animation:listenPulse 0.7s infinite alternate;box-shadow:0 0 0 8px rgba(190,24,93,0.18)}
@@ -61,7 +61,7 @@
   .listen-answer-reveal.wrong-reveal{background:#fff1f2;border-color:#fecdd3;color:#9f1239}
   .listen-mode-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#fce7f3;color:#be185d;margin-bottom:10px;margin-left:6px}
   .read-mode-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#d1fae5;color:#065f46;margin-bottom:10px;margin-left:6px}
-  .read-card{background:var(--card);border-radius:16px;padding:28px 20px 22px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;animation:quizFadeIn 0.18s ease-out}
+  .read-card{position:relative;background:var(--card);border-radius:16px;padding:28px 20px 22px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;animation:quizFadeIn 0.18s ease-out}
   .read-korean-big{font-size:52px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.2}
   .read-speak-btn{background:#d1fae5;border:none;border-radius:50%;width:46px;height:46px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;transition:background 0.15s}
   .read-speak-btn:active{background:#a7f3d0}
@@ -91,7 +91,14 @@
   .progress{font-size:12px;color:var(--text-dim);text-align:right;margin-bottom:8px}
   .cat-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#3730a3;margin-bottom:10px}
   .mode-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#92400e;margin-bottom:10px;margin-left:6px}
-  .qcard{background:var(--card);border-radius:16px;padding:24px 20px 20px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);animation:quizFadeIn 0.18s ease-out}
+  .qcard{position:relative;background:var(--card);border-radius:16px;padding:24px 20px 20px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);animation:quizFadeIn 0.18s ease-out}
+  .star-btn{position:absolute;top:10px;right:10px;z-index:3;background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:#d1d5db;padding:4px 6px;transition:transform 0.15s,color 0.15s}
+  .star-btn.active{color:#f59e0b}
+  .star-btn:active{transform:scale(0.82)}
+  .vocab-star-btn{background:none;border:none;font-size:20px;line-height:1;cursor:pointer;color:#d1d5db;padding:2px 4px;flex-shrink:0}
+  .vocab-star-btn.active{color:#f59e0b}
+  .rct.star-tab{border-color:#fcd34d;color:#92400e;background:#fef9c3}
+  .rct.star-tab.active{background:#f59e0b;color:#fff;border-color:#f59e0b}
   .korean-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px}
   .korean{font-size:40px;font-weight:700;text-align:center;color:var(--text);line-height:1.2}
   .roman{font-size:14px;font-weight:600;text-align:center;color:var(--text-dim);letter-spacing:.3px;margin-top:2px}
@@ -347,6 +354,7 @@
     <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
     Review Vocab
   </button>
+  <button class="rev-btn" id="must-review-btn" onclick="openStarred()" style="border-color:#fcd34d;background:#fef9c3;color:#92400e">⭐ Must Review <span id="must-review-count" style="opacity:.65;font-size:10px;margin-left:2px">0</span></button>
   <button class="rev-btn" onclick="openTenses()" style="border-color:#c4b5fd;color:#5b21b6">
     <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#5b21b6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 5v5.25l4.5 2.67-.75 1.23L11 13V7h1.5z"/></svg>
     Verb &amp; Adj. Tenses
@@ -785,6 +793,7 @@ let CATS=["All",...new Set(V.map(v=>v.c))];
 let selectedCats=new Set(CATS.filter(c=>c!=="All"));
 let af="All",pool=[],queue=[],cur=null,answered=false;
 function syncAfLabel(){
+  if(starredQuizActive){ af="⭐ Must Review"; return; }
   const total=CATS.length-1;
   if(selectedCats.size>=total) af="All";
   else if(selectedCats.size===1) af=[...selectedCats][0];
@@ -792,6 +801,7 @@ function syncAfLabel(){
 }
 function poolWords(){ return V.filter(v=>selectedCats.has(v.c)).filter(isIncluded); }
 function setCategoryFilter(cat){
+  starredQuizActive=false;
   if(cat==="All") selectedCats=new Set(CATS.filter(c=>c!=="All"));
   else selectedCats=new Set([cat]);
   syncAfLabel();
@@ -802,6 +812,7 @@ function setCategoryFilter(cat){
 }
 
 function playAgain(){
+  if(starredQuizActive){ startStarredQuiz(); return; }
   practiceMode=false;
   buildPool();updateMasteryBar();nxt();
 }
@@ -974,7 +985,9 @@ function switchProfile(){
 function startAppForActiveProfile(){
   const lbl=document.getElementById("switch-user-label");
   if(lbl) lbl.textContent=activeProfile;
+  starredSet=new Set();
   loadSession();
+  updateMustReviewCount();
   renderFilters();buildPool();updateMasteryBar();updateS();nxt();
 }
 
@@ -987,7 +1000,8 @@ function saveSession(){
       )),
       af,quizMode,choiceMode,score,cc,tot,stk,seenCounter,QL,
       selectedCats:Array.from(selectedCats),
-      excluded:Array.from(excludedSet)
+      excluded:Array.from(excludedSet),
+      starred:Array.from(starredSet)
     };
     localStorage.setItem(SAVE_KEY,JSON.stringify(data));
   }catch(e){}
@@ -1020,12 +1034,55 @@ function loadSession(){
     syncAfLabel();
     if(data.seenCounter) seenCounter=data.seenCounter;
     if(data.excluded) excludedSet=new Set(data.excluded);
+    if(data.starred) starredSet=new Set(data.starred);
+    updateMustReviewCount();
     if(data.QL){
       QL=data.QL;
       const sel=document.getElementById("ql-select");
       if(sel) sel.value=String(QL);
     }
   }catch(e){}
+}
+
+// ===== MUST REVIEW (starred words, quizzable on their own) =====
+let starredSet=new Set();
+let starredQuizActive=false;
+function wKey(w){ return w.k+"|"+w.e; }
+function isStarred(w){ return starredSet.has(wKey(w)); }
+function updateMustReviewCount(){
+  const el=document.getElementById("must-review-count");
+  if(el) el.textContent=String(starredSet.size);
+}
+function starBtnHTML(w){
+  const active=isStarred(w);
+  return '<button class="star-btn'+(active?' active':'')+'" onclick="toggleStarCur(this)" title="'+
+    (active?'Remove from Must Review':'Add to Must Review')+'">'+(active?'★':'☆')+'</button>';
+}
+// Toggles the star for the word currently on screen during a quiz (mc/listen/read)
+function toggleStarCur(btn){
+  if(!cur) return;
+  const id=wKey(cur);
+  if(starredSet.has(id)) starredSet.delete(id); else starredSet.add(id);
+  saveSession();
+  const active=starredSet.has(id);
+  btn.classList.toggle("active",active);
+  btn.textContent=active?"★":"☆";
+  btn.title=active?"Remove from Must Review":"Add to Must Review";
+  updateMustReviewCount();
+}
+// Toggles the star from the vocab review list (grid), where the word is passed by id
+function toggleStarById(id,btn){
+  if(starredSet.has(id)) starredSet.delete(id); else starredSet.add(id);
+  saveSession();
+  const active=starredSet.has(id);
+  if(btn){
+    btn.classList.toggle("active",active);
+    btn.textContent=active?"★":"☆";
+    btn.title=active?"Remove from Must Review":"Add to Must Review";
+  }
+  updateMustReviewCount();
+  renderReviewTabs();
+  if(reviewCat==="★") renderVocabGrid();
 }
 
 // ===== WEAK / MASTERY MAP =====
@@ -1082,9 +1139,11 @@ function getWeakWords(){
   }).sort((a,b)=>(b.wrong-b.correct)-(a.wrong-a.correct));
 }
 function updateMasteryBar(){
-  const catWords=poolWords();
+  const catWords=starredQuizActive?pool:poolWords();
   const total=catWords.length;
-  const mastered=getMasteredSet().length;
+  const mastered=starredQuizActive
+    ?catWords.filter(v=>{const w=weakMap[v.k+"|"+v.e];return w&&w.mastered;}).length
+    :getMasteredSet().length;
   const pct=total>0?Math.round(mastered/total*100):0;
   document.getElementById("mastery-fill").style.width=pct+"%";
   document.getElementById("mastery-count").textContent=mastered+" / "+total+" mastered";
@@ -1121,6 +1180,29 @@ function retakeMastered(){
   practiceMode=true;
   buildPool();
   nxt();
+}
+
+// Starts a quiz using ONLY the words the user starred as "Must Review",
+// regardless of which category they belong to. Doesn't touch selectedCats
+// so the normal category quiz picks right back up once this ends.
+function startStarredQuiz(){
+  const words=V.filter(v=>isStarred(v));
+  if(words.length===0) return;
+  starredQuizActive=true;
+  practiceMode=true;
+  pool=[...words];
+  queue=shuf([...words]);
+  noneSelected=false;
+  score=0;cc=0;tot=0;stk=0;updateS();
+  renderFilters();
+  updateMasteryBar();
+  nxt();
+}
+function exitStarredQuiz(){
+  starredQuizActive=false;
+  practiceMode=false;
+  score=0;cc=0;tot=0;stk=0;updateS();
+  buildPool();updateMasteryBar();nxt();
 }
 
 
@@ -1451,11 +1533,18 @@ function setMode(m){
     return;
   }
   score=0;cc=0;tot=0;stk=0;updateS();
+  if(starredQuizActive){ queue=shuf([...pool]); updateMasteryBar(); nxt(); return; }
   buildPool();updateMasteryBar();nxt();
 }
 
 function renderFilters(){
   syncAfLabel();
+  if(starredQuizActive){
+    document.getElementById("frow").innerHTML=
+      '<button class="fbtn active" style="font-weight:600;border-color:#f59e0b;background:#fef3c7;color:#92400e" onclick="exitStarredQuiz()">⭐ Must Review '+
+      '<span style="opacity:.6;font-size:10px;margin-left:2px">('+pool.length+' words · tap to exit)</span></button>';
+    return;
+  }
   const total=CATS.length-1;
   const label = selectedCats.size>=total ? "All Categories"
     : selectedCats.size===1 ? catLabel([...selectedCats][0])
@@ -1494,6 +1583,7 @@ function nxt(){
     return;
   }
   if(queue.length===0){
+    if(starredQuizActive){ showEnd(); return; }
     const unmastered=getUnmastered();
     if(unmastered.length===0) showAllMastered();
     else showEnd();
@@ -1536,7 +1626,7 @@ function renderMC(){
     '<button class="ctbtn '+(choiceMode===4?'active':'')+'" onclick="setChoices(4)">4</button>'+
     '<button class="ctbtn '+(showRomanMC?'active':'')+'" onclick="toggleShowRoman()" title="Show/hide romanization" style="margin-left:6px">Aa</button></div></div>'+
     '<span class="cat-badge">'+catLabel(cur.c)+'</span>'+repeatBadge+streakStars+practiceBadgeHtml()+
-    '<div class="qcard">'+
+    '<div class="qcard">'+starBtnHTML(cur)+
     '<div class="korean-row"><div class="korean">'+cur.k+'</div>'+
     '<button class="speak-btn" id="main-speak" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+speakerSVG+'</button></div>'+
     (showRomanMC?'<div class="roman">'+romanize(cur.k)+'</div>':'')+
@@ -1603,7 +1693,7 @@ function renderListen(){
     '<span class="cat-badge">'+catLabel(cur.c)+'</span>'+
     '<span class="listen-mode-badge">🎧 Listening</span>'+practiceBadgeHtml()+
     repeatBadge+streakStars+
-    '<div class="listen-card">'+
+    '<div class="listen-card">'+starBtnHTML(cur)+
     '<button class="listen-play-btn" id="listen-play-btn" onclick="playListenWord(this)">'+
       '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'+
     '</button>'+
@@ -1733,7 +1823,7 @@ function renderRead(){
     '<span class="cat-badge">'+catLabel(cur.c)+'</span>'+
     '<span class="read-mode-badge">✍️ Reading</span>'+practiceBadgeHtml()+
     repeatBadge+streakStars+
-    '<div class="read-card">'+
+    '<div class="read-card">'+starBtnHTML(cur)+
       '<div class="read-korean-big">'+cur.k+'</div>'+
       '<button class="read-speak-btn" id="read-speak-btn" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+
         '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>'+
@@ -1913,7 +2003,14 @@ function showEnd(){
 let reviewCat="All";
 
 function openReview(){
-  reviewCat=af;
+  reviewCat=CATS.includes(af)?af:"All";
+  renderReviewTabs();
+  renderVocabGrid();
+  document.getElementById("review-panel").classList.remove("hidden");
+  document.body.style.overflow="hidden";
+}
+function openStarred(){
+  reviewCat="★";
   renderReviewTabs();
   renderVocabGrid();
   document.getElementById("review-panel").classList.remove("hidden");
@@ -2181,7 +2278,10 @@ function applyVocabDrag(row){
   toggleVocabInclude(id,vocabDrag.mode);
 }
 function renderReviewTabs(){
+  const starredTab='<button class="rct star-tab'+(reviewCat==="★"?' active':'')+'" onclick="switchReviewCat(\'★\')">⭐ Must Review'+
+    ' <span style="opacity:.75;font-size:10px;margin-left:2px">'+starredSet.size+'</span></button>';
   document.getElementById("review-tabs").innerHTML=
+    starredTab+
     CATS.map(c=>{
       const total=c==="All"?V.length:V.filter(v=>v.c===c).length;
       const seen=getSeenCount(c);
@@ -2195,9 +2295,23 @@ function switchReviewCat(cat){
   renderVocabGrid();
   // update quiz button label
   document.getElementById("review-quiz-btn").textContent=
+    cat==="★"?"Start Quiz for Must Review Words":
     cat==="All"?"Start Quiz for All Words":"Start Quiz for \""+cat+"\"";
 }
 function renderVocabGrid(){
+  if(reviewCat==="★"){
+    const words=[...V].filter(v=>isStarred(v)).sort((a,b)=>{
+      if(a.c!==b.c) return a.c.localeCompare(b.c);
+      return a.k.localeCompare(b.k,"ko");
+    });
+    document.getElementById("review-count").textContent=words.length+" word"+(words.length===1?"":"s")+" marked for review";
+    document.getElementById("review-title").textContent="⭐ Must Review";
+    document.getElementById("review-quiz-btn").textContent="Start Quiz for Must Review Words";
+    document.getElementById("vocab-grid").innerHTML=words.length
+      ?words.map(w=>renderVocabCardHTML(w,true)).join("")
+      :'<div style="text-align:center;color:var(--text-dim);padding:30px 12px;font-size:13px;line-height:1.6">No words marked yet.<br>Tap the ☆ star on a quiz question to add it here, so you can recall and re-quiz it anytime.</div>';
+    return;
+  }
   let words=reviewCat==="All"?V:V.filter(v=>v.c===reviewCat);
   if(reviewCat==="All"){
     // Group related/connected vocab together by category, then alphabetically
@@ -2231,11 +2345,15 @@ function tenseFeedbackHTML(word){
     '</div>';
 }
 function renderVocabCardHTML(w,showCatTag){
+  const id=wKey(w);
+  const starActive=isStarred(w);
   const topHTML=
     '<div class="verb-card-top">'+
     '<div class="vocab-left"><div class="vocab-k">'+escHtml(w.k)+'</div><div class="roman" style="text-align:left;margin-top:0">'+romanize(w.k)+'</div><div class="vocab-e">'+escHtml(w.e)+'</div></div>'+
     '<div style="display:flex;align-items:center;gap:6px">'+
     (showCatTag?'<span class="vocab-cat-tag">'+catLabel(w.c)+'</span>':'')+
+    '<button class="vocab-star-btn'+(starActive?' active':'')+'" onclick="toggleStarById(\''+id.replace(/'/g,"\\'")+'\',this)" title="'+
+      (starActive?'Remove from Must Review':'Add to Must Review')+'">'+(starActive?'★':'☆')+'</button>'+
     '<button class="vocab-speak" onclick="speakKorean(\''+w.k.replace(/'/g,"\\'")+'\',this)">'+speakerSVG+'</button>'+
     '</div></div>';
   if(!isConjugatable(w)){
@@ -2251,6 +2369,7 @@ function renderVocabCardHTML(w,showCatTag){
 }
 function startQuizFromReview(){
   closeReview();
+  if(reviewCat==="★"){ startStarredQuiz(); return; }
   setCategoryFilter(reviewCat);
 }
 
