@@ -395,6 +395,7 @@
       <div class="vocab-grid" id="vocab-grid"></div>
     </div>
     <div class="review-start-bar">
+      <button class="review-quiz-btn" id="review-merge-btn" style="display:none;margin-bottom:8px;background:#92400e" onclick="mergeStarredIntoCurrentQuiz()">🔀 Merge Into Ongoing Quiz</button>
       <button class="review-quiz-btn" id="review-quiz-btn" onclick="startQuizFromReview()">Start Quiz for This Category</button>
     </div>
   </div>
@@ -792,14 +793,27 @@ function groupOf(word,cat){
 let CATS=["All",...new Set(V.map(v=>v.c))];
 let selectedCats=new Set(CATS.filter(c=>c!=="All"));
 let af="All",pool=[],queue=[],cur=null,answered=false;
+// When true, starred "Must Review" words are temporarily folded into
+// whatever quiz is currently running (single category, several categories,
+// or "All") without changing the category selection itself.
+let mergeStarred=false;
 function syncAfLabel(){
   if(starredQuizActive){ af="⭐ Must Review"; return; }
   const total=CATS.length-1;
   if(selectedCats.size>=total) af="All";
   else if(selectedCats.size===1) af=[...selectedCats][0];
   else af=selectedCats.size+" categories";
+  if(mergeStarred && starredSet.size>0) af+=" + ⭐ Must Review";
 }
-function poolWords(){ return V.filter(v=>selectedCats.has(v.c)).filter(isIncluded); }
+function poolWords(){
+  const words=V.filter(v=>selectedCats.has(v.c)).filter(isIncluded);
+  if(!mergeStarred || starredQuizActive) return words;
+  // Merge in starred words from categories that aren't currently selected,
+  // without duplicating ones already in the pool.
+  const seen=new Set(words.map(wKey));
+  const extra=V.filter(v=>isStarred(v)&&isIncluded(v)&&!seen.has(wKey(v)));
+  return words.concat(extra);
+}
 function setCategoryFilter(cat){
   starredQuizActive=false;
   if(cat==="All") selectedCats=new Set(CATS.filter(c=>c!=="All"));
@@ -1205,6 +1219,39 @@ function exitStarredQuiz(){
   buildPool();updateMasteryBar();nxt();
 }
 
+// ===== MERGE MUST REVIEW INTO THE CURRENT / ONGOING QUIZ =====
+// Lets starred words tag along in whatever category quiz is already
+// running (or "All") instead of forcing a separate Must-Review-only quiz.
+// Toggling off drops them back out and the normal category pool resumes.
+function toggleMergeStarred(){
+  if(starredQuizActive || starredSet.size===0) return;
+  mergeStarred=!mergeStarred;
+  practiceMode=false;
+  renderFilters();
+  buildPool();updateMasteryBar();nxt();
+}
+// Called from inside the Must Review panel: merges starred words into
+// whichever quiz was already running, then closes the panel.
+function mergeStarredIntoCurrentQuiz(){
+  if(starredSet.size===0) return;
+  mergeStarred=true;
+  closeReview();
+  if(starredQuizActive) return;
+  renderFilters();
+  buildPool();updateMasteryBar();nxt();
+}
+function clearAllStarred(){
+  if(starredSet.size===0) return;
+  if(!confirm("Remove all "+starredSet.size+" word"+(starredSet.size===1?"":"s")+" from Must Review?")) return;
+  starredSet=new Set();
+  saveSession();
+  updateMustReviewCount();
+  renderReviewTabs();
+  renderVocabGrid();
+  if(starredQuizActive){ exitStarredQuiz(); return; }
+  if(mergeStarred){ mergeStarred=false; renderFilters(); buildPool(); updateMasteryBar(); nxt(); }
+}
+
 
 const speakerSVG='<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
 
@@ -1550,9 +1597,15 @@ function renderFilters(){
     : selectedCats.size===1 ? catLabel([...selectedCats][0])
     : selectedCats.size+" Categories Selected";
   const seen=selectedCats.size===1?getSeenCount([...selectedCats][0])+"/"+poolWords().length+" ":"";
+  const mergeBtn = starredSet.size>0
+    ? '<button class="fbtn'+(mergeStarred?' active':'')+'" style="'+(mergeStarred?'border-color:#f59e0b;background:#fef3c7;color:#92400e;font-weight:600':'border-color:#fcd34d;color:#92400e')+'" onclick="toggleMergeStarred()" title="'+
+      (mergeStarred?'Stop mixing Must Review words into this quiz':'Temporarily mix Must Review words into this quiz')+'">⭐ '+
+      (mergeStarred?'Merged ('+starredSet.size+')':'Merge Must Review')+'</button>'
+    : '';
   document.getElementById("frow").innerHTML=
     '<button class="fbtn active" style="font-weight:600" onclick="openCategoryModal()">🗂️ '+label+
-    ' <span style="opacity:.55;font-size:10px;margin-left:2px">'+seen+'</span><span style="opacity:.6">▾</span></button>';
+    ' <span style="opacity:.55;font-size:10px;margin-left:2px">'+seen+'</span><span style="opacity:.6">▾</span></button>'+
+    mergeBtn;
 }
 
 function updateS(){
@@ -2297,6 +2350,8 @@ function switchReviewCat(cat){
   document.getElementById("review-quiz-btn").textContent=
     cat==="★"?"Start Quiz for Must Review Words":
     cat==="All"?"Start Quiz for All Words":"Start Quiz for \""+cat+"\"";
+  const mergeBtn=document.getElementById("review-merge-btn");
+  if(mergeBtn) mergeBtn.style.display=(cat==="★"&&!starredQuizActive)?"block":"none";
 }
 function renderVocabGrid(){
   if(reviewCat==="★"){
@@ -2304,11 +2359,15 @@ function renderVocabGrid(){
       if(a.c!==b.c) return a.c.localeCompare(b.c);
       return a.k.localeCompare(b.k,"ko");
     });
-    document.getElementById("review-count").textContent=words.length+" word"+(words.length===1?"":"s")+" marked for review";
+    document.getElementById("review-count").innerHTML=
+      words.length+" word"+(words.length===1?"":"s")+" marked for review"+
+      (words.length?' · <a href="javascript:void(0)" onclick="clearAllStarred()" style="color:#dc2626;text-decoration:underline">Clear all</a>':"");
     document.getElementById("review-title").textContent="⭐ Must Review";
     document.getElementById("review-quiz-btn").textContent="Start Quiz for Must Review Words";
+    const mergeBtn=document.getElementById("review-merge-btn");
+    if(mergeBtn) mergeBtn.style.display=(!starredQuizActive&&words.length)?"block":"none";
     document.getElementById("vocab-grid").innerHTML=words.length
-      ?words.map(w=>renderVocabCardHTML(w,true)).join("")
+      ?words.map(w=>renderVocabCardHTML(w,true,true)).join("")
       :'<div style="text-align:center;color:var(--text-dim);padding:30px 12px;font-size:13px;line-height:1.6">No words marked yet.<br>Tap the ☆ star on a quiz question to add it here, so you can recall and re-quiz it anytime.</div>';
     return;
   }
@@ -2344,16 +2403,19 @@ function tenseFeedbackHTML(word){
     tenseRowHTML("Future",t.future)+
     '</div>';
 }
-function renderVocabCardHTML(w,showCatTag){
+function renderVocabCardHTML(w,showCatTag,inStarredTab){
   const id=wKey(w);
   const starActive=isStarred(w);
+  const starOrRemoveBtn = inStarredTab
+    ? '<button class="vocab-star-btn active" style="border-color:#dc2626;background:#fee2e2;color:#991b1b;font-size:11px;font-weight:600;width:auto;padding:0 8px;border-radius:14px" onclick="toggleStarById(\''+id.replace(/'/g,"\\'")+'\',this)" title="Remove from Must Review">✕ Remove</button>'
+    : '<button class="vocab-star-btn'+(starActive?' active':'')+'" onclick="toggleStarById(\''+id.replace(/'/g,"\\'")+'\',this)" title="'+
+      (starActive?'Remove from Must Review':'Add to Must Review')+'">'+(starActive?'★':'☆')+'</button>';
   const topHTML=
     '<div class="verb-card-top">'+
     '<div class="vocab-left"><div class="vocab-k">'+escHtml(w.k)+'</div><div class="roman" style="text-align:left;margin-top:0">'+romanize(w.k)+'</div><div class="vocab-e">'+escHtml(w.e)+'</div></div>'+
     '<div style="display:flex;align-items:center;gap:6px">'+
     (showCatTag?'<span class="vocab-cat-tag">'+catLabel(w.c)+'</span>':'')+
-    '<button class="vocab-star-btn'+(starActive?' active':'')+'" onclick="toggleStarById(\''+id.replace(/'/g,"\\'")+'\',this)" title="'+
-      (starActive?'Remove from Must Review':'Add to Must Review')+'">'+(starActive?'★':'☆')+'</button>'+
+    starOrRemoveBtn+
     '<button class="vocab-speak" onclick="speakKorean(\''+w.k.replace(/'/g,"\\'")+'\',this)">'+speakerSVG+'</button>'+
     '</div></div>';
   if(!isConjugatable(w)){
