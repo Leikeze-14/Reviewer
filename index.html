@@ -479,6 +479,21 @@
 </div>
 
 <!-- CLOUD SAVE MODAL -->
+<div class="cloud-modal hidden" id="category-modal" onclick="handleCategoryModalClick(event)">
+  <div class="cloud-sheet" style="max-height:82vh;overflow-y:auto">
+    <div class="cloud-title">🗂️ Choose Categories</div>
+    <div class="cloud-sub">Tick which categories to include in your quiz.</div>
+    <div class="settings-tab-actions" style="padding:0;margin-bottom:10px">
+      <button class="settings-mini-btn" onclick="selectAllCategories()">Select All</button>
+      <button class="settings-mini-btn" onclick="deselectAllCategories()">Deselect All</button>
+    </div>
+    <div class="vocab-grid" id="category-checklist"></div>
+    <div id="category-modal-count" style="font-size:12px;color:var(--text-dim);text-align:center;margin-top:10px"></div>
+    <button class="cloud-save-btn" style="width:100%;margin-top:12px" onclick="applyCategorySelection()">Apply</button>
+    <button class="cloud-cancel" onclick="closeCategoryModal()">Cancel</button>
+  </div>
+</div>
+
 <div class="cloud-modal hidden" id="cloud-modal" onclick="handleCloudModalClick(event)">
   <div class="cloud-sheet" id="cloud-sheet">
     <div class="cloud-title">💾 Save / Load Progress</div>
@@ -767,7 +782,92 @@ function groupOf(word,cat){
 }
 
 let CATS=["All",...new Set(V.map(v=>v.c))];
+let selectedCats=new Set(CATS.filter(c=>c!=="All"));
 let af="All",pool=[],queue=[],cur=null,answered=false;
+function syncAfLabel(){
+  const total=CATS.length-1;
+  if(selectedCats.size>=total) af="All";
+  else if(selectedCats.size===1) af=[...selectedCats][0];
+  else af=selectedCats.size+" categories";
+}
+function poolWords(){ return V.filter(v=>selectedCats.has(v.c)).filter(isIncluded); }
+function setCategoryFilter(cat){
+  if(cat==="All") selectedCats=new Set(CATS.filter(c=>c!=="All"));
+  else selectedCats=new Set([cat]);
+  syncAfLabel();
+  practiceMode=false;
+  renderFilters();
+  if(quizMode==="audio"){ initAudioReview(); return; }
+  buildPool();updateMasteryBar();nxt();
+}
+
+function playAgain(){
+  practiceMode=false;
+  buildPool();updateMasteryBar();nxt();
+}
+
+// ===== CATEGORIES MODAL (tick which categories are included in the quiz) =====
+let pendingCats=null;
+function openCategoryModal(){
+  pendingCats=new Set(selectedCats);
+  renderCategoryChecklist();
+  document.getElementById("category-modal").classList.remove("hidden");
+  document.body.style.overflow="hidden";
+}
+function closeCategoryModal(){
+  document.getElementById("category-modal").classList.add("hidden");
+  document.body.style.overflow="";
+  pendingCats=null;
+}
+function handleCategoryModalClick(e){
+  if(e.target===document.getElementById("category-modal")) closeCategoryModal();
+}
+function renderCategoryChecklist(){
+  const list=CATS.filter(c=>c!=="All");
+  document.getElementById("category-checklist").innerHTML=list.map(c=>{
+    const checked=pendingCats.has(c);
+    const catWords=V.filter(v=>v.c===c).filter(isIncluded);
+    const total=catWords.length;
+    const mastered=catWords.filter(v=>{ const w=weakMap[v.k+"|"+v.e]; return w&&w.mastered; }).length;
+    const progress=total>0?' · ⭐ '+mastered+'/'+total+' mastered':'';
+    return '<label class="vocab-check-row'+(checked?' checked':'')+'" data-cat="'+escAttr(c)+'">'+
+      '<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleCategoryPending(\''+c.replace(/'/g,"\\'")+'\',this.checked,this)">'+
+      '<span class="vocab-check-text"><div class="vocab-k" style="font-size:15px">'+escHtml(catLabel(c))+'</div><div class="vocab-e">'+total+' words'+progress+'</div></span>'+
+      '</label>';
+  }).join("");
+  updateCategoryModalCount();
+}
+function toggleCategoryPending(cat,checked,el){
+  if(checked) pendingCats.add(cat); else pendingCats.delete(cat);
+  if(el){ const row=el.closest(".vocab-check-row"); if(row) row.classList.toggle("checked",checked); }
+  updateCategoryModalCount();
+}
+function updateCategoryModalCount(){
+  const el=document.getElementById("category-modal-count");
+  if(el) el.textContent=pendingCats.size+" of "+(CATS.length-1)+" categories selected";
+}
+function selectAllCategories(){
+  pendingCats=new Set(CATS.filter(c=>c!=="All"));
+  renderCategoryChecklist();
+}
+function deselectAllCategories(){
+  pendingCats=new Set();
+  renderCategoryChecklist();
+}
+function applyCategorySelection(){
+  if(!pendingCats||pendingCats.size===0){
+    const el=document.getElementById("category-modal-count");
+    if(el){ el.textContent="Pick at least one category."; el.style.color="#dc2626"; }
+    return;
+  }
+  selectedCats=new Set(pendingCats);
+  syncAfLabel();
+  practiceMode=false;
+  closeCategoryModal();
+  renderFilters();
+  if(quizMode==="audio"){ initAudioReview(); return; }
+  buildPool();updateMasteryBar();nxt();
+}
 let score=0,cc=0,tot=0,stk=0;
 let seenCounter=0;
 let choiceMode=4;
@@ -875,7 +975,6 @@ function startAppForActiveProfile(){
   const lbl=document.getElementById("switch-user-label");
   if(lbl) lbl.textContent=activeProfile;
   loadSession();
-  if(af!=="All"){const btn=Array.from(document.querySelectorAll(".fbtn")).find(b=>b.textContent.startsWith(af));if(btn){document.querySelectorAll(".fbtn").forEach(b=>b.classList.remove("active"));btn&&btn.classList.add("active");}}
   renderFilters();buildPool();updateMasteryBar();updateS();nxt();
 }
 
@@ -887,6 +986,7 @@ function saveSession(){
         [k,{wrong:v.wrong,correct:v.correct,streak:v.streak,mastered:v.mastered,lastSeen:v.lastSeen||0}]
       )),
       af,quizMode,choiceMode,score,cc,tot,stk,seenCounter,QL,
+      selectedCats:Array.from(selectedCats),
       excluded:Array.from(excludedSet)
     };
     localStorage.setItem(SAVE_KEY,JSON.stringify(data));
@@ -910,6 +1010,14 @@ function loadSession(){
     if(data.tot) tot=data.tot;
     if(data.stk) stk=data.stk;
     if(data.af) af=data.af;
+    if(Array.isArray(data.selectedCats)&&data.selectedCats.length){
+      const valid=data.selectedCats.filter(c=>CATS.includes(c)&&c!=="All");
+      selectedCats=valid.length?new Set(valid):new Set(CATS.filter(c=>c!=="All"));
+    }else if(data.af&&data.af!=="All"&&CATS.includes(data.af)){
+      // Migrate from an older save that only stored a single active category
+      selectedCats=new Set([data.af]);
+    }
+    syncAfLabel();
     if(data.seenCounter) seenCounter=data.seenCounter;
     if(data.excluded) excludedSet=new Set(data.excluded);
     if(data.QL){
@@ -960,21 +1068,21 @@ function recordAnswer(entry,isCorrect){
   saveSession();
 }
 function getMasteredSet(){
-  const catWords=(af==="All"?V:V.filter(v=>v.c===af)).filter(isIncluded);
+  const catWords=poolWords();
   return catWords.filter(v=>{ const w=weakMap[v.k+"|"+v.e]; return w&&w.mastered; });
 }
 function getUnmastered(){
-  const catWords=(af==="All"?V:V.filter(v=>v.c===af)).filter(isIncluded);
+  const catWords=poolWords();
   return catWords.filter(v=>{ const w=weakMap[v.k+"|"+v.e]; return !w||!w.mastered; });
 }
 function getWeakWords(){
   return Object.values(weakMap).filter(w=>{
-    const inCat=af==="All"||w.entry.c===af;
+    const inCat=selectedCats.has(w.entry.c);
     return inCat&&isIncluded(w.entry)&&w.wrong>w.correct&&!w.mastered;
   }).sort((a,b)=>(b.wrong-b.correct)-(a.wrong-a.correct));
 }
 function updateMasteryBar(){
-  const catWords=(af==="All"?V:V.filter(v=>v.c===af)).filter(isIncluded);
+  const catWords=poolWords();
   const total=catWords.length;
   const mastered=getMasteredSet().length;
   const pct=total>0?Math.round(mastered/total*100):0;
@@ -1000,7 +1108,7 @@ function confirmResetMastery(){
 }
 function resetMastery(){
   practiceMode=false;
-  const catWords=(af==="All"?V:V.filter(v=>v.c===af)).filter(isIncluded);
+  const catWords=poolWords();
   catWords.forEach(v=>{
     const w=weakMap[v.k+"|"+v.e];
     if(w){ w.mastered=false; w.streak=0; }
@@ -1140,7 +1248,7 @@ function initAudioReview(){
   if(audioPool.length) playAudioReview();
 }
 function buildAudioPool(){
-  const list=(af==="All"?[...V]:V.filter(v=>v.c===af)).filter(isIncluded);
+  const list=poolWords();
   audioPool=audioShuffle?shuf([...list]):list;
 }
 function renderAudioReview(){
@@ -1284,7 +1392,7 @@ let practiceMode=false;
 function roundSize(){ return practiceMode?pool.length:Math.min(QL,pool.length); }
 function buildPool(){
   // Full category pool (for mastery bar reference), respecting vocab selection
-  pool=(af==="All"?[...V]:V.filter(v=>v.c===af)).filter(isIncluded);
+  pool=poolWords();
   if(pool.length===0){
     noneSelected=true;
     queue=[];
@@ -1347,25 +1455,15 @@ function setMode(m){
 }
 
 function renderFilters(){
+  syncAfLabel();
+  const total=CATS.length-1;
+  const label = selectedCats.size>=total ? "All Categories"
+    : selectedCats.size===1 ? catLabel([...selectedCats][0])
+    : selectedCats.size+" Categories Selected";
+  const seen=selectedCats.size===1?getSeenCount([...selectedCats][0])+"/"+poolWords().length+" ":"";
   document.getElementById("frow").innerHTML=
-    CATS.map(c=>{
-      const total=(c==="All"?V:V.filter(v=>v.c===c)).filter(isIncluded).length;
-      const seen=getSeenCount(c);
-      return '<button class="fbtn '+(c===af?'active':'')+'" onclick="sf(this,\''+c.replace(/'/g,"\\'")+'\')" >'+catLabel(c)+
-        ' <span style="opacity:.55;font-size:10px;margin-left:2px">'+seen+'/'+total+'</span></button>';
-    }).join("");
-}
-
-function sf(btn,cat){
-  af=cat;
-  practiceMode=false;
-  document.querySelectorAll(".fbtn").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
-  if(quizMode==="audio"){
-    initAudioReview();
-    return;
-  }
-  buildPool();updateMasteryBar();nxt();
+    '<button class="fbtn active" style="font-weight:600" onclick="openCategoryModal()">🗂️ '+label+
+    ' <span style="opacity:.55;font-size:10px;margin-left:2px">'+seen+'</span><span style="opacity:.6">▾</span></button>';
 }
 
 function updateS(){
@@ -1754,7 +1852,7 @@ function showNoneSelected(){
 
 function showAllMastered(){
   document.getElementById("total-count").textContent="";
-  const catWords=(af==="All"?V:V.filter(v=>v.c===af)).filter(isIncluded);
+  const catWords=poolWords();
   const total=catWords.length;
   const esc=s=>s.replace(/'/g,"\'");
   document.getElementById("qa").innerHTML=
@@ -1770,7 +1868,7 @@ function showAllMastered(){
     '<div style="font-size:11px;color:var(--text-dim);margin:-4px 0 14px;line-height:1.4">Practice these words again — your mastery, streaks, and history stay exactly as they are.</div>'+
     '<button class="reset-mastery-btn" onclick="confirmResetMastery()">🔄 Reset Mastery for '+esc(af)+'</button>'+
     '<div style="font-size:11px;color:var(--text-dim);margin:-4px 0 14px;line-height:1.4">This clears mastery only for <strong>'+esc(af)+'</strong> — other categories are untouched.</div>'+
-    '<button class="replay-btn" style="background:#f5f4f0;color:#1a1a1a" onclick="sf(document.querySelector(\'.fbtn.active\'),\''+esc(af)+'\')">Change Category</button>'+
+    '<button class="replay-btn" style="background:#f5f4f0;color:#1a1a1a" onclick="openCategoryModal()">Change Category</button>'+
     '</div>';
 }
 
@@ -1807,7 +1905,7 @@ function showEnd(){
     '<div class="end-stat"><div class="end-stat-label">Correct</div><div class="end-stat-val">'+cc+'/'+total+'</div></div>'+
     '<div class="end-stat"><div class="end-stat-label">Category</div><div class="end-stat-val" style="font-size:13px;padding-top:4px">'+af+'</div></div>'+
     '</div>'+
-    '<button class="replay-btn" onclick="sf(document.querySelector(\'.fbtn.active\'),\''+af.replace(/'/g,"\\'")+'\')">Play again</button>'+
+    '<button class="replay-btn" onclick="playAgain()">Play again</button>'+
     '</div>'+weakHTML;
 }
 
@@ -1907,7 +2005,7 @@ function renderTensesGrid(){
 let settingsTab="All";
 let settingsFilter="all";
 function openSettings(){
-  settingsTab=af!=="All"?af:(CATS.find(c=>c!=="All")||"All");
+  settingsTab=selectedCats.size===1?[...selectedCats][0]:(CATS.find(c=>c!=="All")||"All");
   settingsFilter="all";
   renderSettingsTabs();
   renderSettingsFilters();
@@ -2153,8 +2251,7 @@ function renderVocabCardHTML(w,showCatTag){
 }
 function startQuizFromReview(){
   closeReview();
-  const targetBtn=Array.from(document.querySelectorAll(".fbtn")).find(b=>b.textContent===reviewCat);
-  if(targetBtn) sf(targetBtn,reviewCat);
+  setCategoryFilter(reviewCat);
 }
 
 // ===== PARTICLES & COUNTING UNITS DATA =====
