@@ -240,6 +240,9 @@
 
   /* CLOUD SAVE */
   .cloud-btn{font-size:12px;padding:5px 14px;border-radius:20px;border:1.5px solid #bae6fd;background:#e0f2fe;color:#0369a1;cursor:pointer;font-family:inherit;font-weight:600;display:flex;align-items:center;gap:5px;transition:all 0.15s}
+  .sync-status{font-size:11px;color:var(--text-dim);white-space:nowrap}
+  .sync-status.error,.sync-status.offline{color:#b45309}
+  .sync-status.synced{color:#15803d}
   .cloud-btn:hover{background:#bae6fd}
   .cloud-btn svg{width:14px;height:14px;fill:#0369a1}
   .cloud-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--overlay2);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -302,6 +305,7 @@
 </style>
 </head>
 <body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <div class="header">
   <div>
@@ -377,6 +381,7 @@
     <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
     <span id="switch-user-label">Switch User</span>
   </button>
+  <span id="sync-status" class="sync-status"></span>
 </div>
 
 <div class="quiz-area" id="qa"></div>
@@ -981,7 +986,80 @@ let QL=20;
 const MASTERY_THRESHOLD=3;
 let SAVE_KEY="korean_quiz_v1";
 
-// ===== USER PROFILES (separate local progress per person, no login needed) =====
+// ===== SUPABASE CLOUD SYNC (fill in from your Supabase project's Settings → API) =====
+// If left blank, the app works exactly as before: local-only, per-device saves.
+const SUPABASE_URL="https://lynpyssfhrcbbhxmxujq.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_AKz_kfDSyqjN4vtCV7i_0A_KyK3BwWN";
+const supabaseClient=(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+let cloudSyncTimer=null;
+let cloudLastSyncedAt=null;
+function setSyncStatus(state){
+  const el=document.getElementById("sync-status");
+  if(!el) return;
+  if(!supabaseClient){ el.textContent=""; return; }
+  const map={
+    syncing:"🔄 Syncing…",
+    synced:"☁️ Synced",
+    offline:"⚠️ Offline (saved on this device only)",
+    error:"⚠️ Sync error (saved on this device only)"
+  };
+  el.textContent=map[state]||"";
+  el.className="sync-status "+state;
+}
+function scheduleCloudSync(data){
+  if(!supabaseClient||!activeProfile) return;
+  const profileAtSchedule=activeProfile;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer=setTimeout(()=>{ cloudSaveProgress(data,profileAtSchedule); },1200);
+}
+async function cloudSaveProgress(data,profileName){
+  profileName=profileName||activeProfile;
+  if(!supabaseClient||!profileName) return;
+  setSyncStatus("syncing");
+  try{
+    const nowIso=new Date().toISOString();
+    const {error}=await supabaseClient.from("quiz_progress").upsert({
+      profile_name:profileName.toLowerCase(),
+      data,
+      updated_at:nowIso
+    },{onConflict:"profile_name"});
+    if(error){ console.warn("Cloud save error:",error); setSyncStatus("error"); return; }
+    cloudLastSyncedAt=nowIso;
+    setSyncStatus("synced");
+  }catch(e){ console.warn("Cloud save failed:",e); setSyncStatus("offline"); }
+}
+async function cloudLoadProgress(name){
+  if(!supabaseClient) return null;
+  try{
+    const {data,error}=await supabaseClient.from("quiz_progress").select("data,updated_at").eq("profile_name",name.toLowerCase()).maybeSingle();
+    if(error){ console.warn("Cloud load error:",error); return null; }
+    if(data&&data.updated_at) cloudLastSyncedAt=data.updated_at;
+    return data?data.data:null;
+  }catch(e){ console.warn("Cloud load failed:",e); return null; }
+}
+async function pullLatestFromCloud(){
+  if(!supabaseClient||!activeProfile) return false;
+  setSyncStatus("syncing");
+  const cloudData=await cloudLoadProgress(activeProfile);
+  if(cloudData){
+    try{ localStorage.setItem(SAVE_KEY,JSON.stringify(cloudData)); }catch(e){}
+    setSyncStatus("synced");
+    return true;
+  }
+  setSyncStatus(supabaseClient?"offline":"");
+  return false;
+}
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="visible"&&supabaseClient&&activeProfile){
+    pullLatestFromCloud().then(got=>{
+      if(got){ loadSession(); renderFilters();buildPool();updateMasteryBar();updateS();nxt(); }
+    });
+  }
+});
+
+// ===== USER PROFILES (separate progress per person, synced via Supabase when configured) =====
 const PROFILES=["Joanna","Ezekiel"];
 const ACTIVE_PROFILE_KEY="korean_quiz_active_profile";
 let activeProfile=null;
@@ -1002,13 +1080,22 @@ function selectProfile(name){
   startAppForActiveProfile();
 }
 function switchProfile(){
+  clearTimeout(cloudSyncTimer);
+  const outgoingProfile=activeProfile;
   saveSession();
+  if(supabaseClient&&outgoingProfile){
+    try{
+      const raw=localStorage.getItem(SAVE_KEY);
+      if(raw) cloudSaveProgress(JSON.parse(raw),outgoingProfile);
+    }catch(e){}
+  }
   document.getElementById("profile-picker").classList.remove("hidden");
 }
-function startAppForActiveProfile(){
+async function startAppForActiveProfile(){
   const lbl=document.getElementById("switch-user-label");
   if(lbl) lbl.textContent=activeProfile;
   starredSet=new Set();
+  await pullLatestFromCloud();
   loadSession();
   updateMustReviewCount();
   renderFilters();buildPool();updateMasteryBar();updateS();nxt();
@@ -1027,6 +1114,7 @@ function saveSession(){
       starred:Array.from(starredSet)
     };
     localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+    scheduleCloudSync(data);
   }catch(e){}
 }
 function loadSession(){
