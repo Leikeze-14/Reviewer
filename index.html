@@ -1074,8 +1074,12 @@ async function pullLatestFromCloud(){
 }
 document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="visible"&&supabaseClient&&activeProfile){
+    // Sync quietly in the background only — never rebuild the pool or jump
+    // to a new question here, since this fires for ANY tab/app switch and
+    // would otherwise reset whatever quiz (MC, listening, reading, graph,
+    // picture nouns, etc.) the person is currently in the middle of.
     pullLatestFromCloud().then(got=>{
-      if(got){ loadSession(); renderFilters();buildPool();updateMasteryBar();updateS();nxt(); }
+      if(got){ loadSession(); updateMustReviewCount(); updateS(); }
     });
   }
 });
