@@ -825,7 +825,7 @@ function groupOf(word,cat){
   return "Other";
 }
 
-let CATS=["All",...new Set(V.map(v=>v.c))];
+let CATS=["All",...new Set(V.map(v=>v.c))].sort((a,b)=>a==="All"?-1:b==="All"?1:a.localeCompare(b));
 let selectedCats=new Set(CATS.filter(c=>c!=="All"));
 let af="All",pool=[],queue=[],cur=null,answered=false;
 // When true, starred "Must Review" words are temporarily folded into
@@ -1459,7 +1459,6 @@ function showTTSFailToast(){
 function playTTS(text,lang,rate,onend){
   if(!window.speechSynthesis){ showTTSFailToast(); if(onend)onend(); return; }
   loadVoice();
-  if(lang==="ko"&&!koVoice){ showTTSFailToast(); if(onend)onend(); return; }
   window.speechSynthesis.cancel();
   const utt=new SpeechSynthesisUtterance(text);
   utt.lang=lang==="ko"?"ko-KR":"en-US"; utt.rate=rate||1.0;
@@ -2698,7 +2697,7 @@ const MOST_USEFUL_VERBS_DATA=[
 const MOST_USEFUL_VERBS_VOCAB=MOST_USEFUL_VERBS_DATA.map(v=>({k:v.k,e:v.e,c:"Most Useful Verbs"}));
 
 V.push(...PARTICLES_VOCAB,...COUNTERS_VOCAB,...GRAMMAR_VOCAB,...MOST_USEFUL_VERBS_VOCAB);
-CATS=["All",...new Set(V.map(v=>v.c))];
+CATS=["All",...new Set(V.map(v=>v.c))].sort((a,b)=>a==="All"?-1:b==="All"?1:a.localeCompare(b));
 
 let particlesTab="particles";
 function openParticles(){
