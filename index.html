@@ -510,17 +510,21 @@
 
 <!-- CLOUD SAVE MODAL -->
 <div class="cloud-modal hidden" id="category-modal" onclick="handleCategoryModalClick(event)">
-  <div class="cloud-sheet" style="max-height:82vh;overflow-y:auto">
-    <div class="cloud-title">🗂️ Choose Categories</div>
-    <div class="cloud-sub">Tick which categories to include in your quiz.</div>
-    <div class="settings-tab-actions" style="padding:0;margin-bottom:10px">
-      <button class="settings-mini-btn" onclick="selectAllCategories()">Select All</button>
-      <button class="settings-mini-btn" onclick="deselectAllCategories()">Deselect All</button>
+  <div class="cloud-sheet" style="max-height:82vh;display:flex;flex-direction:column;padding-bottom:0">
+    <div style="flex-shrink:0">
+      <div class="cloud-title">🗂️ Choose Categories</div>
+      <div class="cloud-sub">Tick which categories to include in your quiz.</div>
+      <div class="settings-tab-actions" style="padding:0;margin-bottom:10px">
+        <button class="settings-mini-btn" onclick="selectAllCategories()">Select All</button>
+        <button class="settings-mini-btn" onclick="deselectAllCategories()">Deselect All</button>
+      </div>
     </div>
-    <div class="vocab-grid" id="category-checklist"></div>
-    <div id="category-modal-count" style="font-size:12px;color:var(--text-dim);text-align:center;margin-top:10px"></div>
-    <button class="cloud-save-btn" style="width:100%;margin-top:12px" onclick="applyCategorySelection()">Apply</button>
-    <button class="cloud-cancel" onclick="closeCategoryModal()">Cancel</button>
+    <div class="vocab-grid" id="category-checklist" style="overflow-y:auto;flex:1;min-height:0;padding-bottom:4px"></div>
+    <div style="flex-shrink:0;padding-bottom:20px">
+      <div id="category-modal-count" style="font-size:12px;color:var(--text-dim);text-align:center;margin-top:10px"></div>
+      <button class="cloud-save-btn" style="width:100%;margin-top:12px" onclick="applyCategorySelection()">Apply</button>
+      <button class="cloud-cancel" onclick="closeCategoryModal()">Cancel</button>
+    </div>
   </div>
 </div>
 
