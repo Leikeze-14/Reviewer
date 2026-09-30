@@ -1166,6 +1166,7 @@ function saveSession(){
       )),
       af,quizMode,choiceMode,score,cc,tot,stk,seenCounter,QL,
       selectedCats:Array.from(selectedCats),
+      allCats:CATS.filter(c=>c!=="All"),
       excluded:Array.from(excludedSet),
       starred:Array.from(starredSet)
     };
@@ -1192,8 +1193,15 @@ function loadSession(){
     if(data.stk) stk=data.stk;
     if(data.af) af=data.af;
     if(Array.isArray(data.selectedCats)&&data.selectedCats.length){
-      const valid=data.selectedCats.filter(c=>CATS.includes(c)&&c!=="All");
-      selectedCats=valid.length?new Set(valid):new Set(CATS.filter(c=>c!=="All"));
+      const allCatsNow=CATS.filter(c=>c!=="All");
+      const savedSelected=new Set(data.selectedCats.filter(c=>allCatsNow.includes(c)));
+      // Categories the save knew about (deliberately unchecked ones stay unchecked).
+      // Older saves have no allCats field; fall back to selectedCats itself, so any
+      // category that didn't exist yet when this was saved counts as brand-new.
+      const known=new Set(Array.isArray(data.allCats)?data.allCats:data.selectedCats);
+      const brandNew=allCatsNow.filter(c=>!known.has(c));
+      const merged=new Set([...savedSelected,...brandNew]);
+      selectedCats=merged.size?merged:new Set(allCatsNow);
     }else if(data.af&&data.af!=="All"&&CATS.includes(data.af)){
       // Migrate from an older save that only stored a single active category
       selectedCats=new Set([data.af]);
