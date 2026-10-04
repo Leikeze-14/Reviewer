@@ -2583,7 +2583,8 @@ function renderVocabCardHTML(w,showCatTag,inStarredTab){
   const topHTML=
     '<div class="verb-card-top">'+
     (w.img?'<img src="'+w.img+'" alt="" class="vocab-pic-thumb">':'')+
-    '<div class="vocab-left"><div class="vocab-k">'+escHtml(w.k)+'</div><div class="roman" style="text-align:left;margin-top:0">'+romanize(w.k)+'</div><div class="vocab-e">'+escHtml(w.e)+'</div></div>'+
+    '<div class="vocab-left"><div class="vocab-k">'+escHtml(w.k)+'</div><div class="roman" style="text-align:left;margin-top:0">'+romanize(w.k)+'</div>'+
+    (w.img?'':'<div class="vocab-e">'+escHtml(w.e)+'</div>')+'</div>'+
     '<div style="display:flex;align-items:center;gap:6px">'+
     (showCatTag?'<span class="vocab-cat-tag">'+catLabel(w.c)+'</span>':'')+
     starOrRemoveBtn+
