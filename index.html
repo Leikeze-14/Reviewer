@@ -309,13 +309,30 @@
   .settings-tab-actions{display:flex;gap:8px;padding:8px 16px 0;flex-shrink:0}
   .settings-mini-btn{flex:1;font-size:12px;padding:8px;border-radius:10px;border:1px solid var(--border-light);background:var(--input-bg);color:var(--text-mid);cursor:pointer;font-family:inherit;font-weight:600}
   .settings-mini-btn:hover{background:var(--divider)}
+  .settings-apply-bar{
+    flex-shrink:0;
+    padding:10px 16px 16px;
+    border-top:1px solid var(--divider);
+    background:var(--card);
+  }
+  .settings-apply-note{font-size:11px;color:var(--text-dim);text-align:center;margin-bottom:7px}
+  .settings-apply-btn{width:100%;padding:12px;border:0;border-radius:12px;background:#0E7C66;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  .settings-apply-btn:hover{background:#0B4D42}
   .vocab-check-row{display:flex;align-items:center;gap:10px;background:var(--input-bg);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer;transition:background 0.12s,border-color 0.12s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:pan-y}
   .vocab-check-row.checked{background:rgba(11,77,66,0.14);border-color:#0B4D42}
   .vocab-check-row input[type=checkbox]{width:19px;height:19px;flex-shrink:0;accent-color:#0B4D42}
   .vocab-check-text{flex:1;min-width:0}
   .vocab-check-row .vocab-e{margin-top:1px}
-  #settings-body.vocab-grid{gap:4px}
-  #settings-body .vocab-check-row{padding:9px 12px;gap:10px;border-radius:10px}
+  #settings-body.vocab-grid{
+    gap:8px;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    align-content:start;
+  }
+  #settings-body .vocab-check-row{padding:9px 12px;gap:10px;border-radius:10px;min-width:0}
+  @media (max-width:1050px){#settings-body.vocab-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+  @media (max-width:760px){#settings-body.vocab-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  @media (max-width:480px){#settings-body.vocab-grid{grid-template-columns:1fr;}}
   #settings-body .vocab-check-row input[type=checkbox]{width:18px;height:18px}
   #settings-body .vocab-k{font-size:18px;font-weight:700;line-height:1.3}
   #settings-body .vocab-e{font-size:13px;margin-top:2px;line-height:1.3;color:var(--text-mid)}
@@ -534,6 +551,10 @@
     </div>
     <div class="review-body">
       <div class="vocab-grid" id="settings-body"></div>
+    </div>
+    <div class="settings-apply-bar">
+      <div class="settings-apply-note" id="settings-apply-note">Changes are not applied until you tap Apply.</div>
+      <button class="settings-apply-btn" onclick="applyVocabSettings()">✓ Apply</button>
     </div>
   </div>
 </div>
@@ -2833,9 +2854,13 @@ function renderTensesGrid(){
 // ===== VOCAB SETTINGS PANEL (choose which words appear per category) =====
 let settingsTab="All";
 let settingsFilter="all";
+let settingsDraftExcluded=new Set();
+let settingsApplied=false;
 function openSettings(){
   settingsTab=selectedCats.size===1?[...selectedCats][0]:(CATS.find(c=>c!=="All")||"All");
   settingsFilter="all";
+  settingsDraftExcluded=new Set(excludedSet);
+  settingsApplied=false;
   renderSettingsTabs();
   renderSettingsFilters();
   renderSettingsBody();
@@ -2843,7 +2868,18 @@ function openSettings(){
   document.body.style.overflow="hidden";
   initVocabDragSelect();
 }
+function applyVocabSettings(){
+  excludedSet=new Set(settingsDraftExcluded);
+  settingsApplied=true;
+  saveSession();
+  renderSettingsBody();
+  const note=document.getElementById("settings-apply-note");
+  if(note) note.textContent="✓ Applied — your word selection is now active.";
+  setTimeout(()=>{ if(note && settingsApplied) note.textContent="Changes are not applied until you tap Apply."; },1800);
+}
 function closeSettings(){
+  // If Apply was not pressed, discard the pending selections.
+  if(!settingsApplied) settingsDraftExcluded=new Set(excludedSet);
   document.getElementById("settings-panel").classList.add("hidden");
   document.body.style.overflow="";
   saveSession();
@@ -2906,7 +2942,7 @@ function updateSettingsActionLabels(){
 }
 function renderSettingsBody(){
   const words=V.filter(v=>v.c===settingsTab);
-  const includedCount=words.filter(isIncluded).length;
+  const includedCount=words.filter(v=>!settingsDraftExcluded.has(vocabId(v))).length;
   document.getElementById("settings-count").textContent=includedCount+" / "+words.length+" words selected for review";
   updateSettingsActionLabels();
   const filtered=getFilteredSettingsWords();
@@ -2918,7 +2954,7 @@ function renderSettingsBody(){
   document.getElementById("settings-body").innerHTML=
     filtered.map((v,i)=>{
       const id=vocabId(v);
-      const checked=isIncluded(v);
+      const checked=!settingsDraftExcluded.has(id);
       return '<label class="vocab-check-row'+(checked?' checked':'')+'" data-id="'+escAttr(id)+'">'+
         '<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleVocabInclude(\''+id.replace(/'/g,"\\'")+'\',this.checked,this)">'+
         '<span class="vocab-check-text"><div class="vocab-k">'+escHtml(v.k)+'</div><div class="vocab-e">'+escHtml(v.e)+'</div></span>'+
@@ -2927,17 +2963,17 @@ function renderSettingsBody(){
     }).join("");
 }
 function toggleVocabInclude(id,included,el){
-  if(included) excludedSet.delete(id); else excludedSet.add(id);
+  if(included) settingsDraftExcluded.delete(id); else settingsDraftExcluded.add(id);
   if(el&&el.closest) { const row=el.closest(".vocab-check-row"); if(row) row.classList.toggle("checked",included); }
   document.getElementById("settings-count").textContent=
-    V.filter(v=>v.c===settingsTab&&isIncluded(v)).length+" / "+V.filter(v=>v.c===settingsTab).length+" words selected for review";
+    V.filter(v=>v.c===settingsTab&&!settingsDraftExcluded.has(vocabId(v))).length+" / "+V.filter(v=>v.c===settingsTab).length+" words selected for review";
 }
 function selectAllInCat(){
-  getFilteredSettingsWords().forEach(v=>excludedSet.delete(vocabId(v)));
+  getFilteredSettingsWords().forEach(v=>settingsDraftExcluded.delete(vocabId(v)));
   renderSettingsBody();
 }
 function deselectAllInCat(){
-  getFilteredSettingsWords().forEach(v=>excludedSet.add(vocabId(v)));
+  getFilteredSettingsWords().forEach(v=>settingsDraftExcluded.add(vocabId(v)));
   renderSettingsBody();
 }
 
