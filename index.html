@@ -352,6 +352,16 @@
   .ti-card img{width:100%;height:120px;object-fit:contain;background:#fff;border-radius:8px;margin-bottom:8px}
   .ti-card .ti-k{font-size:15px;font-weight:700;color:var(--text)}
   .ti-card .ti-e{font-size:11px;color:var(--text-mid);margin-top:2px}
+  /* EPS KEYWORDS cheat sheet */
+  .kw-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}
+  .kw-tabs .rct{white-space:nowrap;flex:0 0 auto}
+  .kw-search{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:15px;margin-bottom:10px}
+  .kw-row{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+  .kw-ko{font-size:17px;font-weight:700;color:var(--text)}
+  .kw-en{font-size:13px;color:var(--text-mid);margin-top:2px}
+  .kw-ans{font-size:14px;font-weight:600;color:#0B4D42;margin-top:4px}
+  .kw-sec{font-size:12px;font-weight:700;color:var(--text-mid);margin:12px 0 6px}
+  .kw-note{font-size:12px;color:var(--text-mid);background:var(--input-bg);border:1px dashed var(--border);border-radius:10px;padding:10px;margin-top:10px}
 </style>
 </head>
 <body>
@@ -418,6 +428,7 @@
   </button>
   <button class="rev-btn" onclick="openPicNouns()" style="border-color:#E8B65B;color:#B9700F">🖼️ Picture Nouns</button>
   <button class="rev-btn" onclick="openToolsImg()" style="border-color:#8FCBB9;color:#0B4D42">🛠️ Tools with Image</button>
+  <button class="rev-btn" onclick="openKeywords()" style="border-color:#C9A7E8;color:#5B2A86">🔑 EPS Keywords</button>
   <button class="rev-btn" onclick="openGraphQuiz()" style="border-color:#8FCBB9;color:#0B4D42">📊 Graph Quiz</button>
   <button class="cloud-btn" onclick="openCloudSave()">
     <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
@@ -527,6 +538,21 @@
     <div class="review-body">
       <div class="pn-progress" id="ti-progress"></div>
       <div id="ti-area"></div>
+    </div>
+  </div>
+</div>
+
+<!-- EPS KEYWORDS PANEL -->
+<div class="review-panel hidden" id="kw-panel" onclick="handleKwPanelClick(event)">
+  <div class="review-sheet" id="kw-sheet">
+    <div class="review-header">
+      <h2>🔑 EPS Keywords</h2>
+      <button class="review-close" onclick="closeKeywords()">x</button>
+    </div>
+    <div class="review-body">
+      <div class="kw-tabs" id="kw-tabs"></div>
+      <input class="kw-search" id="kw-search" type="search" placeholder="Search Korean or English (all sections)" oninput="renderKw()">
+      <div id="kw-list"></div>
     </div>
   </div>
 </div>
@@ -3624,6 +3650,46 @@ function answerToolsImg(i){
     (tiIdx+1<tiOrder.length?"Next →":"See Results")+'</button>');
 }
 function nextToolsImg(){ tiIdx++; renderToolsImgQ(); }
+
+// ===== EPS KEYWORDS (cheat sheet) =====
+const KW_DATA=[{"t": "Work", "n": "WORK AND ALLOWANCES (근로)", "i": [["연장 근로", "Overtime work", "연장 근로 수당"], ["8시간 초과", "Exceeding 8 hours", "연장 근로"], ["1.5배", "1.5 times", "연장 근로 수당"], ["야간 근로", "Night work", "야간 근로 수당"], ["밤", "Night", "야간 근로"], ["휴일 근로", "Holiday work", "휴일 근로 수당"], ["임금", "Wages", "임금 지급"], ["월급", "Monthly salary", "월급 / 임금"], ["최저임금", "Minimum wage", "최저임금"], ["퇴직하다", "To leave a job", "퇴직금 (if retirement pay is discussed)"], ["퇴직금", "Retirement pay", "퇴직금"], ["지급하다", "To pay / provide", "Payment / allowance"], ["근무 시간", "Working hours", "근무 시간"], ["출근하다", "To go to work", "출근"], ["퇴근하다", "To leave work", "퇴근"], ["결근하다", "To be absent from work", "결근"], ["지각하다", "To be late", "지각"]]}, {"t": "Safety", "n": "WORKPLACE SAFETY (안전)", "i": [["안전모", "Safety helmet", "안전모 착용"], ["보호구", "Protective equipment", "보호구 착용"], ["착용하다", "To wear", "Wearing safety equipment"], ["위험하다", "Dangerous", "Safety precautions"], ["조심하다", "To be careful", "안전 주의"], ["화재", "Fire", "화재 예방 / 소화기"], ["소화기", "Fire extinguisher", "Fire safety"], ["대피하다", "To evacuate", "대피"], ["사고", "Accident", "사고 예방"], ["감전", "Electric shock", "전기 안전"], ["미끄럽다", "Slippery", "미끄럼 주의"], ["기계", "Machine", "기계 안전"], ["고장", "Breakdown / malfunction", "고장 신고 / 수리"], ["수리하다", "To repair", "수리"], ["안전 수칙", "Safety rules", "Follow safety rules"], ["비상구", "Emergency exit", "대피"], ["보호 장갑", "Protective gloves", "보호구 착용"]]}, {"t": "Rules", "n": "RULES AND PROHIBITIONS (규칙)", "i": [["금지하다", "To prohibit", "Prohibited action"], ["하면 안 됩니다", "Must not", "금지"], ["반드시", "Must / certainly", "Required action"], ["-아야 합니다 / -어야 합니다", "Must", "Required action"], ["-으면 안 됩니다", "Must not", "Prohibited action"], ["지키다", "To follow / obey", "규칙 준수"], ["허용하다", "To permit", "Permission"], ["출입 금지", "No entry", "출입하면 안 됩니다"], ["만지지 마세요", "Do not touch", "금지 행동"], ["사용하지 마세요", "Do not use", "금지 행동"], ["주의하다", "To be careful", "주의"], ["규칙", "Rule", "규칙 준수"], ["법", "Law", "법적 규정"], ["필요하다", "To be necessary", "Required item / action"], ["가능하다", "Possible / allowed", "Possibility / permission"], ["불가능하다", "Impossible / not allowed", "Restriction"]]}, {"t": "Documents", "n": "DOCUMENTS AND APPLICATIONS (서류)", "i": [["신청하다", "To apply", "신청서"], ["신청서", "Application form", "Application"], ["제출하다", "To submit", "서류 제출"], ["작성하다", "To write / fill out", "서류 작성"], ["서명하다", "To sign", "서명"], ["서류", "Documents", "서류 제출"], ["여권", "Passport", "Identification"], ["외국인등록증", "Alien registration card", "Identification"], ["예약하다", "To make a reservation", "예약"], ["접수하다", "To register / receive an application", "접수"], ["확인하다", "To check / confirm", "확인"], ["발급하다", "To issue a document", "발급"], ["복사하다", "To copy", "복사"], ["준비하다", "To prepare", "준비"], ["잃어버리다", "To lose something", "분실 신고"]]}, {"t": "Daily Life", "n": "DAILY LIFE AND PLACES (생활)", "i": [["병원", "Hospital", "진료"], ["아프다", "To be sick / hurt", "병원 / 치료"], ["약국", "Pharmacy", "약 구입"], ["약", "Medicine", "약 복용"], ["은행", "Bank", "은행 업무"], ["돈을 찾다", "To withdraw money", "출금"], ["돈을 보내다", "To send money", "송금"], ["입금하다", "To deposit money", "입금"], ["버스", "Bus", "대중교통"], ["지하철", "Subway", "대중교통"], ["길을 묻다", "To ask for directions", "길 안내"], ["쓰레기", "Trash", "쓰레기 처리"], ["분리배출", "Waste sorting", "분리배출"], ["재활용하다", "To recycle", "재활용"], ["예약 시간", "Reservation time", "시간 확인"], ["영업시간", "Business hours", "영업시간 확인"], ["문을 닫다", "To close", "폐점 / 마감"], ["문을 열다", "To open", "개점 / 영업 시작"], ["고향", "Hometown", "고향"], ["여행하다", "To travel", "여행"]]}, {"t": "Shopping", "n": "SHOPPING AND MONEY (쇼핑)", "i": [["가격", "Price", "가격 확인"], ["얼마예요?", "How much is it?", "가격"], ["할인", "Discount", "할인 가격"], ["무료", "Free of charge", "무료 이용"], ["비싸다", "Expensive", "높은 가격"], ["싸다", "Cheap", "낮은 가격"], ["환불하다", "To refund", "환불"], ["교환하다", "To exchange", "교환"], ["영수증", "Receipt", "구매 증명"], ["현금", "Cash", "현금 결제"], ["카드", "Card", "카드 결제"], ["계산하다", "To pay / calculate", "계산 / 결제"], ["세일", "Sale", "할인"], ["수량", "Quantity", "개수"], ["재고", "Stock / inventory", "상품 재고"]]}, {"t": "Time", "n": "TIME AND SCHEDULES (시간)", "i": [["오늘", "Today", "오늘 일정"], ["내일", "Tomorrow", "내일 일정"], ["어제", "Yesterday", "과거 일정"], ["매일", "Every day", "Daily routine"], ["매주", "Every week", "Weekly schedule"], ["매월", "Every month", "Monthly schedule"], ["오전", "Morning / AM", "오전 시간"], ["오후", "Afternoon / PM", "오후 시간"], ["밤", "Night", "야간"], ["주말", "Weekend", "주말 일정"], ["평일", "Weekdays", "평일 일정"], ["마감일", "Deadline", "제출 기한"], ["늦다", "To be late", "지각 / 지연"], ["일찍", "Early", "조기 도착"], ["시작하다", "To start", "시작 시간"], ["끝나다", "To end", "종료 시간"], ["연기하다", "To postpone", "일정 연기"], ["취소하다", "To cancel", "취소"]]}, {"t": "Questions", "n": "COMMON QUESTION VOCABULARY", "i": [["무엇입니까?", "What is it?", "Identify the topic"], ["무엇에 대한 글입니까?", "What is the passage about?", "Main topic"], ["무엇을 해야 합니까?", "What must be done?", "Required action"], ["무엇을 하면 안 됩니까?", "What must not be done?", "Prohibited action"], ["맞는 것은 무엇입니까?", "Which is correct?", "Correct answer"], ["틀린 것은 무엇입니까?", "Which is incorrect?", "Incorrect answer"], ["왜 그렇습니까?", "Why is that?", "Reason"], ["언제입니까?", "When?", "Time / date"], ["어디입니까?", "Where?", "Place"], ["누구입니까?", "Who?", "Person"], ["어떻게 해야 합니까?", "What should be done?", "Method / action"], ["얼마입니까?", "How much?", "Price / amount"], ["몇 시입니까?", "What time?", "Clock time"], ["알맞은 것은?", "Which is appropriate?", "Best matching answer"], ["아니요", "No", "Negative answer"], ["않다", "Not", "Negation"], ["못하다", "Cannot", "Inability"], ["금지", "Prohibition", "Forbidden action"], ["틀린 것", "Incorrect statement", "Find the wrong answer"]]}, {"t": "Numbers & Clues", "n": "NUMBERS AND SPECIAL CLUES", "i": [["1.5배", "1.5 times", "Often overtime allowance in context"], ["8시간 초과", "Exceeding 8 hours", "Overtime work"], ["밤 + 근로", "Night + work", "Night work"], ["휴일 + 일하다", "Holiday + work", "Holiday work"], ["반드시", "Must", "Required action"], ["금지", "Prohibited", "Forbidden action"], ["무료", "Free", "No payment"], ["할인", "Discount", "Reduced price"], ["마감일", "Deadline", "Due date"], ["매월", "Every month", "Monthly schedule"], ["고장", "Malfunction", "Repair / report a problem"], ["수리하다", "To repair", "Repair"], ["몇 명", "How many people?", "Number of people"], ["몇 개", "How many items?", "Quantity"], ["몇 시", "What time?", "Time"], ["얼마", "How much?", "Price / amount"], ["언제", "When?", "Time / date"], ["어디", "Where?", "Place"], ["누구", "Who?", "Person"], ["왜", "Why?", "Reason"], ["어떻게", "How?", "Method"]]}, {"t": "Grammar", "n": "IMPORTANT GRAMMAR CLUES", "i": [["-아야 합니다 / -어야 합니다", "Must do something", "Required action"], ["-으면 안 됩니다", "Must not do something", "Prohibition"], ["-지 마세요", "Please do not", "Prohibited action"], ["-기 때문에", "Because", "Reason"], ["-지만", "But / although", "Contrast"], ["-고 나서", "After doing something", "Sequence"], ["-기 전에", "Before doing something", "Previous action"], ["-(으)면", "If / when", "Condition"], ["-거나", "Or", "Choices / alternatives"], ["-부터", "From / starting at", "Starting point"], ["-까지", "Until / up to", "Ending point"], ["-동안", "During / for a period", "Duration"], ["-마다", "Every", "Repetition / frequency"], ["보다", "More than / compared with", "Comparison, depending on context"], ["함께", "Together", "Doing something together"], ["따로", "Separately", "Separate action"]]}];
+const KW_NOTE="These are keyword clues, not guaranteed answers. Always match the keyword with the sentence meaning and the question being asked. One Korean word can lead to different answers depending on context.";
+let kwSec=0;
+function openKeywords(){
+  document.getElementById("kw-panel").classList.remove("hidden");
+  document.getElementById("kw-tabs").innerHTML=KW_DATA.map((s,i)=>
+    '<button class="rct'+(i===kwSec?' active':'')+'" onclick="switchKwTab('+i+')">'+escHtml(s.t)+'</button>').join("");
+  renderKw();
+}
+function closeKeywords(){ document.getElementById("kw-panel").classList.add("hidden"); }
+function handleKwPanelClick(e){ if(e.target===document.getElementById("kw-panel")) closeKeywords(); }
+function switchKwTab(i){
+  kwSec=i;
+  document.getElementById("kw-search").value="";
+  document.querySelectorAll("#kw-tabs .rct").forEach((b,j)=>b.classList.toggle("active",j===i));
+  renderKw();
+}
+function kwRow(r){
+  return '<div class="kw-row"><div class="kw-ko">'+escHtml(r[0])+'</div>'+
+    '<div class="kw-en">'+escHtml(r[1])+'</div>'+
+    '<div class="kw-ans">→ '+escHtml(r[2])+'</div></div>';
+}
+function renderKw(){
+  const q=document.getElementById("kw-search").value.trim().toLowerCase();
+  const list=document.getElementById("kw-list");
+  let html="";
+  if(q){
+    KW_DATA.forEach(s=>{
+      const hits=s.i.filter(r=>r.join(" ").toLowerCase().includes(q));
+      if(hits.length) html+='<div class="kw-sec">'+escHtml(s.n)+'</div>'+hits.map(kwRow).join("");
+    });
+    if(!html) html='<div class="kw-note">No matches.</div>';
+  } else {
+    const s=KW_DATA[kwSec];
+    html='<div class="kw-sec">'+escHtml(s.n)+' · '+s.i.length+' keywords</div>'+s.i.map(kwRow).join("");
+  }
+  list.innerHTML=html+'<div class="kw-note">'+escHtml(KW_NOTE)+'</div>';
+}
 
 // ===== GRAPH READING QUIZ =====
 // Transcribed from a Korean workplace-Korean exam worksheet: each item has a
