@@ -355,6 +355,10 @@
   /* EPS KEYWORDS cheat sheet */
   .kw-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}
   .kw-tabs .rct{white-space:nowrap;flex:0 0 auto}
+  .ubt-del-btn{background:#F8E2DA;border:1px solid #E3A48F;color:#8C3423;border-radius:14px;font-size:12px;font-weight:600;padding:5px 10px;cursor:pointer;font-family:inherit;flex-shrink:0}
+  .ubt-del-btn:active{transform:scale(0.95)}
+  .ubt-restore-link{color:#0B4D42;text-decoration:underline;cursor:pointer;margin-left:6px}
+  .ubt-list{display:flex;flex-direction:column;gap:8px}
   .kw-search{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:15px;margin-bottom:10px}
   .kw-row{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px}
   .kw-ko{font-size:17px;font-weight:700;color:var(--text)}
@@ -421,6 +425,7 @@
     <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
     Review Vocab
   </button>
+  <button class="rev-btn" onclick="openUbt()" style="border-color:#8FCBB9;background:#DCF3EC;color:#0B4D42">📘 UBT Vocab <span id="ubt-count" style="opacity:.65;font-size:10px;margin-left:2px">0</span></button>
   <button class="rev-btn" id="must-review-btn" onclick="openStarred()" style="border-color:#E8B65B;background:#FBEBD3;color:#B9700F">⭐ Must Review <span id="must-review-count" style="opacity:.65;font-size:10px;margin-left:2px">0</span></button>
   <button class="rev-btn" onclick="openTenses()" style="border-color:#D9D0C0;color:#5B5347">
     <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#5B5347"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 5v5.25l4.5 2.67-.75 1.23L11 13V7h1.5z"/></svg>
@@ -467,6 +472,24 @@
     <div class="review-start-bar">
       <button class="review-quiz-btn" id="review-merge-btn" style="display:none;margin-bottom:8px;background:#B9700F" onclick="mergeStarredIntoCurrentQuiz()">🔀 Merge Into Ongoing Quiz</button>
       <button class="review-quiz-btn" id="review-quiz-btn" onclick="startQuizFromReview()">Start Quiz for This Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- UBT VOCAB PANEL -->
+<div class="review-panel hidden" id="ubt-panel" onclick="handleUbtPanelClick(event)">
+  <div class="review-sheet" id="ubt-sheet">
+    <div class="review-header">
+      <h2>📘 UBT Vocabulary</h2>
+      <button class="review-close" onclick="closeUbt()">x</button>
+    </div>
+    <div class="review-body">
+      <input class="kw-search" id="ubt-search" type="search" placeholder="Search Korean or English" oninput="renderUbt()">
+      <div class="review-count" id="ubt-count-line" style="padding:0 0 10px"></div>
+      <div class="ubt-list" id="ubt-list"></div>
+    </div>
+    <div class="review-start-bar">
+      <button class="review-quiz-btn" id="ubt-quiz-btn" onclick="startUbtQuiz()">Start Quiz for UBT Vocab</button>
     </div>
   </div>
 </div>
@@ -1228,6 +1251,18 @@ function groupOf(word,cat){
 }
 
 const SIGNAGE_CAT="Signages";
+// ===== UBT VOCAB (own tab, words can be deleted; deletions are remembered) =====
+const UBT_CAT="UBT Vocabularies";
+const UBT_DEL_KEY="eps_ubt_deleted_v1";
+const UBT_ORIG=V.filter(v=>v.c===UBT_CAT).map(v=>({k:v.k,e:v.e,c:v.c}));
+let ubtDeleted=new Set();
+try{ const r=localStorage.getItem(UBT_DEL_KEY); if(r) ubtDeleted=new Set(JSON.parse(r)); }catch(e){}
+function ubtId(v){ return v.k+"|"+v.e; }
+function persistUbtDeleted(){ try{ localStorage.setItem(UBT_DEL_KEY,JSON.stringify(Array.from(ubtDeleted))); }catch(e){} }
+function applyUbtDeletions(){
+  for(let i=V.length-1;i>=0;i--){ if(V[i].c===UBT_CAT && ubtDeleted.has(ubtId(V[i]))) V.splice(i,1); }
+}
+applyUbtDeletions();
 let signageQuizActive=false;
 let CATS=["All",...new Set(V.map(v=>v.c).filter(c=>c!==SIGNAGE_CAT))].sort((a,b)=>a==="All"?-1:b==="All"?1:a.localeCompare(b));
 let selectedCats=new Set(CATS.filter(c=>c!=="All"));
@@ -1573,6 +1608,7 @@ function saveSession(){
       selectedCats:Array.from(selectedCats),
       allCats:CATS.filter(c=>c!=="All"),
       excluded:Array.from(excludedSet),
+      deletedUbt:Array.from(ubtDeleted),
       starred:Array.from(starredSet)
     };
     localStorage.setItem(SAVE_KEY,JSON.stringify(data));
@@ -1584,6 +1620,11 @@ function loadSession(){
     const raw=localStorage.getItem(SAVE_KEY);
     if(!raw)return;
     const data=JSON.parse(raw);
+    if(Array.isArray(data.deletedUbt)&&data.deletedUbt.some(id=>!ubtDeleted.has(id))){
+      data.deletedUbt.forEach(id=>ubtDeleted.add(id));
+      persistUbtDeleted(); applyUbtDeletions();
+      CATS=["All",...new Set(V.map(v=>v.c).filter(c=>c!==SIGNAGE_CAT))].sort((a,b)=>a==="All"?-1:b==="All"?1:a.localeCompare(b));
+    }
     if(data.weakMap){
       Object.entries(data.weakMap).forEach(([id,val])=>{
         const entry=V.find(v=>v.k+"|"+v.e===id);
@@ -2708,7 +2749,7 @@ function showEnd(){
 let reviewCat="All";
 
 function openReview(){
-  reviewCat=CATS.includes(af)?af:"All";
+  reviewCat=(CATS.includes(af)&&af!==UBT_CAT)?af:"All";
   renderReviewTabs();
   renderVocabGrid();
   document.getElementById("review-panel").classList.remove("hidden");
@@ -2728,6 +2769,83 @@ function closeReview(){
 function handlePanelClick(e){
   if(e.target===document.getElementById("review-panel")) closeReview();
 }
+
+// ===== UBT VOCAB PANEL =====
+function updateUbtCount(){
+  const n=V.filter(v=>v.c===UBT_CAT).length;
+  const el=document.getElementById("ubt-count"); if(el) el.textContent=String(n);
+}
+function openUbt(){
+  document.getElementById("ubt-search").value="";
+  renderUbt();
+  document.getElementById("ubt-panel").classList.remove("hidden");
+  document.body.style.overflow="hidden";
+}
+function closeUbt(){
+  document.getElementById("ubt-panel").classList.add("hidden");
+  document.body.style.overflow="";
+}
+function handleUbtPanelClick(e){ if(e.target===document.getElementById("ubt-panel")) closeUbt(); }
+function renderUbt(){
+  const all=V.filter(v=>v.c===UBT_CAT);
+  const q=(document.getElementById("ubt-search").value||"").trim().toLowerCase();
+  const words=all.filter(v=>!q||v.k.toLowerCase().includes(q)||v.e.toLowerCase().includes(q))
+    .sort((a,b)=>a.k.localeCompare(b.k,"ko"));
+  const delN=ubtDeleted.size;
+  document.getElementById("ubt-count-line").innerHTML=
+    words.length+(q?" of "+all.length:"")+" words"+
+    (delN?' · <a class="ubt-restore-link" href="javascript:void(0)" onclick="restoreUbtWords()">Restore '+delN+' deleted</a>':"");
+  document.getElementById("ubt-list").innerHTML=words.length?words.map(w=>
+    '<div class="vocab-card"><div class="vocab-left"><div class="vocab-k">'+escHtml(w.k)+'</div>'+
+    '<div class="roman" style="text-align:left;margin-top:0">'+romanize(w.k)+'</div>'+
+    '<div class="vocab-e">'+escHtml(w.e)+'</div></div>'+
+    '<div style="display:flex;align-items:center;gap:6px">'+
+    '<button class="vocab-speak" onclick="speakKorean(this.dataset.k,this)" data-k="'+escAttr(w.k)+'">'+speakerSVG+'</button>'+
+    '<button class="ubt-del-btn" data-id="'+escAttr(ubtId(w))+'" onclick="deleteUbtWord(this.dataset.id)" title="Delete this word">🗑 Delete</button>'+
+    '</div></div>').join("")
+    :'<div style="text-align:center;color:var(--text-dim);padding:30px 12px;font-size:13px">No words found.</div>';
+  const qb=document.getElementById("ubt-quiz-btn");
+  if(qb){ qb.disabled=all.length===0; qb.style.opacity=all.length?"1":".5"; }
+  updateUbtCount();
+}
+function deleteUbtWord(id){
+  const w=V.find(v=>v.c===UBT_CAT&&ubtId(v)===id);
+  if(!w) return;
+  if(!confirm('Delete "'+w.k+'" ('+w.e+') from UBT vocab?')) return;
+  ubtDeleted.add(id);
+  persistUbtDeleted();
+  const i=V.indexOf(w); if(i>=0) V.splice(i,1);
+  try{ delete weakMap[id]; }catch(e){}
+  starredSet.delete(id);
+  excludedSet.delete(vocabId(w));
+  pool=pool.filter(v=>ubtId(v)!==id);
+  queue=queue.filter(v=>ubtId(v)!==id);
+  updateMustReviewCount();
+  saveSession();
+  renderUbt();
+  renderFilters();
+}
+function restoreUbtWords(){
+  if(!ubtDeleted.size) return;
+  if(!confirm("Restore all "+ubtDeleted.size+" deleted UBT words?")) return;
+  const have=new Set(V.filter(v=>v.c===UBT_CAT).map(ubtId));
+  UBT_ORIG.forEach(o=>{ if(ubtDeleted.has(ubtId(o))&&!have.has(ubtId(o))) V.push({k:o.k,e:o.e,c:o.c}); });
+  ubtDeleted=new Set();
+  persistUbtDeleted();
+  if(!CATS.includes(UBT_CAT)){
+    CATS=["All",...new Set(V.map(v=>v.c).filter(c=>c!==SIGNAGE_CAT))].sort((a,b)=>a==="All"?-1:b==="All"?1:a.localeCompare(b));
+    selectedCats.add(UBT_CAT);
+  }
+  saveSession();
+  renderUbt();
+  renderFilters();
+}
+function startUbtQuiz(){
+  if(!V.some(v=>v.c===UBT_CAT)) return;
+  closeUbt();
+  setCategoryFilter(UBT_CAT);
+}
+updateUbtCount();
 
 // ===== VERB & ADJECTIVE TENSES PANEL =====
 let tensesCat="Verbs";
@@ -3002,8 +3120,8 @@ function renderReviewTabs(){
     ' <span style="opacity:.75;font-size:10px;margin-left:2px">'+starredSet.size+'</span></button>';
   document.getElementById("review-tabs").innerHTML=
     starredTab+
-    CATS.map(c=>{
-      const total=c==="All"?V.length:V.filter(v=>v.c===c).length;
+    CATS.filter(c=>c!==UBT_CAT).map(c=>{
+      const total=c==="All"?V.filter(v=>v.c!==UBT_CAT).length:V.filter(v=>v.c===c).length;
       const seen=getSeenCount(c);
       return '<button class="rct '+(c===reviewCat?'active':'')+'" onclick="switchReviewCat(\''+c.replace(/'/g,"\\'")+'\')">'+catLabel(c)+
         ' <span style="opacity:.6;font-size:10px;margin-left:2px">'+seen+'/'+total+'</span></button>';
@@ -3038,7 +3156,7 @@ function renderVocabGrid(){
       :'<div style="text-align:center;color:var(--text-dim);padding:30px 12px;font-size:13px;line-height:1.6">No words marked yet.<br>Tap the ☆ star on a quiz question to add it here, so you can recall and re-quiz it anytime.</div>';
     return;
   }
-  let words=reviewCat==="All"?V:V.filter(v=>v.c===reviewCat);
+  let words=reviewCat==="All"?V.filter(v=>v.c!==UBT_CAT):V.filter(v=>v.c===reviewCat);
   if(reviewCat==="All"){
     // Group related/connected vocab together by category, then alphabetically
     // within each category, while still showing everything in this one tab.
