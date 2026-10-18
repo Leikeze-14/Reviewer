@@ -2269,16 +2269,96 @@ function updateS(){
   document.getElementById("acc").textContent=tot===0?"--":Math.round(cc/tot*100)+"%";
 }
 
-function wrongs(c){
-  // Pull distractors from same category first for a fairer challenge
-  const sameCat=V.filter(v=>v.e!==c.e&&v.c===c.c);shuf(sameCat);
-  if(sameCat.length>=choiceMode-1){
-    return sameCat.slice(0,choiceMode-1).map(v=>v.e);
+// ===== SMART DISTRACTORS: wrong choices are kept relevant to the question word =====
+// e.g. 무 (Radish) -> Tomato, Cucumber, Carrot ... instead of random words.
+const TOPIC_BY_CAT={"Vegetables":"vegetable","Fruits":"fruit","Animals":"animal","Body Parts":"body","Family":"family","Occupations":"job",
+  "Clothes":"clothing","Accessories":"clothing","Tools":"tool","Work Tools & Equipment":"tool","EPS-TOPIK Factory Tools":"tool","Operating Machines":"machine",
+  "Appliances":"home","Home Goods":"home","School Supplies":"school","Transportation Means":"transport","Places":"place","Gov. Offices":"place",
+  "Building Floors":"place","Colors":"color","Time & Date":"time","Months":"calendar","Days of the Week":"calendar","Dates":"calendar","Hours (시)":"clock",
+  "Directions & Positions":"direction","Food":"food","Nature":"nature","Materials":"material","Packaging":"material"};
+const TOPIC_RULES=[
+  ["vegetable",/\b(radish|cabbage|onion|garlic|carrot|cucumber|potato|eggplant|pepper|spinach|pumpkin|lettuce|sprout|zucchini|vegetable|tomato|corn|bean|scallion|leek)s?\b/],
+  ["fruit",/\b(apple|pear|grape|strawberry|watermelon|melon|peach|orange|banana|persimmon|tangerine|cherry|plum|lemon|fruit|produce)s?\b/],
+  ["animal",/\b(dog|cat|cow|pig|chicken|horse|bird|fish|rabbit|mouse|tiger|bear|duck|sheep|goat|animal|insect|mosquito)s?\b/],
+  ["direction",/\b(behind|front|beside|next to|above|below|underneath|across|opposite|inside|outside|left|right|east|west|south|north|straight|direction|upstairs|downstairs)\b/],
+  ["body",/\b(head|eye|nose|mouth|ear|hand|arm|leg|foot|feet|finger|stomach|belly|chest|shoulder|knee|neck|face|hair|tooth|teeth|body|waist|skin|throat)s?\b/],
+  ["family",/\b(father|mother|brother|sister|parent|grandfather|grandmother|grandparent|family|son|daughter|husband|wife|child|children|relative)s?\b/],
+  ["taste",/\b(bitter|salty|sour|spicy|sweet|tasty|tastes?|delicious|greasy|oily|fatty|flavor)\b/],
+  ["appearance",/\b(beautiful|pretty|cute|good-looking|ugly|fat|overweight|chubby|slim|slender|skinny|scrawny|handsome)\b/],
+  ["size",/\b(big|small|many|few|short|narrow|wide|broad|long|tall|large|little|high|low|quantity)\b/],
+  ["speed",/\b(fast|slow|slowly|late|early|urgent|hurry|rush|quick|quickly)\b/],
+  ["safety",/\b(danger|dangerous|hazard|hazardous|toxic|toxicity|poison|poisonous|explode|explosion|burst|fire|flammable|radiation|radioactiv|oxygen|pressure|electric shock|caution|careful|careless|watch out|safety|safe|accident|injur|hurt|fall|drop|helmet|protect|warning|prohibit|forbidden|emergency)\w*\b/],
+  ["money",/\b(salary|wage|price|cost|money|deposit|fee|pay|payment|bank|cash|tax|insurance|bill|won|cheap|expensive|account|remittance|severance|discount|loan|financing|free)\b/],
+  ["clock",/\b(hour|minute|second|o'clock|sharp|a\.m\.|p\.m\.|morning|afternoon|evening|night|daytime|now|soon|time)s?\b/],
+  ["calendar",/\b(today|tomorrow|yesterday|week|weekend|month|year|date|calendar|season|spring|summer|autumn|winter|holiday|vacation|day off|leave|birthday|chuseok|festival|period|duration|expiration)s?\b/],
+  ["school",/\b(homework|assignment|school|class|lesson|study|exam|test|textbook|pen|pencil|notebook|eraser|student|teacher|stationery|bookshop|library|learn|teach|university|book)s?\b/],
+  ["transport",/\b(bus|subway|train|taxi|car|airplane|plane|ship|bicycle|bike|truck|motorcycle|station|ticket|drive|ride|railroad|rail|flight)s?\b/],
+  ["post",/\b(envelope|postcard|stamp|fax|mail|air mail|package|parcel)s?\b/],
+  ["place",/\b(office|hospital|restaurant|market|store|shop|room|building|factory|farm|airport|restroom|toilet|house|dormitory|workplace|laundromat|salon|embassy|post office|pharmacy|gym|park|city|region|area|zone|village|country|gate|exit|floor|site)s?\b/],
+  ["food",/\b(rice|soup|bread|noodle|meat|kimchi|water|milk|coffee|juice|food|meal|breakfast|lunch|dinner|snack|side dish|ramyeon|egg|beer|sugar|salt|cook|cooking|recipe|eat|drink|boil|chop|slice|fry|steam|stir|mix|blend|roast|grill|bake|rinse)s?\b/],
+  ["clothing",/\b(shirt|pants|shoe|shoes|hat|cap|coat|clothes|clothing|sock|socks|glove|gloves|uniform|jacket|skirt|dress|attire|wear|undress|ring|mask)s?\b/],
+  ["tool",/\b(hammer|saw|wrench|pliers|screwdriver|tape measure|shovel|hoe|sickle|drill|tool|nail|screw|bolt|ladder|rope|wire|scissors|knife|axe|drawer)s?\b/],
+  ["machine",/\b(machine|press|forklift|excavator|conveyor|engine|motor|generator|operate|pump|crane|lathe|welder|equipment|ventilator|blower|power|handle|lever)s?\b/],
+  ["labor",/\b(excavat\w*|dig|lay pipes|blast|detonate|load|unload|stack|pile|lift|carry|move|wipe|polish|clean\w*|pack|wrap|cut|attach|stick|assemble|paint|weld|repair|break down|breakdown|malfunction|harvest|organize|tidy|sort|classify|measure\w*|erase|tear|peel|trim|cover|remove|drain|fold|glue|construction|maintenance|facility|industry|packaging)\b/],
+  ["home",/\b(furniture|bed|table|desk|chair|refrigerator|tv|television|washing|door|window|key|kitchen|mirror|soap|toothbrush|tissue|lamp|fan|heater|air conditioner|sofa|blanket|toothpaste)s?\b/],
+  ["nature",/\b(rain|snow|wind|cloud|cloudy|sun|moon|mountain|river|sea|ocean|tree|flower|plant|fertilizer|manure|vegetation|grow|weather|hot|cold|warm|cool|sky|soil|forest|field|chilly|frosty|humid|earthquake)s?\b/],
+  ["personality",/\b(kind|friendly|affable|gentle|smart|clever|wise|quiet|demure|well-behaved|lively|active|energetic|cheerful|diligent|hardworking|honest|shy|polite|lazy|brave|generous|personality|attitude)\b/],
+  ["feeling",/\b(happy|glad|angry|sad|tired|surprised|startled|scared|afraid|lonely|bored|worried|worry|excited|proud|sorry|thank|hungry|thirsty|sick|painful|greet|apolog|sleepy|annoyed|interesting|boring|dull|loud|noisy|noise|unpleasant|fun)\w*\b/],
+  ["relation",/\b(meet|marry|congratulate|promise|lie|confess|love|like|hate|dislike|fight|win|lose|help|customer|guest)\b/],
+  ["speech",/\b(ask|answer|question|inquiry|say|tell|call|speak|talk|explain|reply|report|contact|message|phone|telephone|email|meeting|introduce|inform|notify|know)\w*\b/],
+  ["work",/\b(work|job|task|duty|operation|manager|boss|coworker|colleague|company|overtime|shift|commute|go to work|attendance|contract|employ|resign|retire|production|product|worker)\w*\b/],
+  ["texture",/\b(hard|stiff|sharp|pointed|soft|tender|ripe|moist|damp|clammy|wet|dry|arid|slippery|heavy|light|bright|dark|swell)\b/],
+  ["condition",/\b(good|fine|bad|poor|difficult|easy|clean|dirty|comfortable|uncomfortable|convenient|weird|strange|crowded|jammed|full|empty|alright|ok|new|old|fresh|healthy|weak|strong|sturdy|feeble|similar|different|correct|wrong|suitable)\b/],
+  ["travel",/\b(trip|travel|luggage|accommodation|reserve|book|unpack|change|transfer|watch|view|show|movie|photo|picture|camera)s?\b/],
+  ["move",/\b(come|go|walk|run|exit|enter|depart|arrive|get up|sit|stand|climb|dance|exercise|practice|lie down|bow|catch|avoid|dodge|nod)\b/],
+  ["daily",/\b(sleep|wash|open|close|rest|cry|laugh|hear|see|read|dream|doze|think|remember)\b/],
+  ["transaction",/\b(buy|sell|order|receive|borrow|send|give|use|have|prepare|find|start|finish|wait|do|make|live|die|born|choose|throw away|put in|insert)\b/]
+];
+const TOPIC_RELATED={vegetable:["fruit","food"],fruit:["vegetable","food"],food:["vegetable","fruit","taste"],taste:["food"],
+  tool:["machine","labor"],machine:["tool","labor"],labor:["tool","machine","work"],safety:["work","machine","labor"],money:["work"],
+  work:["money","machine","labor"],place:["transport"],transport:["place","travel"],travel:["transport"],personality:["feeling","appearance"],
+  feeling:["personality"],appearance:["personality","size"],size:["appearance","texture"],texture:["size","condition"],condition:["texture"],
+  nature:["animal"],animal:["nature"],home:["tool"],school:["speech"],speech:["school","relation"],relation:["feeling","speech"],
+  clothing:["body"],body:["clothing"],family:["job","relation"],job:["family","work"],clock:["calendar","time"],calendar:["clock","time"],
+  time:["clock","calendar"],move:["daily","labor"],daily:["move"],transaction:["money","labor"],post:["speech"],direction:["place"]};
+const _topicCache=new Map();
+function topicOf(v){
+  if(_topicCache.has(v)) return _topicCache.get(v);
+  let t=TOPIC_BY_CAT[v.c]||null;
+  if(!t){
+    const e=String(v.e||"").toLowerCase();
+    for(const [name,re] of TOPIC_RULES){ if(re.test(e)){ t=name; break; } }
   }
-  // If not enough same-category words, top up from other categories
-  const others=V.filter(v=>v.e!==c.e&&v.c!==c.c);shuf(others);
-  const combined=[...sameCat,...others];
-  return combined.slice(0,choiceMode-1).map(v=>v.e);
+  if(!t) t="misc";
+  _topicCache.set(v,t);
+  return t;
+}
+function wordForm(v){ return /^to\b/i.test(String(v.e||"").trim())?"V":"N"; }
+function meaningSet(e){
+  return new Set(String(e).toLowerCase().replace(/\([^)]*\)/g,"").split(/[\/,;]/).map(x=>x.trim().replace(/^to (be )?/,"")).filter(Boolean));
+}
+function wrongs(c){
+  const ct=topicOf(c), cf=wordForm(c), cm=meaningSet(c.e);
+  const rel=new Set(TOPIC_RELATED[ct]||[]);
+  const seen=new Set([c.e]);
+  const ck=new Set(String(c.k).split("/").map(x=>x.trim()));
+  const scored=[];
+  for(const v of V){
+    if(v.c==="Signages"||seen.has(v.e)||!v.e) continue;
+    if(String(v.k).split("/").some(x=>ck.has(x.trim()))) continue;   // same Korean word = same answer
+    // never offer a choice that is also a correct meaning (e.g. "Wage" for "Monthly salary / Wage")
+    let clash=false; for(const m of meaningSet(v.e)){ if(cm.has(m)){ clash=true; break; } }
+    if(clash) continue;
+    seen.add(v.e);
+    const t=topicOf(v);
+    let sc=Math.random()*8;
+    if(ct!=="misc"&&t===ct) sc+=100; else if(rel.has(t)) sc+=40;
+    if(v.c===c.c) sc+=30;
+    if(wordForm(v)===cf) sc+=20;
+    scored.push([sc,v.e]);
+  }
+  scored.sort((a,b)=>b[0]-a[0]);
+  return scored.slice(0,choiceMode-1).map(x=>x[1]);
 }
 
 let autoAdvanceTimer=null;
@@ -3776,8 +3856,32 @@ function renderSynQ(){
   const word=g.w[Math.floor(Math.random()*g.w.length)];
   const others=g.w.filter(w=>w!==word);
   const answer=others[Math.floor(Math.random()*others.length)];
-  const otherGroups=shuf(SYN_DATA.map((_,i)=>i).filter(i=>i!==gi)).slice(0,3);
-  const distractors=otherGroups.map(i=>{ const ws=SYN_DATA[i].w; return ws[Math.floor(Math.random()*ws.length)]; });
+  // wrong choices must be relevant: same topic + same word type (other synonym groups first, then the vocabulary list)
+  const gTopic=topicOf({e:g.e,c:""}), gForm=/다$/.test(g.w[0])?"V":"N";
+  const rel=new Set(TOPIC_RELATED[gTopic]||[]);
+  const own=new Set(g.w);
+  const cands=[], seenW=new Set();
+  const addCand=(w,t,f,bonus)=>{
+    if(!w||own.has(w)||seenW.has(w)) return;
+    seenW.add(w);
+    let sc=Math.random()*8+bonus;
+    if(gTopic!=="misc"&&t===gTopic) sc+=100; else if(rel.has(t)) sc+=40;
+    if(f===gForm) sc+=30;
+    cands.push([sc,w]);
+  };
+  SYN_DATA.forEach((o,i)=>{
+    if(i===gi) return;
+    const w=o.w[Math.floor(Math.random()*o.w.length)];
+    addCand(w,topicOf({e:o.e,c:""}),/다$/.test(w)?"V":"N",10);
+  });
+  V.forEach(v=>{
+    if(v.c==="Signages"||v.c==="Colors"||v.img) return;
+    const w=String(v.k).split("/")[0].trim();
+    if(/[\s~?]/.test(w)) return;
+    addCand(w,topicOf(v),/다$/.test(w)?"V":"N",0);
+  });
+  cands.sort((x,y)=>y[0]-x[0]);
+  const distractors=cands.slice(0,3).map(x=>x[1]);
   const options=shuf([answer,...distractors]);
   synCur={gi,word,answer,options};
   area.innerHTML=
