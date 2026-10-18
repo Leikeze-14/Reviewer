@@ -359,6 +359,7 @@
   .ubt-del-btn:active{transform:scale(0.95)}
   .ubt-restore-link{color:#0B4D42;text-decoration:underline;cursor:pointer;margin-left:6px}
   .ubt-list{display:flex;flex-direction:column;gap:8px}
+  .topic-hint{font-size:13px;color:var(--text-dim);margin-top:4px;font-weight:600}
   .syn-q-box{background:var(--input-bg);border:1px solid var(--border);border-radius:16px;padding:20px 12px;text-align:center;margin-bottom:14px}
   .syn-q-label{font-size:12px;color:var(--text-dim);margin-bottom:8px}
   .syn-q-word{font-size:30px;font-weight:700;line-height:1.2}
@@ -2275,7 +2276,7 @@ const TOPIC_BY_CAT={"Vegetables":"vegetable","Fruits":"fruit","Animals":"animal"
   "Clothes":"clothing","Accessories":"clothing","Tools":"tool","Work Tools & Equipment":"tool","EPS-TOPIK Factory Tools":"tool","Operating Machines":"machine",
   "Appliances":"home","Home Goods":"home","School Supplies":"school","Transportation Means":"transport","Places":"place","Gov. Offices":"place",
   "Building Floors":"place","Colors":"color","Time & Date":"time","Months":"calendar","Days of the Week":"calendar","Dates":"calendar","Hours (시)":"clock",
-  "Directions & Positions":"direction","Food":"food","Nature":"nature","Materials":"material","Packaging":"material"};
+  "Directions & Positions":"direction","Hobby / Sports":"hobby","Food":"food","Nature":"nature","Materials":"material","Packaging":"material"};
 const TOPIC_RULES=[
   ["vegetable",/\b(radish|cabbage|onion|garlic|carrot|cucumber|potato|eggplant|pepper|spinach|pumpkin|lettuce|sprout|zucchini|vegetable|tomato|corn|bean|scallion|leek)s?\b/],
   ["fruit",/\b(apple|pear|grape|strawberry|watermelon|melon|peach|orange|banana|persimmon|tangerine|cherry|plum|lemon|fruit|produce)s?\b/],
@@ -2332,6 +2333,36 @@ function topicOf(v){
   if(!t) t="misc";
   _topicCache.set(v,t);
   return t;
+}
+const TOPIC_LABEL={
+  vegetable:["Vegetable","채소"],fruit:["Fruit","과일"],animal:["Animal","동물"],direction:["Direction / Position","방향 / 위치"],
+  body:["Body part","신체"],family:["Family","가족"],taste:["Taste","맛"],appearance:["Appearance","외모"],size:["Size / Amount","크기 / 양"],
+  speed:["Speed","속도"],safety:["Safety / Danger","안전 / 위험"],money:["Money / Pay","돈 / 급여"],clock:["Time of day","시각"],
+  calendar:["Date / Calendar","날짜 / 달력"],time:["Time","시간"],school:["School / Study","학교 / 공부"],transport:["Transportation","교통"],
+  post:["Mail","우편"],place:["Place","장소"],food:["Food","음식"],clothing:["Clothing","옷"],tool:["Tool","도구"],machine:["Machine","기계"],
+  labor:["Work task","작업"],home:["Home item","생활용품"],nature:["Nature / Weather","자연 / 날씨"],personality:["Personality","성격"],
+  feeling:["Feeling","감정"],relation:["Relationship","관계"],speech:["Communication","의사소통"],work:["Workplace","직장"],
+  texture:["Physical quality","성질"],condition:["Condition","상태"],travel:["Travel","여행"],move:["Movement","이동"],daily:["Daily action","일상 행동"],
+  transaction:["Action","행동"],job:["Occupation","직업"],color:["Color","색깔"],material:["Material","재료"],hobby:["Hobby / Sport","취미 / 운동"]
+};
+const CAT_FALLBACK_LABEL={
+  "Numbers":["Number","숫자"],"Sino-Korean Numbers":["Number","숫자"],"Korean Particles (조사)":["Particle","조사"],"Particles 조사":["Particle","조사"],
+  "Counting Units 단위":["Counting unit","단위"],"Graph 문법":["Graph grammar","그래프 문법"],"Exam Expressions":["Exam phrase","시험 표현"],
+  "Listening Questionnaire Phrases":["Listening question","듣기 문제"],"Reading Questionnaire Phrases":["Reading question","읽기 문제"],
+  "EPS-TOPIK Exam Glossary":["Exam term","시험 용어"],"EPS-TOPIK Exam Keywords":["Exam term","시험 용어"],
+  "EPS-TOPIK Vocabulary & Question Clues":["Exam term","시험 용어"],"EPS-TOPIK Question Prompts & Words":["Exam question","시험 문제"],
+  "Illustration & Document Vocabulary":["Document / Picture","문서 / 그림"]
+};
+// "(Vegetable (채소))" — category shown under each question word
+function topicHint(v){
+  const t=topicOf(v);
+  let L=TOPIC_LABEL[t];
+  if(!L) L=CAT_FALLBACK_LABEL[v.c];
+  if(!L){
+    const e=String(v.e||"").trim();
+    L=/^to be\b/i.test(e)?["Adjective","형용사"]:/^to\b/i.test(e)?["Verb","동사"]:["Noun","명사"];
+  }
+  return "("+L[0]+" ("+L[1]+"))";
 }
 function wordForm(v){ return /^to\b/i.test(String(v.e||"").trim())?"V":"N"; }
 function meaningSet(e){
@@ -2493,6 +2524,7 @@ function renderMC(){
     '<div class="korean-row"><div class="korean">'+cur.k+'</div>'+
     '<button class="speak-btn" id="main-speak" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+speakerSVG+'</button></div>'+
     (showRomanMC?'<div class="roman">'+romanize(cur.k)+'</div>':'')+
+    '<div class="topic-hint">'+topicHint(cur)+'</div>'+
     '<div class="hint">What does this mean in English? <span style="opacity:.7">(Alt+1 to replay sound)</span></div>'+
     '<div class="options '+(choiceMode===2?'cols1':'cols2')+'">'+
     opts.map(o=>'<button class="opt" onclick="pick(this,\''+esc(o)+'\',\''+esc(cur.e)+'\')">'+o+'</button>').join("")+
@@ -2561,6 +2593,7 @@ function renderListen(){
       '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'+
     '</button>'+
     '<div class="listen-replay-hint">Tap to play • tap again to replay • Alt+1</div>'+
+    '<div class="topic-hint" style="text-align:center;margin-bottom:6px">'+topicHint(cur)+'</div>'+
     '<div class="listen-prompt">Type the <strong>English meaning</strong> of the Korean word you hear:</div>'+
     '<input class="listen-input" id="listen-input" type="text" placeholder="Type answer here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key===\'Enter\' && !answered){submitListen();setTimeout(function(){var i=document.getElementById(\'listen-input\');if(i)i.blur();},80);}"/>'+
     '<button class="listen-submit" id="listen-submit-btn" onclick="submitListen()">Check Answer ↵</button>'+
@@ -2688,6 +2721,7 @@ function renderRead(){
     repeatBadge+streakStars+
     '<div class="read-card">'+starBtnHTML(cur)+
       '<div class="read-korean-big">'+cur.k+'</div>'+
+      '<div class="topic-hint" style="text-align:center">'+topicHint(cur)+'</div>'+
       '<button class="read-speak-btn" id="read-speak-btn" onclick="speakKorean(\''+esc(cur.k)+'\',this)">'+
         '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>'+
       '</button>'+
@@ -3887,6 +3921,7 @@ function renderSynQ(){
   area.innerHTML=
     '<div class="syn-q-box"><div class="syn-q-label">Choose the word with a similar meaning to:</div>'+
     '<div class="syn-q-word">'+escHtml(word)+'</div><div class="syn-q-roman">'+romanize(word)+'</div>'+
+    '<div class="topic-hint">'+topicHint({e:g.e,c:""})+'</div>'+
     '<button class="vocab-speak" style="margin-top:8px" data-k="'+escAttr(word)+'" onclick="speakKorean(this.dataset.k,this)">'+speakerSVG+'</button></div>'+
     '<div class="pn-options" id="syn-options">'+
     options.map((opt,i)=>
