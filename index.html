@@ -1973,11 +1973,16 @@ function showTTSFailToast(){
   setTimeout(()=>el.classList.remove("show"),6000);
 }
 // lang: "ko" or "en" · rate: playback speed, 1.0 = normal
+// Entries like "월급 / 급여 / 봉급" list synonyms after slashes: read only the first one aloud
+function ttsFirst(text){
+  const first=String(text).split(/\s*[\/／]\s*/)[0].trim();
+  return first||String(text);
+}
 function playTTS(text,lang,rate,onend){
   if(!window.speechSynthesis){ showTTSFailToast(); if(onend)onend(); return; }
   loadVoice();
   window.speechSynthesis.cancel();
-  const utt=new SpeechSynthesisUtterance(text);
+  const utt=new SpeechSynthesisUtterance(ttsFirst(text));
   utt.lang=lang==="ko"?"ko-KR":"en-US"; utt.rate=rate||1.0;
   if(lang==="ko"&&koVoice)utt.voice=koVoice;
   let started=false,settled=false;
