@@ -9,7 +9,7 @@
 <title>EPS Master — Korean Vocabulary for EPS-TOPIK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   :root{
@@ -391,6 +391,109 @@
   .cz-row input{width:20px;height:20px;accent-color:var(--brand-600);flex-shrink:0;cursor:pointer}
   .cz-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
   .cz-btn{font-size:12px;padding:7px 14px;border-radius:16px;border:1px solid var(--border-light);background:var(--input-bg);color:var(--text-mid);cursor:pointer;font-family:inherit;font-weight:600}
+/*REFRESH_START — eye-comfort home page*/
+:root{
+  --bg:#F3F0E8;--card:#FDFCF9;--text:#2B2823;--text-dim:#6B6256;--text-dimmer:#8A8174;
+  --text-mid:#463F35;--text-mid2:#554D41;--border:#E5DFD1;--border-light:#D8D0BF;
+  --divider:#EEE9DC;--input-bg:#F6F3EB;--disabled:#C9C1B0;
+  --font-display:'Poppins','Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --brand-900:#1F5E52;--brand-700:#2A7A69;--brand-600:#33897A;--brand-500:#4A9D8C;--brand-100:#E1EFEA;--brand-50:#F0F7F4;
+  --accent:#2A7A69;--accent-glow:rgba(42,122,105,.25);--shadow-card:0 6px 24px rgba(70,55,30,.07);
+}
+body.dark{
+  --bg:#17191B;--card:#202325;--text:#E4E1DA;--text-dim:#A5A196;--text-dimmer:#7F7C73;
+  --text-mid:#CFCBC2;--text-mid2:#BDB9AF;--border:#2F3336;--border-light:#3B4044;
+  --divider:#272A2D;--input-bg:#1B1E20;--disabled:#4A4D50;
+  --brand-900:#8ED3C1;--brand-700:#6CC0AB;--brand-600:#5BB19C;--brand-500:#4A9D8C;--brand-100:#233B35;--brand-50:#1D2D29;
+  --accent:#2F8572;--accent-glow:rgba(0,0,0,.35);--shadow-card:0 6px 24px rgba(0,0,0,.28);
+}
+body{font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.stats,.filters,.mode-bar,.review-bar,.quiz-area,.total-count,.mastery-bar{max-width:760px;margin-left:auto;margin-right:auto}
+/* header */
+.header{padding:12px max(16px,calc((100% - 760px)/2));box-shadow:0 1px 0 var(--border);border-bottom:none}
+.header h1{font-size:17px;letter-spacing:-.1px}
+.header p{font-size:12.5px}
+.brand-mark{border-radius:12px}
+.icon-toggle-btn{background:var(--card);border-color:var(--border-light)}
+/* stats as one calm strip */
+.stats{width:calc(100% - 32px);margin:14px auto 6px;padding:6px 4px;gap:0;background:var(--card);border:1px solid var(--border);border-radius:16px}
+.stat{background:transparent;border-radius:0;border-right:1px solid var(--divider);padding:8px 6px}
+.stat:last-child{border-right:0}
+.stat-label{font-size:11.5px;color:var(--text-dim);letter-spacing:.2px}
+.stat-val{font-size:19px;font-weight:600}
+/* progress */
+.mastery-bar{padding:8px 16px 4px}
+.mastery-track{height:6px;background:var(--divider)}
+.mastery-fill{background:linear-gradient(90deg,var(--brand-500),var(--accent))}
+.mastery-label{font-size:12px}.mastery-count{font-size:12px;color:var(--brand-900)}
+/* category chip + count */
+.filters{padding:8px 16px 2px}
+.fbtn{font-size:13px;padding:8px 14px;border-radius:12px;border-color:var(--border-light);background:var(--card);color:var(--text-mid)}
+.fbtn.active{background:var(--brand-100);color:var(--brand-900);border-color:var(--brand-500)}
+.total-count{font-size:12px;color:var(--text-dim);padding:4px 16px 10px}
+/* mode buttons */
+.mode-bar{padding:4px 16px 10px;gap:8px}
+.mode-label{font-size:12px;color:var(--text-dim)}
+.mbtn{font-size:13px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--border-light);background:var(--card);color:var(--text-mid);font-weight:500;transition:background .12s,border-color .12s}
+.mbtn:hover{background:var(--brand-50)}
+.mbtn.active,.mbtn.listen-active,.mbtn.read-active,.mbtn.audio-active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;box-shadow:0 2px 8px var(--accent-glow)}
+.mode-bar select{font-size:13px;padding:7px 10px;border-radius:12px;border:1.5px solid var(--border-light);background:var(--card);color:var(--text-mid);font-family:inherit}
+/* tool buttons: one calm style, extras folded away */
+.review-bar{padding:2px 16px 14px;gap:8px}
+.review-bar > button{font-size:13px;padding:8px 14px;border-radius:12px;font-weight:500;
+  border:1.5px solid var(--border-light)!important;background:var(--card)!important;color:var(--text-mid)!important;transition:background .12s,border-color .12s}
+.review-bar > button:hover{background:var(--brand-50)!important;border-color:var(--brand-500)!important}
+.review-bar > button svg{fill:currentColor!important}
+.review-bar > button.more-btn{border-style:dashed!important;color:var(--text-dim)!important}
+.review-bar:not(.open) > [data-ui="autonext"],
+.review-bar:not(.open) > [data-ui="tenses"],
+.review-bar:not(.open) > [data-ui="picnouns"],
+.review-bar:not(.open) > [data-ui="toolsimg"],
+.review-bar:not(.open) > [data-ui="keywords"],
+.review-bar:not(.open) > [data-ui="synonyms"],
+.review-bar:not(.open) > [data-ui="graphquiz"],
+.review-bar:not(.open) > [data-ui="cloud"],
+.review-bar:not(.open) > [data-ui="reset"]{display:none!important}
+/* inactive mode buttons lose their rainbow borders */
+.mode-bar .mbtn{border-color:var(--border-light)!important;color:var(--text-mid)!important}
+.mode-bar .mbtn.active,.mode-bar .mbtn.listen-active,.mode-bar .mbtn.read-active,.mode-bar .mbtn.audio-active{border-color:var(--accent)!important;color:#fff!important}
+.mode-bar .ql-wrap{display:inline-flex;align-items:center;gap:8px;margin-left:auto}
+/* quiz cards */
+.quiz-area{padding:6px 16px 110px}
+.progress{font-size:13px;color:var(--text-dim)}
+.cat-badge{font-size:12px;padding:4px 12px;background:var(--brand-100);color:var(--brand-900)}
+.qcard,.listen-card,.read-card,.end-card{background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-card)}
+.qcard{padding:30px 22px 22px}
+.korean{font-size:clamp(40px,9vw,56px);font-weight:700;letter-spacing:-.5px}
+.roman{font-size:15px;font-weight:500;color:var(--text-dim)}
+.speak-btn,.read-speak-btn{background:var(--brand-100);width:46px;height:46px}
+.speak-btn svg,.read-speak-btn svg{fill:var(--brand-900)}
+.hint{font-size:13px;color:var(--text-dim);margin:8px 0 18px}
+.choice-label{font-size:12px}
+.ctbtn{font-size:13px;padding:6px 14px;border-radius:12px}
+.ctbtn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.options{gap:10px}
+.opt{background:var(--card);border:1.5px solid var(--border-light);border-radius:14px;padding:15px 16px;font-size:15px;font-weight:500;line-height:1.35;min-height:56px;transition:background .12s,border-color .12s,transform .06s}
+.opt:hover:not(:disabled){background:var(--brand-50);border-color:var(--brand-500)}
+.opt:active:not(:disabled){transform:scale(.99);background:var(--brand-100)}
+.opt.correct{background:#E4F1E8;border-color:#7FB894;color:#1F5A36;font-weight:600}
+.opt.wrong{background:#F7E6E1;border-color:#D79484;color:#80352A}
+body.dark .opt.correct{background:#1F3A2A;border-color:#3E7A55;color:#B8E3C6}
+body.dark .opt.wrong{background:#43241F;border-color:#8B4A3D;color:#F0C2B7}
+.feedback{font-size:15px}.feedback.ok{color:#2F7A4D}.feedback.bad{color:#B5483A}
+.next-btn,.replay-btn,.read-submit{background:var(--accent);color:#fff;border-radius:14px;box-shadow:0 4px 14px var(--accent-glow)}
+.read-input,.listen-input{border-radius:14px;background:var(--card)}
+.read-input:focus{border-color:var(--accent)}
+/* comfort */
+:focus-visible{outline:3px solid rgba(74,157,140,.5);outline-offset:2px}
+@media (max-width:560px){
+  .korean{font-size:44px}
+  .qcard{padding:26px 16px 18px}
+  .opt{padding:14px;font-size:14.5px}
+  .mode-bar > .mode-label:first-child{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/*REFRESH_END*/
 </style>
 </head>
 <body>
@@ -427,7 +530,7 @@
   <button class="mbtn" id="mbtn-listen" onclick="setMode('listen')" style="border-color:#E8B65B;color:#D98C2B">🎧 Listening</button>
   <button class="mbtn" id="mbtn-read" onclick="setMode('read')" style="border-color:#8FCBB9;color:#0B4D42">✍️ Reading</button>
   <button class="mbtn" id="mbtn-audio" onclick="setMode('audio')" style="border-color:#E8B65B;color:#B9700F">🚶 Audio Review</button>
-  <span class="mode-label" style="margin-left:10px">Quiz Length:</span>
+  <span class="ql-wrap"><span class="mode-label">Quiz Length:</span>
   <select id="ql-select" onchange="setQuizLength(this.value)" style="font-size:12px;padding:5px 10px;border-radius:20px;border:1.5px solid var(--border-light);background:var(--card);color:var(--text-mid);cursor:pointer;font-family:inherit;font-weight:500">
     <option value="10">10</option>
     <option value="20" selected>20</option>
@@ -440,6 +543,7 @@
     <option value="90">90</option>
     <option value="100">100</option>
   </select>
+  </span>
 </div>
 
 <div class="review-bar">
@@ -479,6 +583,7 @@
     <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
     <span id="switch-user-label">Switch User</span>
   </button>
+  <button class="rev-btn more-btn" id="more-tools-btn" onclick="toggleMoreTools()">⋯ More tools</button>
   <span id="sync-status" class="sync-status"></span>
 </div>
 
@@ -4849,6 +4954,16 @@ function uiPresetClean(){ uiHidden=new Set(UI_CLEAN_HIDE); uiSave(); applyUiHidd
 function openCustomize(){ renderCustomize(); document.getElementById("custom-panel").classList.remove("hidden"); document.body.style.overflow="hidden"; }
 function closeCustomize(){ document.getElementById("custom-panel").classList.add("hidden"); document.body.style.overflow=""; }
 uiTagAll(); applyUiHidden();
+/*REFRESH_JS_START*/
+(function(){ var lab=document.getElementById("total-label"); if(lab) lab.textContent="Korean vocabulary · EPS-TOPIK"; })();
+function toggleMoreTools(){
+  var bar=document.querySelector(".review-bar"); if(!bar) return;
+  var open=bar.classList.toggle("open");
+  var b=document.getElementById("more-tools-btn"); if(b) b.textContent=open?"▴ Show less":"⋯ More tools";
+  try{ localStorage.setItem("eps_more_tools_open",open?"1":"0"); }catch(e){}
+}
+(function(){ try{ if(localStorage.getItem("eps_more_tools_open")==="1") toggleMoreTools(); }catch(e){} })();
+/*REFRESH_JS_END*/
 </script>
 </body>
 </html>
