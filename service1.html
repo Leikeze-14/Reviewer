@@ -268,6 +268,7 @@
   .sync-status{font-size:11px;color:var(--text-dim);white-space:nowrap}
   .sync-status.error,.sync-status.offline{color:#B9700F}
   .sync-status.synced{color:#2F6B3F}
+  .sync-status.idle{color:var(--text-dim)}
   .cloud-btn:hover{background:#C3E8DE}
   .cloud-btn svg{width:14px;height:14px;fill:#D6457F}
   .cloud-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--overlay2);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -1494,18 +1495,38 @@ const supabaseClient=(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
   : null;
 let cloudSyncTimer=null;
 let cloudLastSyncedAt=null;
-function setSyncStatus(state){
+let lastSyncDetail="";
+function setSyncStatus(state,detail){
   const el=document.getElementById("sync-status");
   if(!el) return;
   if(!supabaseClient){ el.textContent=""; return; }
   const map={
     syncing:"🔄 Syncing…",
     synced:"☁️ Synced",
+    idle:"💾 Saved on this device",
     offline:"⚠️ Offline (saved on this device only)",
     error:"⚠️ Sync error (saved on this device only)"
   };
-  el.textContent=map[state]||"";
+  const bad=(state==="offline"||state==="error");
+  lastSyncDetail=detail||"";
+  el.textContent=(map[state]||"")+(bad?" ⓘ":"");
   el.className="sync-status "+state;
+  el.title=detail||"";
+  el.style.cursor=bad?"pointer":"";
+  el.onclick=bad?function(){ syncDetailPrompt(state); }:null;
+}
+function syncDetailPrompt(state){
+  const msg=(state==="error"?"The cloud rejected the save.":"The cloud could not be reached.")+
+    "\n\nDetails: "+(lastSyncDetail||"(none)")+
+    "\n\nYour progress is still saved on this device.\n\nTry syncing again now?";
+  if(confirm(msg)) retrySyncNow();
+}
+function retrySyncNow(){
+  if(!supabaseClient||!activeProfile) return;
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(raw) cloudSaveProgress(JSON.parse(raw),activeProfile); else pullLatestFromCloud();
+  }catch(e){}
 }
 function scheduleCloudSync(data){
   if(!supabaseClient||!activeProfile) return;
@@ -1524,19 +1545,21 @@ async function cloudSaveProgress(data,profileName){
       data,
       updated_at:nowIso
     },{onConflict:"profile_name"});
-    if(error){ console.warn("Cloud save error:",error); setSyncStatus("error"); return; }
+    if(error){ console.warn("Cloud save error:",error); setSyncStatus("error",(error.message||"")+(error.code?" ["+error.code+"]":"")); return; }
     cloudLastSyncedAt=nowIso;
     setSyncStatus("synced");
-  }catch(e){ console.warn("Cloud save failed:",e); setSyncStatus("offline"); }
+  }catch(e){ console.warn("Cloud save failed:",e); setSyncStatus("offline",String((e&&e.message)||e)); }
 }
+let cloudLoadFailed=false, cloudLoadMsg="";
 async function cloudLoadProgress(name){
+  cloudLoadFailed=false; cloudLoadMsg="";
   if(!supabaseClient) return null;
   try{
     const {data,error}=await supabaseClient.from("quiz_progress").select("data,updated_at").eq("profile_name","service1-"+name.toLowerCase()).maybeSingle();
-    if(error){ console.warn("Cloud load error:",error); return null; }
+    if(error){ console.warn("Cloud load error:",error); cloudLoadFailed=true; cloudLoadMsg=(error.message||"")+(error.code?" ["+error.code+"]":""); return null; }
     if(data&&data.updated_at) cloudLastSyncedAt=data.updated_at;
     return data?data.data:null;
-  }catch(e){ console.warn("Cloud load failed:",e); return null; }
+  }catch(e){ console.warn("Cloud load failed:",e); cloudLoadFailed=true; cloudLoadMsg=String((e&&e.message)||e); return null; }
 }
 async function pullLatestFromCloud(){
   if(!supabaseClient||!activeProfile) return false;
@@ -1555,7 +1578,12 @@ async function pullLatestFromCloud(){
     setSyncStatus("synced");
     return true;
   }
-  setSyncStatus(supabaseClient?"offline":"");
+  if(cloudLoadFailed){ setSyncStatus("offline",cloudLoadMsg); return false; }
+  // No cloud row yet for this profile: create it from this device's progress
+  try{
+    const rawLocal=localStorage.getItem(SAVE_KEY);
+    if(rawLocal) cloudSaveProgress(JSON.parse(rawLocal),activeProfile); else setSyncStatus("idle");
+  }catch(e){ setSyncStatus("idle"); }
   return false;
 }
 document.addEventListener("visibilitychange",()=>{
