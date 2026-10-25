@@ -2253,7 +2253,8 @@ const supabaseClient=(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
   : null;
 let cloudSyncTimer=null;
 let cloudLastSyncedAt=null;
-let lastSyncDetail="";
+const APP_BUILD="v3-sync";
+let lastSyncDetail="", lastSyncState="";
 function setSyncStatus(state,detail){
   const el=document.getElementById("sync-status");
   if(!el) return;
@@ -2266,17 +2267,25 @@ function setSyncStatus(state,detail){
     error:"⚠️ Sync error (saved on this device only)"
   };
   const bad=(state==="offline"||state==="error");
-  lastSyncDetail=detail||"";
+  lastSyncDetail=detail||""; lastSyncState=state;
   el.textContent=(map[state]||"")+(bad?" ⓘ":"");
   el.className="sync-status "+state;
   el.title=detail||"";
-  el.style.cursor=bad?"pointer":"";
-  el.onclick=bad?function(){ syncDetailPrompt(state); }:null;
+  el.style.cursor="pointer";
+  el.onclick=function(){ syncDetailPrompt(state); };
 }
 function syncDetailPrompt(state){
-  const msg=(state==="error"?"The cloud rejected the save.":"The cloud could not be reached.")+
-    "\n\nDetails: "+(lastSyncDetail||"(none)")+
-    "\n\nYour progress is still saved on this device.\n\nTry syncing again now?";
+  let localAt="none yet";
+  try{ const r=localStorage.getItem(SAVE_KEY); if(r){ const t=JSON.parse(r).savedAt; localAt=t?new Date(t).toLocaleString():"saved (no timestamp)"; } }catch(e){}
+  const head=(state==="error"?"The cloud rejected the save.":state==="offline"?"The cloud could not be reached.":state==="synced"?"Cloud sync is working.":"Cloud sync status.");
+  const msg=head+
+    "\n\nStatus: "+(state||"-")+
+    "\nDetails: "+(lastSyncDetail||"(none)")+
+    "\nApp version: "+APP_BUILD+
+    "\nSaved on this device under: "+SAVE_KEY+
+    "\nLast saved here: "+localAt+
+    "\nLast cloud sync: "+(cloudLastSyncedAt||"never")+
+    "\n\nProgress is always saved on this device first.\n\nTry syncing again now?";
   if(confirm(msg)) retrySyncNow();
 }
 function retrySyncNow(){
@@ -5091,7 +5100,7 @@ function openCustomize(){ renderCustomize(); document.getElementById("custom-pan
 function closeCustomize(){ document.getElementById("custom-panel").classList.add("hidden"); document.body.style.overflow=""; }
 uiTagAll(); applyUiHidden();
 /*REFRESH_JS_START*/
-(function(){ var lab=document.getElementById("total-label"); if(lab) lab.textContent="Korean vocabulary · EPS-TOPIK"; })();
+(function(){ var lab=document.getElementById("total-label"); if(lab) lab.textContent="Korean vocabulary · EPS-TOPIK · "+(typeof APP_BUILD!=="undefined"?APP_BUILD:""); })();
 function toggleMoreTools(){
   var bar=document.querySelector(".review-bar"); if(!bar) return;
   var open=bar.classList.toggle("open");
