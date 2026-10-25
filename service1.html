@@ -9,7 +9,7 @@
 <title>EPS Service 1 — 숙박 및 음식점업 Vocabulary</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   :root{
@@ -471,7 +471,7 @@
   <button class="mbtn" id="mbtn-listen" onclick="setMode('listen')" style="border-color:#E8B65B;color:#D98C2B">🎧 Listening</button>
   <button class="mbtn" id="mbtn-read" onclick="setMode('read')" style="border-color:#F4A9C6;color:#9E2A5B">✍️ Reading</button>
   <button class="mbtn" id="mbtn-audio" onclick="setMode('audio')" style="border-color:#E8B65B;color:#B9700F">🚶 Audio Review</button>
-  <span class="mode-label" style="margin-left:10px">Quiz Length:</span>
+  <span class="ql-wrap"><span class="mode-label">Quiz Length:</span>
   <select id="ql-select" onchange="setQuizLength(this.value)" style="font-size:12px;padding:5px 10px;border-radius:20px;border:1.5px solid var(--border-light);background:var(--card);color:var(--text-mid);cursor:pointer;font-family:inherit;font-weight:500">
     <option value="10">10</option>
     <option value="20" selected>20</option>
@@ -484,6 +484,7 @@
     <option value="90">90</option>
     <option value="100">100</option>
   </select>
+  </span>
 </div>
 
 <div class="review-bar">
@@ -1542,6 +1543,14 @@ async function pullLatestFromCloud(){
   setSyncStatus("syncing");
   const cloudData=await cloudLoadProgress(activeProfile);
   if(cloudData){
+    // NEWEST WINS: never let older cloud data overwrite newer progress saved on this device
+    let localRaw=null, localAt=0;
+    try{ localRaw=localStorage.getItem(SAVE_KEY); if(localRaw) localAt=(JSON.parse(localRaw).savedAt)||0; }catch(e){}
+    const cloudAt=(cloudData.savedAt)||0;
+    if(localRaw && localAt>cloudAt){
+      try{ cloudSaveProgress(JSON.parse(localRaw),activeProfile); }catch(e){}
+      return false;
+    }
     try{ localStorage.setItem(SAVE_KEY,JSON.stringify(cloudData)); }catch(e){}
     setSyncStatus("synced");
     return true;
@@ -1624,7 +1633,8 @@ function saveSession(){
       allCats:CATS.filter(c=>c!=="All"),
       excluded:Array.from(excludedSet),
       deletedUbt:Array.from(ubtDeleted),
-      starred:Array.from(starredSet)
+      starred:Array.from(starredSet),
+      savedAt:Date.now()
     };
     localStorage.setItem(SAVE_KEY,JSON.stringify(data));
     scheduleCloudSync(data);
@@ -1759,6 +1769,7 @@ function recordAnswer(entry,isCorrect){
   }
   updateMasteryBar();
   saveSession();
+  setTimeout(saveSession,0); // score/streak are updated right after this call
 }
 function getMasteredSet(){
   const catWords=poolWords();
@@ -4290,6 +4301,29 @@ function uiPresetClean(){ uiHidden=new Set(UI_CLEAN_HIDE); uiSave(); applyUiHidd
 function openCustomize(){ renderCustomize(); document.getElementById("custom-panel").classList.remove("hidden"); document.body.style.overflow="hidden"; }
 function closeCustomize(){ document.getElementById("custom-panel").classList.add("hidden"); document.body.style.overflow=""; }
 uiTagAll(); applyUiHidden();
+
+/* ===== PROGRESS SAFETY (Service 1) ===== */
+function flushProgressNow(){
+  if(!activeProfile||!supabaseClient) return;
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(raw){ clearTimeout(cloudSyncTimer); cloudSaveProgress(JSON.parse(raw),activeProfile); }
+  }catch(e){}
+}
+document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden") flushProgressNow(); });
+window.addEventListener("pagehide",flushProgressNow);
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+(function(){
+  var ok=true;
+  try{ localStorage.setItem("__s1_test","1"); ok=localStorage.getItem("__s1_test")==="1"; localStorage.removeItem("__s1_test"); }catch(e){ ok=false; }
+  if(!ok){
+    var d=document.createElement("div");
+    d.style.cssText="position:fixed;left:8px;right:8px;top:8px;z-index:9999;background:#C2492F;color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.4;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.3)";
+    d.textContent="\u26A0\uFE0F This browser can't save your progress here (private mode or an in-app browser like Messenger/Facebook). Open the link in Chrome or Safari instead.";
+    d.onclick=function(){ d.remove(); };
+    document.body.appendChild(d);
+  }
+})();
 </script>
 </body>
 </html>
